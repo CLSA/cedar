@@ -80,8 +80,7 @@ class assignment_delete extends \cenozo\ui\push\base_delete
   }
 
   /**
-   * Purge auxiliary records and reset the adjudicate states of the
-   * sibling assignment's test_entry records.
+   * Purge auxiliary records
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
    * @access protected

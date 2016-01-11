@@ -47,13 +47,6 @@ class test_entry_list extends \cenozo\ui\widget\base_list
     $this->add_column( 'participant_status', 'string', 'Participant Status' );
     $this->add_column( 'completed', 'string', 'Completed' );
     $this->add_column( 'deferred', 'boolean', 'Deferred', false );
-
-    $db_operation = $operation_class_name::get_operation( 'widget', 'test_entry', 'adjudicate' );
-    if( lib::create( 'business\session' )->is_allowed( $db_operation ) )
-    {
-      $this->adjudicate_allowed = true;
-      $this->add_column( 'adjudicate', 'boolean', 'Adjudicate', true );
-    }
   }
 
   /**
@@ -90,17 +83,7 @@ class test_entry_list extends \cenozo\ui\widget\base_list
         // note count isn't a column, it's used for the note button
         'note_count' => $db_test_entry->get_note_count() );
 
-      if( $this->adjudicate_allowed )
-        $columns['adjudicate'] = $db_test_entry->adjudicate;
-
       $this->add_row( $db_test_entry->id, $columns );
     }
   }
-
-  /**
-   * Are adjudications allowed.
-   * @var adjudicate_allowed
-   * @access protected
-   */
-  protected $adjudicate_allowed = false;
 }

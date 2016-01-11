@@ -38,12 +38,9 @@ class assignment_report extends \cenozo\ui\widget\base_report
   {
     parent::prepare();
 
-   $this->add_restriction( 'site' );
-   $this->add_restriction( 'dates' );
+    $this->add_restriction( 'site' );
+    $this->add_restriction( 'dates' );
 
-    $this->set_variable( 'description',
-      'This report lists the number of completed (closed), in progress (open) and remaining ' .
-      'assignment pairs (ie., two typist\'s assignments per participant) by cohort and '.
-      'site on a monthly basis.' );
+    $this->set_variable( 'description', 'This report needs to be rewritten.' );
   }
 }

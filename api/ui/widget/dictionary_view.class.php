@@ -83,7 +83,7 @@ class dictionary_view extends \cenozo\ui\widget\base_view
 
       if( $allow )
         $this->add_action( 'transfer_word', 'Transfer', $db_operation,
-          'Transfer words from the dictionary to a sibling dictionary' );
+          'Transfer words from the dictionary to another dictionary' );
     }
   }
 

@@ -133,39 +133,7 @@ class assignment extends \cenozo\database\record
   }
 
   /**
-   * Get the number of adjudicate test_entry records for this assignment.
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @throws exception\runtime
-   * @return integer
-   * @access public
-   */
-  public function get_adjudicate_count()
-  {
-    return static::db()->get_one(
-      sprintf( 'SELECT adjudicate FROM test_entry_total_adjudicate WHERE assignment_id = %s',
-               static::db()->format_string( $this->id ) ) );
-  }
-
-  /**
-   * Are there any test_entry records requiring adjudication for this assignment?
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @throws exception\runtime
-   * @return boolean
-   * @access public
-   */
-  public function has_adjudicates()
-  {
-    $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'assignment_id', '=', $this->id );
-    $modifier->where( 'IFNULL(adjudicate,false)', '=', true );
-    $sql = sprintf( 'SELECT count(*) FROM test_entry %s', $modifier->get_sql() );
-    return 0 !== intval( static::db()->get_one( $sql ) );
-  }
-
-  /**
-   * Get the deferred, adjudicate and complete counts for this assignment.
+   * Get the deferred and complete counts for this assignment.
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
    * @throws exception\runtime
@@ -175,7 +143,7 @@ class assignment extends \cenozo\database\record
   public function get_all_counts()
   {
     return static::db()->get_row( sprintf(
-      'SELECT deferred, adjudicate, completed FROM assignment_total WHERE assignment_id = %s',
+      'SELECT deferred, completed FROM assignment_total WHERE assignment_id = %s',
       static::db()->format_string( $this->id ) ) );
   }
 
@@ -236,8 +204,7 @@ class assignment extends \cenozo\database\record
     if( 0 == count( $user_languages ) )
       $user_languages[] = $db_service->language_id;
 
-    $id = NULL;
-    $rows = NULL;
+    $participant_id = NULL;
     if( $has_tracking )
     {
       $sql =
@@ -260,7 +227,8 @@ class assignment extends \cenozo\database\record
       $sql =
         'CREATE TEMPORARY TABLE temp_recording AS '.
         'SELECT DISTINCT participant_id '.
-        'FROM sabretooth_recording';
+        'FROM recording '.
+        'WHERE visit = 1';
 
       static::db()->execute( $sql );
 
@@ -269,42 +237,28 @@ class assignment extends \cenozo\database\record
       static::db()->execute( $sql );
 
       $modifier = lib::create( 'database\modifier' );
+      $modifier->where( 'assignment.id', '=', NULL ); // has never been assigned
       $modifier->where( 'participant_site.service_id', '=', $db_service->id );
       $modifier->where( 'participant_site.site_id', '=', $db_site->id );
       $modifier->where( 'IFNULL( participant.language_id, ' .
         static::db()->format_string( $db_service->language_id ) . ' )',
         'IN', $user_languages );
-      $modifier->group( 'participant.id ');
+      $modifier->limit( 1 );
 
       $sql = sprintf(
-        'CREATE TEMPORARY TABLE temp_assignable AS '.
-        'SELECT participant.id AS participant_id, assignment.id AS assignment_id '.
+        'SELECT participant.id AS participant_id '.
         'FROM participant '.
         'JOIN participant_site ON participant_site.participant_id = participant.id '.
         'JOIN temp_completed ON temp_completed.participant_id = participant.id '.
         'JOIN temp_recording ON temp_recording.participant_id = participant.id '.
         'LEFT JOIN assignment ON assignment.participant_id = participant.id '.
-        '%s '. // where statement here
-        'HAVING COUNT(*) < 2 ',
+        '%s ', // where statement here
         $modifier->get_sql() );
 
-      static::db()->execute( $sql );
-
-      $sql = 'ALTER TABLE temp_assignable ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $sql = sprintf(
-        'SELECT participant_id, assignment_id FROM temp_assignable '.
-        'WHERE participant_id NOT IN ( '.
-          'SELECT participant_id FROM assignment '.
-          'WHERE user_id = %s '.
-        ')', static::db()->format_string( $db_user->id ) );
-
-      $rows = static::db()->get_all( $sql );
+      $participant_id = static::db()->get_one( $sql );
     }
 
-    if( is_null( $rows ) && $has_comprehensive )
+    if( is_null( $participant_id ) && $has_comprehensive )
     {
       $sql =
         'CREATE TEMPORARY TABLE temp_completed AS '.
@@ -339,106 +293,33 @@ class assignment extends \cenozo\database\record
       static::db()->execute( $sql );
 
       $modifier = lib::create( 'database\modifier' );
+      $modifier->where( 'assignment.id', '=', NULL );
       $modifier->where( 'participant_site.service_id', '=', $db_service->id );
       $modifier->where( 'participant_site.site_id', '=', $db_site->id );
       $modifier->where( 'IFNULL( participant.language_id, ' .
         static::db()->format_string( $db_service->language_id  ) . ' )',
         'IN', $user_languages );
-      $modifier->group( 'participant.id ');
+      $modifier->limit( 1 );
 
       $sql = sprintf(
-        'CREATE TEMPORARY TABLE temp_assignable AS '.
-        'SELECT participant.id AS participant_id, assignment.id AS assignment_id '.
+        'SELECT participant.id AS participant_id '.
         'FROM participant '.
         'JOIN participant_site ON participant_site.participant_id = participant.id '.
         'JOIN temp_completed ON temp_completed.participant_id = participant.id '.
         'JOIN temp_recording ON temp_recording.participant_id = participant.id '.
         'LEFT JOIN assignment ON assignment.participant_id = participant.id '.
-        '%s '. // where statement here
-        'HAVING COUNT(*) < 2 ',
+        '%s ', // where statement here
         $modifier->get_sql() );
 
-      static::db()->execute( $sql );
+      $participant_id = static::db()->get_one( $sql );
 
-      $sql = 'ALTER TABLE temp_assignable ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $sql = sprintf(
-        'SELECT participant_id, assignment_id FROM temp_assignable '.
-        'WHERE participant_id NOT IN ( '.
-          'SELECT participant_id FROM assignment '.
-          'WHERE user_id = %s '.
-        ')', static::db()->format_string( $db_user->id ) );
-
-      $rows = static::db()->get_all( $sql );
-
-      if( 0 == count( $rows ) )
+      if( is_null( $participant_id ) )
       {
-        $rows = NULL;
-        log::warning(
-          'Tried to get the next available comprehensive cohort participant but there are '.
-          'no more recording files available.  Please try again.' );
-
         $recording_class_name::update_recording_list();
       }
     }
 
-    if( !is_null( $rows ) )
-    {
-      foreach( $rows as $row )
-      {
-        $assignment_id = $row['assignment_id'];
-        $found = false;
-        // null case implies no sibling assignment exists
-        if( is_null( $assignment_id ) )
-        {
-          $found = true;
-        }
-        else
-        {
-          // a sibling assignment can only be created if the primary assignment
-          // has all tests submitted, has no deferrals and the language settings
-          // of the current user match those of the primary assignment's user
-          $db_assignment = lib::create( 'database\assignment', $assignment_id );
-          if( !$db_assignment->has_deferrals() && static::all_tests_submitted( $assignment_id ) )
-          {
-            // get the list of users that have language conditions consistent with
-            // those of the constituent tests
-            $user_list = $db_assignment->get_reassign_user();
-            if( 0 < count( $user_list ) )
-              $found = array_key_exists( $db_user->id, $user_list );
-          }
-        }
-
-        if( $found )
-        {
-          $id = $row['participant_id'];
-          break;
-        }
-      }
-    }
-
-    return is_null( $id ) ? NULL : lib::create( 'database\participant', $id );
-  }
-
-  /**
-   * Get the sibling of this assignment.
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @return record (NULL if no sibling)
-   * @access public
-   */
-  public function get_sibling_assignment()
-  {
-    // find a sibling assignment based on participant, site and user id uniqueness
-    $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'participant_id', '=', $this->participant_id );
-    $modifier->where( 'user_id', '!=', $this->user_id );
-    $modifier->where( 'site_id', '=', $this->site_id );
-    $modifier->limit( 1 );
-    $db_assignment = current( static::select( $modifier ) );
-    return false === $db_assignment ? NULL : $db_assignment;
+    return is_null( $participant_id ) ? NULL : lib::create( 'database\participant', $participant_id );
   }
 
   /**
@@ -561,7 +442,7 @@ class assignment extends \cenozo\database\record
   /**
    * Initialize an assignment.  All existing test_entry records are deleted
    * and new test_entry records are created.
-   * Only assigments that have never been adjudicated or finished can be initialized.
+   * Only assigments that have never been finished can be initialized.
    * This method is typically called during creation of a db_assignment.
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
@@ -593,17 +474,7 @@ class assignment extends \cenozo\database\record
       $db_test_entry->test_id = $db_test->id;
       $db_test_entry->assignment_id = $this->id;
       $db_test_entry->save();
-      $db_sibling_test_entry =  $db_test_entry->get_sibling_test_entry();
       $use_default = true;
-      if( !is_null( $db_sibling_test_entry ) )
-      {
-        $idlist = $db_sibling_test_entry->get_language_idlist();
-        if( 0 < count( $idlist ) )
-        {
-          $db_test_entry->add_language( $idlist );
-          $use_default = false;
-        }
-      }
       if( $use_default )
       {
         $db_language = $db_test_entry->get_default_participant_language();

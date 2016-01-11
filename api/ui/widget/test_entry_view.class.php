@@ -63,7 +63,6 @@ class test_entry_view extends \cenozo\ui\widget\base_view
     $this->add_item( 'deferred',
       $is_deferred ? 'enum' : 'constant', 'Deferred' );
     $this->add_item( 'completed', 'constant', 'Completed' );
-    $this->add_item( 'adjudicate', 'constant', 'Adjudicate' );
 
     $this->language_list = lib::create( 'ui\widget\language_list', $this->arguments );
     $this->language_list->set_parent( $this );
@@ -177,7 +176,6 @@ class test_entry_view extends \cenozo\ui\widget\base_view
         is_null( $db_test_entry->deferred ) ? 'No' : ucwords( $db_test_entry->deferred ) );
 
     $this->set_item( 'completed', ucwords( $db_test_entry->completed )  );
-    $this->set_item( 'adjudicate', true === $db_test_entry->adjudicate ? 'Yes' : 'No' );
 
     try
     {

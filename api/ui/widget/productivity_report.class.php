@@ -43,11 +43,7 @@ class productivity_report extends \cenozo\ui\widget\base_report
     $this->add_restriction( 'dates' );
     $this->add_parameter( 'round_times', 'boolean', 'Round Times' );
 
-    $this->set_variable( 'description',
-      'This report lists typist productivity.  The report can either be generated for a '.
-      'particular day (which will include start and end times), or overall.  The report '.
-      'includes by user the number of adjudicated, completed and incomplete assignments, '.
-      'the total working time, and the number of completed assignments per hour.' );
+    $this->set_variable( 'description', 'This report needs to be rewritten.' );
   }
 
   /**

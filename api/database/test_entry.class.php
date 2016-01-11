@@ -18,11 +18,10 @@ class test_entry extends \cenozo\database\has_note
    * Get the previous record according to test rank.
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @param boolean defines whether to get the next entry when adjudicating
    * @return database\test_entry (NULL if unsuccessful)
    * @access public
    */
-  public function get_previous( $adjudicate = false )
+  public function get_previous()
   {
     $db_prev_test_entry = NULL;
     if( is_null( $this->id ) )
@@ -35,45 +34,24 @@ class test_entry extends \cenozo\database\has_note
       $test_class_name = lib::get_class_name( 'database\test' );
       $rank = $this->get_test()->rank - 1;
       $found = false;
-      if( $adjudicate )
+      do
       {
-        do
+        $db_prev_test = $test_class_name::get_unique_record( 'rank', $rank-- );
+        if( !is_null( $db_prev_test ) )
         {
-          $db_prev_test = $test_class_name::get_unique_record( 'rank', $rank-- );
-          if( !is_null( $db_prev_test ) )
+          $db_test_entry = static::get_unique_record(
+            array( 'test_id', 'assignment_id' ),
+            array( $db_prev_test->id, $this->assignment_id ) );
+          if( !is_null( $db_test_entry ) &&
+              !in_array( $db_test_entry->audio_status, self::$audio_complete_states ) &&
+              'refused' != $db_test_entry->participant_status &&
+              'submitted' != $db_test_entry->completed )
           {
-            $db_test_entry = static::get_unique_record(
-              array( 'test_id', 'assignment_id' ),
-              array( $db_prev_test->id, $this->assignment_id ) );
-            if( !is_null( $db_test_entry ) && $db_test_entry->adjudicate )
-            {
-              $db_prev_test_entry = $db_test_entry;
-              $found = true;
-            }
+            $db_prev_test_entry = $db_test_entry;
+            $found = true;
           }
-        } while( !$found && 0 < $rank );
-      }
-      else
-      {
-        do
-        {
-          $db_prev_test = $test_class_name::get_unique_record( 'rank', $rank-- );
-          if( !is_null( $db_prev_test ) )
-          {
-            $db_test_entry = static::get_unique_record(
-              array( 'test_id', 'assignment_id' ),
-              array( $db_prev_test->id, $this->assignment_id ) );
-            if( !is_null( $db_test_entry ) &&
-                !in_array( $db_test_entry->audio_status, self::$audio_complete_states ) &&
-                'refused' != $db_test_entry->participant_status &&
-                'submitted' != $db_test_entry->completed )
-            {
-              $db_prev_test_entry = $db_test_entry;
-              $found = true;
-            }
-          }
-        } while( !$found && 0 < $rank );
-      }
+        }
+      } while( !$found && 0 < $rank );
     }
     return $db_prev_test_entry;
   }
@@ -82,11 +60,10 @@ class test_entry extends \cenozo\database\has_note
    * Get the next record according to test rank.
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @param boolean defines whether to get the next entry when adjudicating
    * @return database\test_entry (NULL if unsuccessful)
    * @access public
    */
-  public function get_next( $adjudicate = false )
+  public function get_next()
   {
     $db_next_test_entry = NULL;
     if( is_null( $this->id ) )
@@ -100,45 +77,24 @@ class test_entry extends \cenozo\database\has_note
       $rank = $this->get_test()->rank + 1;
       $max_rank = $test_class_name::count();
       $found = false;
-      if( $adjudicate )
+      do
       {
-        do
+        $db_next_test = $test_class_name::get_unique_record( 'rank', $rank++ );
+        if( !is_null( $db_next_test ) )
         {
-          $db_next_test = $test_class_name::get_unique_record( 'rank', $rank++ );
-          if( !is_null( $db_next_test ) )
+          $db_test_entry = static::get_unique_record(
+            array( 'test_id', 'assignment_id' ),
+            array( $db_next_test->id, $this->assignment_id ) );
+          if( !is_null( $db_test_entry ) &&
+              !in_array( $db_test_entry->audio_status, self::$audio_complete_states ) &&
+              'refused' != $db_test_entry->participant_status &&
+              'submitted' != $db_test_entry->completed )
           {
-            $db_test_entry = static::get_unique_record(
-              array( 'test_id', 'assignment_id' ),
-              array( $db_next_test->id, $this->assignment_id ) );
-            if( !is_null( $db_test_entry ) && $db_test_entry->adjudicate )
-            {
-              $db_next_test_entry = $db_test_entry;
-              $found = true;
-            }
+            $db_next_test_entry = $db_test_entry;
+            $found = true;
           }
-        } while( !$found && $rank <= $max_rank );
-      }
-      else
-      {
-        do
-        {
-          $db_next_test = $test_class_name::get_unique_record( 'rank', $rank++ );
-          if( !is_null( $db_next_test ) )
-          {
-            $db_test_entry = static::get_unique_record(
-              array( 'test_id', 'assignment_id' ),
-              array( $db_next_test->id, $this->assignment_id ) );
-            if( !is_null( $db_test_entry ) &&
-                !in_array( $db_test_entry->audio_status, self::$audio_complete_states ) &&
-                'refused' != $db_test_entry->participant_status &&
-                'submitted' != $db_test_entry->completed )
-            {
-              $db_next_test_entry = $db_test_entry;
-              $found = true;
-            }
-          }
-        } while( !$found && $rank <= $max_rank );
-      }
+        }
+      } while( !$found && $rank <= $max_rank );
     }
     return $db_next_test_entry;
   }
@@ -209,8 +165,8 @@ class test_entry extends \cenozo\database\has_note
 
         $completed = 0 === intval( static::db()->get_one( $sql ) );
 
-        // check that intrusions are filled in for non-adjudicate entries
-        if( $completed && is_null( $this->participant_id ) )
+        // check that intrusions are filled in
+        if( $completed )
         {
           $modifier = clone $base_mod;
           $modifier->where( 'ranked_word_set_id', '=', NULL );
@@ -222,147 +178,7 @@ class test_entry extends \cenozo\database\has_note
       }
     }
 
-    if( $this->is_adjudicate() && !$completed )
-    {
-       // compare the progenitors
-       // if they match, assess the audio and participant status's
-       // both of which are allowed to be empty
-       $modifier = lib::create( 'database\modifier' );
-       $modifier->where( 'assignment.participant_id', '=', $this->participant_id );
-       $modifier->where( 'test_id', '=', $this->test_id );
-       $modifier->where( 'participant_id', '=', NULL );
-       $progenitor = $this->get_progenitor_test_entry();
-       $sibling = $progenitor->get_sibling_test_entry();
-       if( $progenitor->compare( $sibling, false ) )
-       {
-         if( ( $progenitor->audio_status == $this->audio_status ||
-               $sibling->audio_status == $this->audio_status ) &&
-             ( $progenitor->participant_status == $this->participant_status ||
-               $sibling->participant_status == $this->participant_status ) )
-           $completed = true;
-       }
-    }
-
     return $completed;
-  }
-
-  /**
-   * Is this test entry and adjudicate entry?
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @access public
-   * @return bool
-   */
-  public function is_adjudicate()
-  {
-    return ( !is_null( $this->participant_id ) && is_null( $this->assignment_id ) );
-  }
-
-  /**
-   * Compare this test_entry with another.
-   * The other test_entry should be from the sibling assignment.
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @access public
-   * @param database\test_entry $db_test_entry
-   * @param bool Whether to compare participant and audio status's
-   * @return bool true if identical
-   */
-  public function compare( $db_test_entry, $status_compare = true )
-  {
-    $comparison_result =  $status_compare ?
-      ( $this->audio_status == $db_test_entry->audio_status &&
-        $this->participant_status == $db_test_entry->participant_status ) : true;
-
-    if( $comparison_result )
-    {
-      // get the daughter table entries as lists
-      $entry_name = 'test_entry_' . $this->get_test()->get_test_type()->name;
-      $entry_class_name = lib::get_class_name( 'database\\' . $entry_name );
-      $get_list_function = 'get_' . $entry_name . '_list';
-
-      $lhs_list = $this->$get_list_function();
-      $rhs_list = $db_test_entry->$get_list_function();
-
-      $comparison_result = $entry_class_name::compare( $lhs_list, $rhs_list );
-    }
-
-    return $comparison_result;
-  }
-
-  /**
-   * Get the sibling of this test_entry
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @param database\modifier $modifier Modifications to the selection.
-   * @access public
-   * @param database\modifier Modifier to refine the selection
-   * @return database\test_entry (NULL if no sibling)
-   */
-  public function get_sibling_test_entry( $modifier = NULL )
-  {
-    $db_test_entry = false;
-    if( !is_null( $this->assignment_id ) )
-    {
-      // find a sibling test_entry based on assignment id and test id uniqueness
-      $db_sibling_assignment = $this->get_assignment()->get_sibling_assignment();
-      if( !is_null( $db_sibling_assignment ) )
-      {
-        if( is_null( $modifier ) )
-        {
-          $modifier = lib::create( 'database\modifier' );
-        }
-        $modifier->where( 'assignment_id', '=', $db_sibling_assignment->id );
-        $modifier->where( 'test_id', '=', $this->test_id );
-        $modifier->limit( 1 );
-        $db_test_entry = current( static::select( $modifier ) );
-      }
-    }
-    return false === $db_test_entry ? NULL : $db_test_entry;
-  }
-
-  /**
-   * Get the adjudication of this test_entry
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @access public
-   * @return database\test_entry (NULL if no adjudicate)
-   */
-  public function get_adjudicate_test_entry()
-  {
-    $db_test_entry = NULL;
-    if( !is_null( $this->assignment_id ) )
-    {
-      $db_assignment = $this->get_assignment();
-      if( !is_null( $db_assignment ) )
-      {
-        $db_test_entry = static::get_unique_record(
-          array( 'test_id', 'participant_id' ),
-          array( $this->test_id, $db_assignment->participant_id ) );
-      }
-    }
-    return $db_test_entry;
-  }
-
-  /**
-   * Get a progenitor of an adjudication test_entry
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @access public
-   * @return database\test_entry (NULL if not an adjudicate or no progenitor)
-   */
-  public function get_progenitor_test_entry()
-  {
-    $db_test_entry = NULL;
-    if( $this->is_adjudicate() )
-    {
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'assignment.participant_id', '=', $this->participant_id );
-      $modifier->where( 'test_id', '=', $this->test_id );
-      $modifier->limit( 1 );
-      $db_test_entry = current( static::select( $modifier ) );
-    }
-    return false === $db_test_entry ? NULL : $db_test_entry;
   }
 
   /**
@@ -378,7 +194,6 @@ class test_entry extends \cenozo\database\has_note
     {
       $this->completed = 'incomplete';
       $this->deferred = NULL;
-      $this->adjudicate = NULL;
       $this->audio_status = NULL;
       $this->participant_status = NULL;
       $this->save();

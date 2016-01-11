@@ -12,7 +12,7 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * push: test_entry submit
  *
- * Submit a test entry from an adjudication.
+ * Submit a test entry
  */
 class test_entry_submit extends \cenozo\ui\push\base_record
 {

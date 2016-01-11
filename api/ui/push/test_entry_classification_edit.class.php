@@ -42,15 +42,11 @@ class test_entry_classification_edit extends \cenozo\ui\push\base_edit
 
     if( !is_null( $candidate ) )
     {
-      // empty entries are permitted for adjudicates
-      if( '' !== $candidate )
-      {
-        $word_class_name = lib::get_class_name( 'database\word' );
-        if( !$word_class_name::is_valid_word( $candidate ) )
-          throw lib::create( 'exception\notice',
-            'The word "'. $candidate . '" is not a valid word entry.',
-            __METHOD__ );
-      }
+      $word_class_name = lib::get_class_name( 'database\word' );
+      if( !$word_class_name::is_valid_word( $candidate ) )
+        throw lib::create( 'exception\notice',
+          'The word "'. $candidate . '" is not a valid word entry.',
+          __METHOD__ );
     }
   }
 

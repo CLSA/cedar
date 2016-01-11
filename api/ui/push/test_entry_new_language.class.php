@@ -46,12 +46,6 @@ class test_entry_new_language extends \cenozo\ui\push\base_record
         'This test type cannot have its language setting modified.',
         __METHOD__ );
 
-    // disallow new language if an adjudication is in progress
-    if( !is_null( $db_test_entry->get_adjudicate_test_entry() ) )
-      throw lib::create( 'exception\notice',
-        'This test is being adjudicated and cannot have its language setting modified.',
-        __METHOD__ );
-
     // disallow new language if the assignment is closed
     $db_assignment = $db_test_entry->get_assignment();
     if( !is_null( $db_assignment ) && !is_null( $db_assignment->end_datetime ) )

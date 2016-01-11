@@ -51,12 +51,6 @@ class assignment_edit extends \cenozo\ui\push\base_edit
       if( $user_id == $db_assignment->get_user()->id )
         throw lib::create( 'exception\runtime',
           'Invalid (primary) user for reassigning', __METHOD__ );
-
-      $db_sibling_assignment = $db_assignment->get_sibling_assignment();
-      if( !is_null( $db_sibling_assignment ) &&
-          $user_id == $db_sibling_assignment->get_user()->id )
-        throw lib::create( 'exception\runtime',
-          'Invalid (sibling) user for reassigning', __METHOD__ );
     }
   }
 

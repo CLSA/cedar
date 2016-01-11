@@ -33,7 +33,7 @@ class recording extends \cenozo\database\record
   }
 
   /**
-   * Builds the recording list based on recording files found in the COMP_RECORDING path (if set)
+   * Builds the recording list based on recording files found in the RECORDING path (if set)
    *
    * @author Dean Inglis <inglisd@mcmaster.ca>
    * @access public
@@ -44,9 +44,9 @@ class recording extends \cenozo\database\record
     $test_class_name = lib::get_class_name( 'database\test' );
 
     // make sure that all recordings on disk have a corresponding database record
-    if( is_dir( COMP_RECORDINGS_PATH ) )
+    if( is_dir( RECORDINGS_PATH ) )
     {
-      $glob_search = sprintf( '%s/*/*/*.wav', COMP_RECORDINGS_PATH );
+      $glob_search = sprintf( '%s/*/*/*/*.wav', RECORDINGS_PATH );
 
       $values = '';
       $values_array = array();

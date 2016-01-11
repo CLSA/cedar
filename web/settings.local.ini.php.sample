@@ -32,5 +32,5 @@ $SETTINGS['db']['password'] = 'put your database password here';
 
 // the root directory where comprehensive recordings are located
 // (must be an absolute path that the asterisk server's user has access to)
-$SETTINGS['path']['COMP_RECORDINGS'] = $SETTINGS['path']['APPLICATION'].'/path/to/comp-recordings';
-$SETTINGS['url']['COMP_RECORDINGS'] = 'comp-recordings';
+$SETTINGS['path']['RECORDINGS'] = $SETTINGS['path']['APPLICATION'].'/path/to/recordings';
+$SETTINGS['url']['RECORDINGS'] = 'recordings';

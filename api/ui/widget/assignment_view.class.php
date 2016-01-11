@@ -59,10 +59,8 @@ class assignment_view extends \cenozo\ui\widget\base_view
       // assignments can only be reassigned if
       // 1) the assignment has not been finished
       // 2) one or more tests are incomplete
-      // 3) the sibling assignment has not been created
       if( is_null( $db_assignment->end_datetime ) &&
-          !$assignment_class_name::all_tests_complete( $db_assignment->id ) &&
-          is_null( $db_assignment->get_sibling_assignment() ) )
+          !$assignment_class_name::all_tests_complete( $db_assignment->id ) )
       {
         $this->add_action( 'reassign', 'Reassign', $db_operation,
           'Reassign this assignment to another typist' );

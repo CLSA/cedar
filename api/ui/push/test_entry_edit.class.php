@@ -88,17 +88,6 @@ class test_entry_edit extends \cenozo\ui\push\base_edit
           in_array( $columns['audio_status'], $test_entry_class_name::$audio_complete_states ) ) )
     {
       $db_test_entry->initialize( false );
-      // if this record is the progenitor of an adjudicate entry
-      // reset the adjudictate entry
-      if( !$db_test_entry->is_adjudicate() )
-      {
-        $db_adjudicate_test_entry = $test_entry_class_name::get_unique_record(
-          array( 'test_id', 'participant_id' ),
-          array( $db_test_entry->get_test()->id,
-                 $db_test_entry->get_assignment()->get_participant()->id ) );
-        if( !is_null( $db_adjudicate_test_entry ) )
-          $db_adjudicate_test_entry->initialize();
-      }
     }
 
     // if changing deferred from requested to pending, do not complete the entry

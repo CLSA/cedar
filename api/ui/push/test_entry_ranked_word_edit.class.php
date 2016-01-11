@@ -42,22 +42,21 @@ class test_entry_ranked_word_edit extends \cenozo\ui\push\base_edit
 
     if( !is_null( $candidate ) )
     {
-      // empty intrusion entries are permitted for adjudicates
-      if( '' !== $candidate )
-      {
-        $word_class_name = lib::get_class_name( 'database\word' );
-        if( !$word_class_name::is_valid_word( $candidate ) )
-          throw lib::create( 'exception\notice',
-            'The word "'. $candidate . '" is not a valid word entry.',
-            __METHOD__ );
-      }
-      else
+      if( '' === $candidate )
       {
         $columns = $this->get_argument( 'columns', array() );
         if( !array_key_exists( 'selection', $columns ) &&
             'variant' == $this->get_record()->selection )
           throw lib::create( 'exception\notice',
             'An empty word cannot be set as a variant.',
+            __METHOD__ );
+      }
+      else
+      {
+        $word_class_name = lib::get_class_name( 'database\word' );
+        if( !$word_class_name::is_valid_word( $candidate ) )
+          throw lib::create( 'exception\notice',
+            'The word "'. $candidate . '" is not a valid word entry.',
             __METHOD__ );
       }
     }

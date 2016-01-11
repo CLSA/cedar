@@ -86,21 +86,6 @@ class test_entry_transcribe extends \cenozo\ui\widget\base_record
         throw lib::create( 'exception\notice',
           'This test can only have one language', __METHOD__ );
     }
-
-    // language restrictions of siblings must match for ranked word tests
-    if( 'ranked_word' == $test_type_name )
-    {
-      $db_sibling_test_entry = $db_test_entry->get_sibling_test_entry();
-      if( !is_null( $db_sibling_test_entry ) )
-      {
-        if( 0 < count( array_diff(
-          $id_list, $db_sibling_test_entry->get_language_idlist() ) ) )
-        {
-          throw lib::create( 'exception\notice',
-            'Language restrictions must match among siblings', __METHOD__ );
-        }
-      }
-    }
   }
 
   /**
@@ -182,44 +167,18 @@ class test_entry_transcribe extends \cenozo\ui\widget\base_record
     $db_assignment = $db_test_entry->get_assignment();
     $db_participant = $db_assignment->get_participant();
 
-    $cohort_name = $db_participant->get_cohort()->name;
-    $recording_data = array();
-    if( 'tracking' == $cohort_name )
-    {
-      $setting_manager = lib::create( 'business\setting_manager' );
-      $sabretooth_manager = lib::create( 'business\cenozo_manager', SABRETOOTH_URL );
-      $sabretooth_manager->set_user( $setting_manager->get_setting( 'sabretooth', 'user' ) );
-      $sabretooth_manager->set_password( $setting_manager->get_setting( 'sabretooth', 'password' ) );
-      $sabretooth_manager->set_site( $setting_manager->get_setting( 'sabretooth', 'site' ) );
-      $sabretooth_manager->set_role( $setting_manager->get_setting( 'sabretooth', 'role' ) );
-
-      $args = array();
-      $args['qnaire_rank'] = 1;
-      $args['participant_id'] = $db_participant->id;
-      $recording_list = $sabretooth_manager->pull( 'recording', 'list', $args );
-      if( !is_null( $recording_list ) &&
-          1 == $recording_list->success && 0 < count( $recording_list->data ) )
-      {
-        foreach( $recording_list->data as $data )
-        {
-          $url = SABRETOOTH_URL . '/' . $data->url;
-          // has to be this servers domain not localhost
-          $recording_data[] = str_replace( 'localhost', $_SERVER['SERVER_NAME'], $url );
-        }
-      }
-    }
-    else if( 'comprehensive' == $cohort_name )
-    {
-      $recording_class_name = lib::get_class_name( 'database\recording' );
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'participant_id', '=', $db_participant->id );
-      $modifier->where( 'test_id', '=', $db_test->id );
-      $modifier->where( 'visit', '=', 1 );
-      $modifier->limit( 1 );
-      $db_recording = current( $recording_class_name::select( $modifier ) );
-      $url = COMP_RECORDINGS_URL . '/' . $db_recording->get_filename();
-      $recording_data[] = $url;
-    }
+    $recording_class_name = lib::get_class_name( 'database\recording' );
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->where( 'participant_id', '=', $db_participant->id );
+    $modifier->where( 'test_id', '=', $db_test->id );
+    $modifier->where( 'visit', '=', 1 );
+    $modifier->limit( 1 );
+    $db_recording = current( $recording_class_name::select( $modifier ) );
+    $url = sprintf( '%s/%s/%s',
+                    RECORDINGS_URL,
+                    $db_participant->get_cohort()->name,
+                    $db_recording->get_filename() );
+    $recording_data = array( $url );
 
     $this->set_variable( 'recording_data', $recording_data );
 

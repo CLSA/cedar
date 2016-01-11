@@ -48,7 +48,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
     $this->add_column( 'cohort.name', 'string', 'Cohort', true );
     $this->add_column( 'user.name', 'string', 'User', true );
     $this->add_column( 'deferred', 'string', 'Deferred', false );
-    $this->add_column( 'adjudicate', 'boolean', 'Adjudicate', false );
     $this->add_column( 'completed', 'boolean', 'Completed', false );
 
     $is_typist = 'typist' == $db_role->name;
@@ -145,8 +144,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
 
     // allow test_entry transcribe via a transcribe button on assigment rows
     $allow_transcribe_operation = false;
-    // allow test_entry adjudicate via a adjudicate button on assignment rows
-    $allow_adjudicate_operation = false;
 
     if( $this->allow_restrict_state )
     {
@@ -169,69 +166,32 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
       $db_participant = $db_assignment->get_participant();
 
       $allow_transcribe = false;
-      $allow_adjudicate = false;
 
       $deferred   = $db_assignment->has_deferrals();
-      $adjudicate = $db_assignment->has_adjudicates();
       $completed  = $assignment_class_name::all_tests_submitted( $db_assignment->id );
 
       // select the first test_entry for which we either want to transcribe
-      // or adjudicate depending on user role
       $test_entry_id = NULL;
 
-      if( 'typist' == $db_role->name )
+      $test_entry_mod = clone $base_mod;
+      // get the first test that could be pending
+      if( $deferred )
       {
-        $test_entry_mod = clone $base_mod;
-        // get the first test that could be pending
-        if( $deferred )
-        {
-          $test_entry_mod->where( 'IFNULL(deferred,"NULL")', '=', 'pending' );
-        }
-        // otherwise, get the first test_entry that hasnt been submitted
-        else
-        {
-          $test_entry_mod->where( 'completed', '!=', 'submitted' );
-        }
-        $test_entry_mod->order( 'test.rank' );
-        $test_entry_mod->limit( 1 );
-        $db_test_entry = current( $test_entry_class_name::select( $test_entry_mod ) );
-        if( false !== $db_test_entry )
-        {
-          $test_entry_id = $db_test_entry->id;
-          $allow_transcribe = true;
-          $allow_transcribe_operation = $allow_transcribe;
-        }
+        $test_entry_mod->where( 'IFNULL(deferred,"NULL")', '=', 'pending' );
       }
-      else if( 'typist' != $db_role->name && $completed && $adjudicate && !$deferred )
+      // otherwise, get the first test_entry that hasnt been submitted
+      else
       {
-        $db_sibling_assignment = $db_assignment->get_sibling_assignment();
-        if( !is_null( $db_sibling_assignment ) &&
-            $db_sibling_assignment->has_adjudicates() &&
-            !$db_sibling_assignment->has_deferrals() &&
-            $assignment_class_name::all_tests_submitted( $db_sibling_assignment->id ) )
-        {
-          // get the first test entry of current db_assignment that requires adjudication
-          $test_entry_mod = clone $base_mod;
-          $test_entry_mod->where( 'IFNULL(adjudicate,false)', '=', true );
-          $test_entry_mod->order( 'test.rank' );
-          $test_entry_mod->limit( 1 );
-
-          $db_test_entry = current( $test_entry_class_name::select( $test_entry_mod ) );
-          if( false !== $db_test_entry )
-          {
-            // see if the sibling test_entry exists
-            $sibling_mod = lib::create( 'database\modifier' );
-            $sibling_mod->where( 'IFNULL(adjudicate,false)', '=', true );
-
-            if( !is_null( $db_test_entry->get_sibling_test_entry( $sibling_mod ) ) &&
-                !$allow_adjudicate )
-            {
-              $test_entry_id = $db_test_entry->id;
-              $allow_adjudicate = true;
-              $allow_adjudicate_operation = $allow_adjudicate;
-            }
-          }
-        }
+        $test_entry_mod->where( 'completed', '!=', 'submitted' );
+      }
+      $test_entry_mod->order( 'test.rank' );
+      $test_entry_mod->limit( 1 );
+      $db_test_entry = current( $test_entry_class_name::select( $test_entry_mod ) );
+      if( false !== $db_test_entry )
+      {
+        $test_entry_id = $db_test_entry->id;
+        $allow_transcribe = true;
+        $allow_transcribe_operation = $allow_transcribe;
       }
 
       $row = array(
@@ -240,10 +200,8 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
         'cohort.name' => $db_participant->get_cohort()->name,
         'user.name' => $db_assignment->get_user()->name,
         'deferred' => $db_assignment->get_deferred_string(),
-        'adjudicate' =>  $adjudicate,
         'completed' =>  $completed,
         'allow_transcribe' => $allow_transcribe ? 1 : 0,
-        'allow_adjudicate' => $allow_adjudicate ? 1 : 0,
         'test_entry_id' => is_null( $test_entry_id ) ? '' : $test_entry_id );
 
       $this->add_row( $db_assignment->id, $row );
@@ -255,16 +213,11 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
       $this->set_variable( 'restrict_state_id', $this->get_argument( 'restrict_state_id', '' ) );
     }
 
-    // define whether or not test_entry transcribing or adjudicating is allowed
+    // define whether or not test_entry transcribing
     $db_operation = $operation_class_name::get_operation( 'widget', 'test_entry', 'transcribe' );
     $this->set_variable( 'allow_transcribe',
       ( lib::create( 'business\session' )->is_allowed( $db_operation ) &&
         $allow_transcribe_operation ) );
-
-    $db_operation = $operation_class_name::get_operation( 'widget', 'test_entry', 'adjudicate' );
-    $this->set_variable( 'allow_adjudicate',
-      ( lib::create( 'business\session' )->is_allowed( $db_operation ) &&
-        $allow_adjudicate_operation ) );
   }
 
   /**
@@ -314,12 +267,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
           {
             $modifier->where( 'IFNULL(test_entry.deferred,"NULL")', 'IN',
               $test_entry_class_name::$deferred_states );
-          }
-          else if( $restrict_state_id == array_search( 'Adjudicate', $this->state_list ) )
-          {
-            $modifier->where( 'IFNULL(test_entry.deferred,"NULL")', 'NOT IN',
-              $test_entry_class_name::$deferred_states );
-            $modifier->where( 'IFNULL(test_entry.adjudicate,false)', '=', true );
           }
         }
       }
@@ -386,12 +333,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
             $modifier->where( 'IFNULL(test_entry.deferred,"NULL")', 'IN',
               $test_entry_class_name::$deferred_states );
           }
-          else if( $restrict_state_id == array_search( 'Adjudicate', $this->state_list ) )
-          {
-            $modifier->where( 'IFNULL(test_entry.deferred,"NULL")', 'NOT IN',
-              $test_entry_class_name::$deferred_states );
-            $modifier->where( 'IFNULL(test_entry.adjudicate,false)', '=', true );
-          }
         }
       }
 
@@ -445,7 +386,7 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
    * @access protected
    */
   protected $state_list = array(
-    1 => 'Closed', 2 => 'No restriction', 3 => 'Deferred', 4 => 'Adjudicate' );
+    1 => 'Closed', 2 => 'No restriction', 3 => 'Deferred' );
 
   /**
    * Get a restrict state name from its id

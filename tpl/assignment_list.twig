@@ -40,18 +40,6 @@
           slot_load( {{ slot }}, "test_entry", "transcribe", args );
         } );
       } );
-    {% elseif allow_adjudicate %}
-      $( function() {
-        $( "button.{{ widget.full }}_test_entry_adjudicate" ).button( {
-          text: false,
-          icons: { primary: "ui-icon-pencil" }
-        } ).click( function() {
-          var args = new Object();
-          var id_string = $(this).prop( "id" );
-          args.id = parseInt( id_string.substring( id_string.lastIndexOf("_") + 1 ) );
-          slot_load( {{ slot }}, "test_entry", "adjudicate", args );
-        } );
-      } );
     {% endif %}
 
     {% if state_list is defined %}
@@ -113,9 +101,6 @@
 
 {% block header_button_columns %}
   <th width="1%"></th>
-  {% if allow_adjudicate %}
-    <th width="1%"></th>
-  {% endif %}
 {% endblock header_button_columns %}
 
 {% block button_columns %}
@@ -125,12 +110,6 @@
       <button class="{{ widget.full }}_test_entry_transcribe"
        {{ row.columns['assignment.allow_transcribe'] ? '' : 'disabled' }}
        id="{{ widget.full }}_test_entry_transcribe_{{ row.columns['assignment.test_entry_id'] }}">transcribe</button>
-    </td>
-  {% elseif allow_adjudicate and row.columns['assignment.test_entry_id'] is defined %}
-    <td>
-      <button class="{{ widget.full }}_test_entry_adjudicate"
-       {{ row.columns['assignment.allow_adjudicate'] ? '' : 'disabled' }}
-       id="{{ widget.full }}_test_entry_adjudicate_{{ row.columns['assignment.test_entry_id'] }}">adjudicate</button>
     </td>
   {% else %}
     <td></td>
