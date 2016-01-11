@@ -120,7 +120,7 @@ CREATE PROCEDURE single_entry_patch()
       DEALLOCATE PREPARE statement;
     END IF;
 
-    SELECT "Adding release event_type for the new instance" AS "";
+    SELECT "Adding release event_type" AS "";
 
     SET @sql = CONCAT(
       "INSERT IGNORE INTO ", @cenozo, ".event_type ( name, description ) ",
@@ -129,7 +129,7 @@ CREATE PROCEDURE single_entry_patch()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
-    SELECT "Adding service record for the new instance" AS "";
+    SELECT "Adding service record" AS "";
 
     SET @sql = CONCAT(
       "INSERT IGNORE INTO ", @cenozo, ".service ",
@@ -138,6 +138,66 @@ CREATE PROCEDURE single_entry_patch()
       "FROM ", @cenozo, ".event_type, ", @cenozo, ".language ",
       "WHERE event_type.name = 'released to cedar_f1' ",
       "AND language.name = 'English'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Adding site records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".site ",
+      "( name, service_id, timezone, title, phone_number, address1, address2, city, region_id, postcode ) ",
+      "SELECT site.name, service.id, timezone, site.title, phone_number, ",
+      "address1, address2, city, region_id, postcode ",
+      "FROM ", @cenozo, ".service, ", @cenozo, ".site ",
+      "JOIN ", @cenozo, ".service AS baseline_service ON site.service_id = baseline_service.id ",
+      "WHERE service.name = 'cedar_f1' ",
+      "AND baseline_service.name = 'cedar'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Adding access records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".access ",
+      "( user_id, role_id, site_id ) ",
+      "SELECT user_id, role_id, site.id ",
+      "FROM ", @cenozo, ".access ",
+      "JOIN ", @cenozo, ".site AS baseline_site ON access.site_id = baseline_site.id ",
+      "JOIN ", @cenozo, ".service AS baseline_service ON baseline_site.service_id = baseline_service.id ",
+      "JOIN ", @cenozo, ".site ON baseline_site.name = site.name ",
+      "JOIN ", @cenozo, ".service ON site.service_id = service.id ",
+      "WHERE baseline_service.name = 'cedar' ",
+      "AND service.name = 'cedar_f1'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Adding service_has_cohort records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".service_has_cohort ",
+      "( service_id, cohort_id, grouping ) ",
+      "SELECT service.id, cohort_id, grouping ",
+      "FROM ", @cenozo, ".service, ", @cenozo, ".service_has_cohort ",
+      "JOIN ", @cenozo, ".service AS baseline_service ON service_has_cohort.service_id = baseline_service.id ",
+      "WHERE baseline_service.name = 'cedar' ",
+      "AND service.name = 'cedar_f1'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Adding service_has_role records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".service_has_role ",
+      "( service_id, role_id ) ",
+      "SELECT service.id, role_id ",
+      "FROM ", @cenozo, ".service, ", @cenozo, ".service_has_role ",
+      "JOIN ", @cenozo, ".service AS baseline_service ON service_has_role.service_id = baseline_service.id ",
+      "WHERE baseline_service.name = 'cedar' ",
+      "AND service.name = 'cedar_f1'" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
