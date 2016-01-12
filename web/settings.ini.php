@@ -42,3 +42,6 @@ $SETTINGS['path']['APPLICATION'] = '/usr/local/lib/cedar';
 // (must be an absolute path that the asterisk server's user has access to)
 $SETTINGS['path']['RECORDINGS'] = NULL;
 $SETTINGS['url']['RECORDINGS'] = NULL;
+
+// where to store the file which tracks when the last sync was performed
+$SETTINGS['general']['last_sync_file'] = NULL;

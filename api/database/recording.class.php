@@ -23,13 +23,7 @@ class recording extends \cenozo\database\record
    */
   public function get_filename()
   {
-    $padded_visit = str_pad( $this->visit, 3, '0', STR_PAD_LEFT );
-    $filename = sprintf( '%s/%s/%s.wav',
-                         $padded_visit,
-                         $this->get_participant()->uid,
-                         $this->get_test()->recording_name );
-
-    return $filename;
+    return sprintf( '%s/%s', $this->get_participant()->uid, $this->filename );
   }
 
   /**
@@ -42,73 +36,81 @@ class recording extends \cenozo\database\record
   {
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $test_class_name = lib::get_class_name( 'database\test' );
+    $setting_manager = lib::create( 'business\setting_manager' );
+    $last_sync_file = $setting_manager->get_setting( 'general', 'last_sync_file' );
 
-    // make sure that all recordings on disk have a corresponding database record
-    if( is_dir( RECORDINGS_PATH ) )
+    // create a temporary table to put raw data into
+    static::db()->execute(
+      'CREATE TEMPORARY TABLE temp_recording ( '.
+        'uid char(7) NOT NULL, '.
+        'name varchar(100) NULL DEFAULT NULL, '.
+        'filename varchar(100) NOT NULL, '.
+        'KEY dk_uid ( uid ), '.
+        'KEY dk_name ( name ) '.
+      ')' );
+
+    // If the last sync file is present then only get files which were created after it was
+    // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
+    $command = file_exists( $last_sync_file )
+             ? sprintf( 'find %s -type f -newer %s | grep -v "\-in."', RECORDINGS_PATH, $last_sync_file )
+             : sprintf( 'find %s -type f | grep -v "\-in."', RECORDINGS_PATH );
+    $file_list = array();
+    exec( $command, $file_list );
+    
+    // organize files by participant
+    $count = 0;
+    $insert = '';
+    foreach( $file_list as $file )
     {
-      $glob_search = sprintf( '%s/*/*/*/*.wav', RECORDINGS_PATH );
+      $last_slash = strrpos( $file, '/' );
+      $second_last_slash = strrpos( $file, '/', $last_slash - strlen( $file ) - 1 );
+      $uid = substr( $file, $second_last_slash+1, $last_slash - $second_last_slash - 1 );
+      $filename = substr( $file, $last_slash+1 );
 
-      $values = '';
-      $values_array = array();
-      $first = true;
-      $values_count = 0;
-      $values_limit = 200;
-
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'recording_name', '!=', NULL );
-      $db_test_list = $test_class_name::select( $modifier );
-      $recording_names = array();
-      foreach( $db_test_list as $db_test )
+      // divide inserting data into groups of 1000 records
+      $count++;
+      if( 1000 <= $count )
       {
-        $recording_names[$db_test->recording_name] = $db_test->id;
+        static::db()->execute(
+          sprintf( 'INSERT INTO temp_recording( uid, name, filename ) VALUES %s', $insert ) );
+        $count = 0;
+        $insert = '';
       }
-
-      $glob_result = glob( $glob_search );
-
-      foreach( $glob_result as $filename )
+      else
       {
-        // get the path components from the filename
-        $parts = array_reverse( preg_split( '#/#', $filename ) );
-        if( 3 <= count( $parts ) )
-        {
-          $name = trim( str_replace( '.wav', '', $parts[0] ) );
-          if( !array_key_exists( $name, $recording_names ) ) continue;
-          $uid = trim( $parts[1] );
-          $visit = intval( ltrim( $parts[2], '0' ) );
-
-          $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'uid', '=', $uid );
-          $modifier->limit( 1 );
-          $db_participant = current( $participant_class_name::select( $modifier ) );
-          if( false !== $db_participant )
-          {
-            $values .= sprintf( '%s( %d, %d, %d )',
-                                $first ? '' : ', ',
-                                $db_participant->id,
-                                $recording_names[$name],
-                                $visit );
-            $first = false;
-            $values_count++;
-            if( $values_count++ >= $values_limit )
-            {
-              $values_array[] = $values;
-              $values_count = 0;
-              $first = true;
-              $values = '';
-            }
-          }
-        }
-      }
-
-      if( $values_count < $values_limit && '' !== $values )
-        $values_array[] = $values;
-
-      foreach( $values_array as $values )
-      {
-        static::db()->execute( sprintf(
-          'INSERT IGNORE INTO recording ( participant_id, test_id, visit ) '.
-          'VALUES %s', $values ) );
+        $name = false === strpos( $filename, '-out.wav' )
+              ? substr( $filename, 0, strrpos( $filename, '.' ) )
+              : NULL;
+        $insert .= ( 1 < $count ? ',' : '' )
+                  .sprintf( '( %s, %s, %s )',
+                            static::db()->format_string( $uid ),
+                            static::db()->format_string( $name ),
+                            static::db()->format_string( $filename ) );
       }
     }
+
+    if( 0 < $count )
+    {
+      static::db()->execute(
+        sprintf( 'INSERT INTO temp_recording( uid, name, filename ) VALUES %s', $insert ) );
+    }
+
+    // now convert from temporary records into the recording table
+    static::db()->execute(
+      'INSERT IGNORE INTO recording( participant_id, test_id, filename ) '.
+      'SELECT participant.id, test.id, filename '.
+      'FROM temp_recording '.
+      'JOIN participant ON temp_recording.uid = participant.uid '.
+      'LEFT JOIN test ON temp_recording.name = test.recording_name' );
+
+    static::db()->execute( 'DROP TABLE temp_recording' );
+
+    // now update the sync file to track when the last sync was done
+    if( !file_exists( $last_sync_file ) )
+      file_put_contents(
+        $last_sync_file,
+        'This file is used to track which recordings have been read into the database, DO NOT REMOVE.' );
+
+    touch( $last_sync_file );
   }
 }

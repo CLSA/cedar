@@ -162,162 +162,54 @@ class assignment extends \cenozo\database\record
     $region_site_class_name = lib::get_class_name( 'database\region_site' );
 
     $session = lib::create( 'business\session' );
-    $db_user = $session->get_user();
-
-    $has_tracking = false;
-    $has_comprehensive = false;
-    foreach( $db_user->get_cohort_list() as $db_cohort )
-    {
-      $has_tracking |= 'tracking' == $db_cohort->name;
-      $has_comprehensive |= 'comprehensive' == $db_cohort->name;
-    }
-
-    if( !$has_tracking && !$has_comprehensive )
-      throw lib::create( 'exception\notice',
-        'There must be one or more cohorts assigned to user: '. $db_user->name,
-          __METHOD__ );
-
     $db_service = $session->get_service();
+    $db_user = $session->get_user();
     $db_site = $session->get_site();
 
-    // get the languages that are common to both site and user
-    $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'service_id', '=', $db_service->id );
-    $modifier->where( 'site_id', '=', $db_site->id );
-    $modifier->group( 'language_id' );
+    // update the recordings
+    $recording_class_name = lib::get_class_name( 'database\recording' );
+    $recording_class_name::update_recording_list();
+
+    // get the user's languages, defaulting to the service's language if they have none
+    $language_mod = lib::create( 'database\modifier' );
+    $language_mod->where( 'user_has_language.user_id', '=', $db_user->id );
+    $sql = sprintf( 'SELECT language_id FROM user_has_language %s', $language_mod->get_sql() );
+    $user_languages = static::db()->get_col( $sql );
+    if( 0 == count( $user_languages ) ) $user_languages[] = $db_service->language_id;
+
+    $participant_mod = lib::create( 'database\modifier' );
+    $participant_mod->where( 'participant.active', '=', true );
+    $participant_mod->where( 'user_has_cohort.user_id', '=', $db_user->id );
+    $participant_mod->where( 'service.id', '=', $db_service->id );
+    $participant_mod->where( 'participant_site.site_id', '=', $db_site->id );
+    $participant_mod->where( 'IFNULL( participant.language_id, service.language_id )', 'IN', $user_languages );
+    $participant_mod->where( 'participant_recording.total', '>', 0 );
+    $participant_mod->where( 'assignment.id', '=', NULL ); // has never been assigned
+    $participant_mod->order_desc( 'event.datetime' );
+    $participant_mod->limit( 1 );
 
     $sql = sprintf(
-      'SELECT DISTINCT language_id AS id '.
-      'FROM user_has_language uhl '.
-      'INNER JOIN ( '.
-        'SELECT l.id FROM language l '.
-        'JOIN region_site rs ON rs.language_id=l.id '.
-      '%s '. // modifier sql
-      ') x ON x.id=uhl.language_id '.
-      'WHERE uhl.user_id = %s',
-      $modifier->get_sql(),
-      static::db()->format_string( $db_user->id ) );
+      'SELECT DISTINCT participant.id '.
+      'FROM service CROSS JOIN participant '.
+      // participants belonging to the current site
+      'JOIN participant_site ON participant_site.participant_id = participant.id '.
+        'AND participant_site.service_id = service.id '.
+      // participants whose cohort the user has access to
+      'JOIN cohort ON participant.cohort_id = cohort.id '.
+      'JOIN user_has_cohort ON cohort.id = user_has_cohort.cohort_id '.
+      // who have completed the (cohort-based) event
+      'JOIN event ON participant.id = event.participant_id '.
+      'JOIN cohort_event_type ON participant.cohort_id = cohort_event_type.cohort_id '.
+        'AND event.event_type_id = cohort_event_type.event_type_id '.
+      // who have at least one recording
+      'JOIN ( '.
+        'SELECT participant_id, COUNT(*) total FROM recording GROUP BY participant_id '.
+      ') AS participant_recording ON participant.id = participant_recording.participant_id '.
+      // who have not yet been assigned
+      'LEFT JOIN assignment ON assignment.participant_id = participant.id %s',
+      $participant_mod->get_sql() );
 
-    $user_languages = static::db()->get_all( $sql );
-    array_walk( $user_languages, function( &$item ){ $item=$item['id']; } );
-
-    if( 0 == count( $user_languages ) )
-      $user_languages[] = $db_service->language_id;
-
-    $participant_id = NULL;
-    if( $has_tracking )
-    {
-      $sql =
-        'CREATE TEMPORARY TABLE temp_completed AS '.
-        'SELECT DISTINCT participant.id AS participant_id '.
-        'FROM participant '.
-        'JOIN event ON event.participant_id = participant.id '.
-        'JOIN event_type ON event_type.id = event.event_type_id '.
-        'JOIN cohort ON cohort.id = participant.cohort_id '.
-        'WHERE event_type.name = "completed (Baseline)" '.
-        'AND participant.active = true '.
-        'AND cohort.name = "tracking"';
-
-      static::db()->execute( $sql );
-
-      $sql = 'ALTER TABLE temp_completed ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $sql =
-        'CREATE TEMPORARY TABLE temp_recording AS '.
-        'SELECT DISTINCT participant_id '.
-        'FROM recording '.
-        'WHERE visit = 1';
-
-      static::db()->execute( $sql );
-
-      $sql = 'ALTER TABLE temp_recording ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'assignment.id', '=', NULL ); // has never been assigned
-      $modifier->where( 'participant_site.service_id', '=', $db_service->id );
-      $modifier->where( 'participant_site.site_id', '=', $db_site->id );
-      $modifier->where( 'IFNULL( participant.language_id, ' .
-        static::db()->format_string( $db_service->language_id ) . ' )',
-        'IN', $user_languages );
-      $modifier->limit( 1 );
-
-      $sql = sprintf(
-        'SELECT participant.id AS participant_id '.
-        'FROM participant '.
-        'JOIN participant_site ON participant_site.participant_id = participant.id '.
-        'JOIN temp_completed ON temp_completed.participant_id = participant.id '.
-        'JOIN temp_recording ON temp_recording.participant_id = participant.id '.
-        'LEFT JOIN assignment ON assignment.participant_id = participant.id '.
-        '%s ', // where statement here
-        $modifier->get_sql() );
-
-      $participant_id = static::db()->get_one( $sql );
-    }
-
-    if( is_null( $participant_id ) && $has_comprehensive )
-    {
-      $sql =
-        'CREATE TEMPORARY TABLE temp_completed AS '.
-        'SELECT DISTINCT participant.id AS participant_id '.
-        'FROM participant '.
-        'JOIN event AS event1 ON event1.participant_id = participant.id '.
-        'JOIN event_type AS event_type1 ON event_type1.id = event1.event_type_id '.
-        'JOIN event AS event2 ON event2.participant_id = participant.id '.
-        'JOIN event_type AS event_type2 ON event_type2.id = event2.event_type_id '.
-        'JOIN cohort ON cohort.id = participant.cohort_id '.
-        'WHERE event_type1.name = "completed (Baseline Home)" '.
-        'AND event_type2.name = "completed (Baseline Site)" '.
-        'AND participant.active = true '.
-        'AND cohort.name = "comprehensive"';
-
-      static::db()->execute( $sql );
-
-      $sql = 'ALTER TABLE temp_completed ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $sql =
-        'CREATE TEMPORARY TABLE temp_recording AS '.
-        'SELECT DISTINCT participant_id '.
-        'FROM recording '.
-        'WHERE visit = 1';
-
-      static::db()->execute( $sql );
-
-      $sql = 'ALTER TABLE temp_recording ADD INDEX (participant_id)';
-
-      static::db()->execute( $sql );
-
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'assignment.id', '=', NULL );
-      $modifier->where( 'participant_site.service_id', '=', $db_service->id );
-      $modifier->where( 'participant_site.site_id', '=', $db_site->id );
-      $modifier->where( 'IFNULL( participant.language_id, ' .
-        static::db()->format_string( $db_service->language_id  ) . ' )',
-        'IN', $user_languages );
-      $modifier->limit( 1 );
-
-      $sql = sprintf(
-        'SELECT participant.id AS participant_id '.
-        'FROM participant '.
-        'JOIN participant_site ON participant_site.participant_id = participant.id '.
-        'JOIN temp_completed ON temp_completed.participant_id = participant.id '.
-        'JOIN temp_recording ON temp_recording.participant_id = participant.id '.
-        'LEFT JOIN assignment ON assignment.participant_id = participant.id '.
-        '%s ', // where statement here
-        $modifier->get_sql() );
-
-      $participant_id = static::db()->get_one( $sql );
-
-      if( is_null( $participant_id ) )
-      {
-        $recording_class_name::update_recording_list();
-      }
-    }
+    $participant_id = static::db()->get_one( $sql );
 
     return is_null( $participant_id ) ? NULL : lib::create( 'database\participant', $participant_id );
   }

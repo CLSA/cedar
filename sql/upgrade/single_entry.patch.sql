@@ -202,6 +202,109 @@ CREATE PROCEDURE single_entry_patch()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
+    SELECT "Adding region_site records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".region_site ",
+      "( service_id, region_id, language_id, site_id ) ",
+      "SELECT service.id, region_site.region_id, region_site.language_id, site.id ",
+      "FROM ", @cenozo, ".region_site ",
+      "JOIN ", @cenozo, ".service AS baseline_service ON region_site.service_id = baseline_service.id ",
+      "JOIN ", @cenozo, ".site AS baseline_site ON region_site.site_id = baseline_site.id ",
+      "JOIN ", @cenozo, ".site ON baseline_site.name = site.name ",
+      "JOIN ", @cenozo, ".service ON site.service_id = service.id ",
+      "WHERE baseline_service.name = 'cedar' ",
+      "AND service.name = 'cedar_f1'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Creating new cohort_event_type table" AS "";
+
+    SET @sql = CONCAT(
+      "CREATE TABLE IF NOT EXISTS cohort_event_type ( ",
+        "id INT UNSIGNED NOT NULL AUTO_INCREMENT, ",
+        "update_timestamp TIMESTAMP NOT NULL, ",
+        "create_timestamp TIMESTAMP NOT NULL, ",
+        "cohort_id INT UNSIGNED NOT NULL, ",
+        "event_type_id INT UNSIGNED NOT NULL, ",
+        "PRIMARY KEY (id), ",
+        "INDEX fk_cohort_id (cohort_id ASC), ",
+        "INDEX fk_event_type_id (event_type_id ASC), ",
+        "UNIQUE INDEX uq_cohort_id (cohort_id ASC), ",
+        "CONSTRAINT fk_cohort_event_type_cohort_id ",
+          "FOREIGN KEY (cohort_id) ",
+          "REFERENCES ", @cenozo, ".cohort (id) ",
+          "ON DELETE NO ACTION ",
+          "ON UPDATE NO ACTION, ",
+        "CONSTRAINT fk_cohort_event_type_event_type_id ",
+          "FOREIGN KEY (event_type_id) ",
+          "REFERENCES ", @cenozo, ".event_type (id) ",
+          "ON DELETE NO ACTION ",
+          "ON UPDATE NO ACTION) ",
+      "ENGINE = InnoDB" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Adding default cohort_event_type records" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO cohort_event_type ( cohort_id, event_type_id ) ",
+      "SELECT cohort.id, event_type.id ",
+      "FROM ", @cenozo, ".cohort, ", @cenozo, ".event_type ",
+      "WHERE event_type.name = ",
+        "IF( cohort.name = 'tracking', 'completed (Follow-Up 1)', 'completed (Follow-Up 1 Site)' )" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Removing recording.visit column" AS "";
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = "recording"
+      AND COLUMN_NAME = "visit" );
+    IF @test = 1 THEN
+      SET @sql = CONCAT( "ALTER TABLE recording DROP COLUMN visit" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
+    SELECT "Allowing recording.test_id to be null" AS "";
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = "recording"
+      AND COLUMN_NAME = "test_id"
+      AND IS_NULLABLE = "NO" );
+    IF @test = 1 THEN
+      SET @sql = CONCAT( "ALTER TABLE recording MODIFY test_id INT(10) UNSIGNED NULL DEFAULT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
+    SELECT "Adding recording.filename column" AS "";
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = "recording"
+      AND COLUMN_NAME = "filename" );
+    IF @test = 0 THEN
+      SET @sql = CONCAT( "ALTER TABLE recording ADD COLUMN filename VARCHAR(45) NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
   END //
 DELIMITER ;
 

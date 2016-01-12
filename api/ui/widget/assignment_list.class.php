@@ -38,8 +38,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
   {
     parent::prepare();
 
-    $region_site_class_name = lib::get_class_name( 'database\region_site' );
-
     $session = lib::create( 'business\session' );
     $db_role = $session->get_role();
 
@@ -51,39 +49,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
     $this->add_column( 'completed', 'boolean', 'Completed', false );
 
     $is_typist = 'typist' == $db_role->name;
-    if( $is_typist )
-    {
-      $db_service = $session->get_service();
-      $db_site = $session->get_site();
-      $db_user = $session->get_user();
-
-      // which languages can the user process?
-      $user_languages = $db_user->get_language_idlist();
-
-      $modifier = lib::create( 'database\modifier' );
-      $modifier->where( 'service_id', '=', $db_service->id );
-      $modifier->where( 'site_id', '=', $db_site->id );
-      $modifier->group( 'language_id' );
-
-      // which languages can the site process?
-      $site_languages = array();
-      foreach( $region_site_class_name::select( $modifier ) as $db_region_site )
-      {
-        $id = $db_region_site->get_language()->id;
-        if( in_array( $id, $user_languages ) )
-        {
-          $site_languages[] = $id;
-        }
-      }
-
-      // sanity check that the user can transcribe in a language at the current site
-      if( 0 == count( $site_languages ) )
-        throw lib::create( 'exception\notice',
-          'There must be one or more region-site languages from '.
-          $db_site->name . ' assigned to user: '.
-          $db_user->name, __METHOD__ );
-    }
-
     $this->set_addable( $is_typist );
     $this->set_allow_restrict_state( !$is_typist );
     $this->set_removable( 'administrator' == $db_role->name );

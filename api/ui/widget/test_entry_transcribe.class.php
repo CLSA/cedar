@@ -167,18 +167,19 @@ class test_entry_transcribe extends \cenozo\ui\widget\base_record
     $db_assignment = $db_test_entry->get_assignment();
     $db_participant = $db_assignment->get_participant();
 
+    $recording_data = array();
     $recording_class_name = lib::get_class_name( 'database\recording' );
     $modifier = lib::create( 'database\modifier' );
     $modifier->where( 'participant_id', '=', $db_participant->id );
-    $modifier->where( 'test_id', '=', $db_test->id );
-    $modifier->where( 'visit', '=', 1 );
-    $modifier->limit( 1 );
-    $db_recording = current( $recording_class_name::select( $modifier ) );
-    $url = sprintf( '%s/%s/%s',
-                    RECORDINGS_URL,
-                    $db_participant->get_cohort()->name,
-                    $db_recording->get_filename() );
-    $recording_data = array( $url );
+    $modifier->where( sprintf( 'IFNULL( test_id, %d )', $db_test->id ), '=', $db_test->id );
+    foreach( $recording_class_name::select( $modifier ) as $db_recording )
+    {
+      $recording_data[] =
+        sprintf( '%s/%s/%s',
+                 RECORDINGS_URL,
+                 $db_participant->get_cohort()->name,
+                 $db_recording->get_filename() );
+    }
 
     $this->set_variable( 'recording_data', $recording_data );
 

@@ -50,7 +50,7 @@ class assignment_new extends \cenozo\ui\push\base_new
     {
       $session->release_semaphore();
       throw lib::create( 'exception\notice',
-        'There are currently no participants available for processing.', __METHOD__ );
+        'There are no participants available for which you have access to.', __METHOD__ );
     }
 
     $columns = array();
