@@ -17,7 +17,7 @@ CREATE PROCEDURE single_entry_patch()
 
     SET @test = ( SELECT COUNT(*) FROM operation );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO operation SELECT * FROM ", @bl, ".operation" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO operation SELECT * FROM ", @bl, ".operation" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -27,7 +27,7 @@ CREATE PROCEDURE single_entry_patch()
 
     SET @test = ( SELECT COUNT(*) FROM role_has_operation );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO role_has_operation SELECT * FROM ", @bl, ".role_has_operation" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO role_has_operation SELECT * FROM ", @bl, ".role_has_operation" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -37,7 +37,7 @@ CREATE PROCEDURE single_entry_patch()
     
     SET @test = ( SELECT COUNT(*) FROM user_has_cohort );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO user_has_cohort SELECT * FROM ", @bl, ".user_has_cohort" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO user_has_cohort SELECT * FROM ", @bl, ".user_has_cohort" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -47,7 +47,7 @@ CREATE PROCEDURE single_entry_patch()
     
     SET @test = ( SELECT COUNT(*) FROM dictionary );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO dictionary SELECT * FROM ", @bl, ".dictionary" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO dictionary SELECT * FROM ", @bl, ".dictionary" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -57,7 +57,7 @@ CREATE PROCEDURE single_entry_patch()
     
     SET @test = ( SELECT COUNT(*) FROM dictionary_import );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO dictionary_import SELECT * FROM ", @bl, ".dictionary_import" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO dictionary_import SELECT * FROM ", @bl, ".dictionary_import" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -67,7 +67,7 @@ CREATE PROCEDURE single_entry_patch()
 
     SET @test = ( SELECT COUNT(*) FROM test_type );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO test_type SELECT * FROM ", @bl, ".test_type" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO test_type SELECT * FROM ", @bl, ".test_type" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -78,7 +78,7 @@ CREATE PROCEDURE single_entry_patch()
     SET @test = ( SELECT COUNT(*) FROM test );
     IF @test = 0 THEN
       SET @sql = CONCAT(
-        "INSERT INTO test ",
+        "INSERT IGNORE INTO test ",
         "( id, name, dictionary_id, intrusion_dictionary_id, variant_dictionary_id, ",
         "mispelled_dictionary_id, test_type_id, strict, rank_words, rank, recording_name ) ",
         "SELECT id, name, dictionary_id, intrusion_dictionary_id, variant_dictionary_id, ",
@@ -93,7 +93,7 @@ CREATE PROCEDURE single_entry_patch()
 
     SET @test = ( SELECT COUNT(*) FROM word );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO word SELECT * FROM ", @bl, ".word" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO word SELECT * FROM ", @bl, ".word" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -103,7 +103,7 @@ CREATE PROCEDURE single_entry_patch()
     
     SET @test = ( SELECT COUNT(*) FROM ranked_word_set );
     IF @test = 0 THEN
-      SET @sql = CONCAT( "INSERT INTO ranked_word_set SELECT * FROM ", @bl, ".ranked_word_set" );
+      SET @sql = CONCAT( "INSERT IGNORE INTO ranked_word_set SELECT * FROM ", @bl, ".ranked_word_set" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -114,7 +114,7 @@ CREATE PROCEDURE single_entry_patch()
     SET @test = ( SELECT COUNT(*) FROM ranked_word_set_has_language );
     IF @test = 0 THEN
       SET @sql = CONCAT(
-        "INSERT INTO ranked_word_set_has_language SELECT * FROM ", @bl, ".ranked_word_set_has_language" );
+        "INSERT IGNORE INTO ranked_word_set_has_language SELECT * FROM ", @bl, ".ranked_word_set_has_language" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
