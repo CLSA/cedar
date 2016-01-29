@@ -104,9 +104,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
     $test_class_name = lib::get_class_name( 'database\test' );
     $test_entry_class_name = lib::get_class_name( 'database\test_entry' );
 
-    $session = lib::create( 'business\session' );
-    $db_role = $session->get_role();
-
     // allow test_entry transcribe via a transcribe button on assigment rows
     $allow_transcribe_operation = false;
 
@@ -125,9 +122,6 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
 
     foreach( $this->get_record_list() as $db_assignment )
     {
-      $base_mod = lib::create( 'database\modifier' );
-      $base_mod->where( 'assignment_id', '=', $db_assignment->id );
-
       $db_participant = $db_assignment->get_participant();
 
       $allow_transcribe = false;
@@ -138,7 +132,9 @@ class assignment_list extends \cenozo\ui\widget\site_restricted_list
       // select the first test_entry for which we either want to transcribe
       $test_entry_id = NULL;
 
-      $test_entry_mod = clone $base_mod;
+      $test_entry_mod = lib::create( 'database\modifier' );
+      $test_entry_mod->where( 'assignment_id', '=', $db_assignment->id );
+
       // get the first test that could be pending
       if( $deferred )
       {

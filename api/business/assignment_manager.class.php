@@ -15,6 +15,47 @@ use cenozo\lib, cenozo\log, cedar\util;
 class assignment_manager extends \cenozo\singleton
 {
   /**
+   * Return a test_entry to its typist.
+   *
+   * @author Dean Inglis <inglisd@mcmaster.ca>
+   * @param  database\test_entry $db_test_entry
+   * @throws exception\runtime
+   * @access public
+   */
+  public static function return_test_entry( $db_test_entry )
+  {
+    // check if the entry has daughter table entries
+    // if not, initialize
+    $entry_name = 'test_entry_' . $db_test_entry->get_test()->get_test_type()->name;
+    $entry_class_name = lib::get_class_name( 'database\\'. $entry_name );
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->where( 'test_entry_id', '=', $db_test_entry->id );
+    if( 0 == $entry_class_name::count( $modifier ) )
+    {
+      // the sibling test entry will have its adjudicate status set to NULL
+      try
+      {
+        static::reset_test_entry( $db_test_entry );
+      }
+      catch( \cenozo\exception\notice $e )
+      {
+        throw lib::create( 'exception\runtime', $e->get_message(), __METHOD__ );
+      }
+    }
+
+    $db_test_entry->deferred = 'pending';
+    if( 'submitted' == $db_test_entry->completed ) $db_test_entry->completed = 'complete';
+    $db_test_entry->save();
+
+    $db_assignment = $db_test_entry->get_assignment();
+    if( !is_null( $db_assignment->end_datetime ) )
+    {
+      $db_assignment->end_datetime = NULL;
+      $db_assignment->save();
+    }
+  }
+
+  /**
    * Reset a test_entry.  All existing test_entry daughter records are deleted
    * and new ones are created. Only test_entrys belonging to assignments that
    * have never been finished can be reset.

@@ -48,7 +48,6 @@ class test_entry_view extends \cenozo\ui\widget\base_view
     $is_deferred = in_array( $db_test_entry->deferred, array( 'requested', 'pending' ) );
     $is_submitted = 'submitted' == $db_test_entry->completed;
     $db_assignment = $db_test_entry->get_assignment();
-    $is_closed = !is_null( $db_assignment->end_datetime );
 
     // add items to the view
     $this->add_item( 'participant.uid', 'constant', 'UID' );
@@ -86,7 +85,9 @@ class test_entry_view extends \cenozo\ui\widget\base_view
     $this->test_entry_transcribe->set_actionable( false );
 
     $db_operation = $operation_class_name::get_operation( 'push', 'test_entry', 'return' );
-    if( lib::create( 'business\session' )->is_allowed( $db_operation ) && !$is_closed )
+    if( lib::create( 'business\session' )->is_allowed( $db_operation ) &&
+        'pending' != $db_test_entry->deferred &&
+        'incomplete' != $db_test_entry->completed )
     {
       $this->add_action( 'return', 'Return', NULL, 'Return this test to the typist' );
     }
