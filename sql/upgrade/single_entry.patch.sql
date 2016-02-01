@@ -32,6 +32,25 @@ CREATE PROCEDURE single_entry_patch()
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
     END IF;
+
+    SELECT "Adding new operations" AS "";
+
+    SET @test = ( SELECT COUNT(*) FROM operation WHERE subject = "word" AND name = "correct" );
+    IF @test = 0 THEN
+      INSERT INTO operation( type, subject, name, restricted, description ) VALUES
+      ( "widget", "word", "correct", true, "View a form for correcting misspelled words." ),
+      ( "push", "word", "correct", true, "Corrects misspelled words." );
+    END IF;
+      
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO role_has_operation( role_id, operation_id ) ",
+      "SELECT role.id, operation.id ",
+      "FROM ", @cenozo, ".role, operation ",
+      "WHERE subject = 'word' AND operation.name = 'correct' ",
+      "AND role.name IN( 'administrator', 'supervisor' )" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
       
     SELECT "Copying user_has_cohort data from baseline instance" AS "";
     

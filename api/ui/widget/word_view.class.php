@@ -38,12 +38,22 @@ class word_view extends \cenozo\ui\widget\base_view
   {
     parent::prepare();
 
+    $operation_class_name = lib::get_class_name( 'database\operation' );
+
     // add items to the view
     $this->add_item( 'word', 'string', 'Word' );
     $this->add_item( 'language_id', 'enum', 'Language' );
 
     // allow words to be moved within dictionaries that are referenced by a test
     $this->add_item( 'dictionary_id', 'enum', 'Dictionary' );
+
+    if( false !== stripos( $this->get_record()->get_dictionary()->name, 'variant' ) )
+    {
+      $db_operation = $operation_class_name::get_operation( 'push', 'word', 'correct' );
+      if( lib::create( 'business\session' )->get_role()->has_operation( $db_operation ) )
+        $this->add_action( 'correct', 'Correct Misspelling', NULL,
+          'Correct a misspelling and have all tests using it automatically update to the corrected word.' );
+    }
   }
 
   /**
