@@ -26,15 +26,10 @@ class dictionary extends \cenozo\database\record
   public static function get_associative_word_list( $modifier = NULL )
   {
     if( is_null( $modifier ) ) $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'language', 'word.language_id', 'language.id' );
 
-    $data = array();
-    foreach( static::db()->get_all( sprintf(
-      'SELECT id, word FROM word %s',
-      $modifier->get_sql() ) ) as $index => $value )
-    {
-      $data[ $value['id'] ] = $value[ 'word' ];
-    }
-    return $data;
+    return static::db()->get_all(
+      sprintf( 'SELECT word.id, word, language.code FROM word %s', $modifier->get_sql() ) );
   }
 
   /**

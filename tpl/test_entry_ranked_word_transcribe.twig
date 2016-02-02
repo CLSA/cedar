@@ -114,11 +114,8 @@
         // words are determined according to test language restrictions
         args["test_entry_id"] = {{ parent.id }};
         args["words_only"] = 1;
-        return $.map( ajax_pull( "word", "list", args ), function( value, key ) {
-          return {
-            label: value,
-            value: key
-          };
+        return ajax_pull( "word", "list", args ).map( function( word ) {
+          return { label: word.word, lang: word.code, value: word.id };
         } );
       }
 
@@ -128,12 +125,9 @@
         // words are determined according to test language restrictions
         args["test_entry_id"] = {{ parent.id }};
         args["words_only"] = 1;
-        return $.map( ajax_pull( "word", "list", args ), function( value, key ) {
-          return {
-            label: value,
-            value: key
-          };
-        });
+        return ajax_pull( "word", "list", args ).map( function( word ) {
+          return { label: word.word, lang: word.code, value: word.id };
+        } );
       }
 
       function update_input_list() {
@@ -151,11 +145,13 @@
           select: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           focus: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           close: function( event, ui ) {
@@ -186,11 +182,13 @@
           select: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           focus: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           close: function( event, ui ) {
@@ -250,8 +248,8 @@
           var target_entry_id = $(this).prop( "id" ).split( "__" )[0];
           args.id = parseInt( target_entry_id );
           var is_variant = $(this).prop( "id" ).split( "__" )[1] === "candidate";
-          if( undefined !== obj ) {
-            columns["word_id"] = obj;
+          if( this.selected_word_id ) {
+            columns["word_id"] = this.selected_word_id;
             args.columns = columns;
           } else {
             args.candidate = candidate;

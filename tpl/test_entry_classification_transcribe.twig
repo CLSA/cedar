@@ -105,11 +105,8 @@
         // words are determined according to test language restrictions
         args["test_entry_id"] = {{ parent.id }};
         args["words_only"] = 1;
-        return $.map( ajax_pull( "word", "list", args ), function( value, key ) {
-          return {
-            label: value,
-            value: key
-          };
+        return ajax_pull( "word", "list", args ).map( function( word ) {
+          return { label: word.word, lang: word.code, value: word.id };
         } );
       }
 
@@ -128,11 +125,13 @@
           select: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           focus: function( event, ui ) {
             $(this).val( ui.item.label );
             $(this).attr( "value", ui.item.label );
+            this.selected_word_id = ui.item.value;
             return false;
           },
           close: function( event, ui ) {
@@ -177,9 +176,9 @@
           var target_entry_id = parseInt( $(this).prop( "id" ).split( "__" )[0] );
           args.id = target_entry_id;
           var rank = parseInt( $(this).prop( "id" ).split( "__" )[1] );
-          if( undefined !== obj ) {
+          if( this.selected_word_id ) {
             var columns = new Object();
-            columns["word_id"] = obj;
+            columns["word_id"] = this.selected_word_id;
             args.columns = columns;
           } else {
             args.candidate = candidate;
