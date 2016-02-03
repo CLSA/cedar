@@ -11,14 +11,14 @@
   {{ parent() }}
   <script type="text/javascript">
     $( function() {
-      $( "#{{ widget.full }}_dialog__correct" ).dialog( {
+      $( "#{{ widget.full }}_dialog_{{ id }}__correct" ).dialog( {
         title: "Correct Misspelling",
         modal: true,
         width: 450,
         autoOpen: false,
         buttons: {
           Ok: function() {
-            var args = { word_id: {{ id }}, correction: $( "#{{ widget.full }}__correction" ).val() };
+            var args = { word_id: {{ id }}, correction: $( "#{{ widget.full }}_{{ id }}__correction" ).val() };
             if( ajax_push( "word", "correct", args ) ) {
               $(this).dialog( "close" );
               window.location.reload();
@@ -31,7 +31,7 @@
       } );
 
       $( "#{{ widget.full }}__correct" ).click( function() {
-        $( "#{{ widget.full }}_dialog__correct" ).dialog( "open" );
+        $( "#{{ widget.full }}_dialog_{{ id }}__correct" ).dialog( "open" );
       } );
     } );
   </script>
@@ -39,7 +39,7 @@
 
 {% block record %}
   {{ parent() }}
-  <div id="{{ widget.full }}_dialog__correct">
+  <div id="{{ widget.full }}_dialog_{{ id }}__correct">
     <table>
       <tr>
         <td class="content" colspan="2" style="padding-bottom:16px">
@@ -51,7 +51,7 @@
       <tr>
         <td class="heading">Correct spelling:</td>
         <td class="content">
-          <input id="{{ widget.full }}__correction" type="input" style="width:99%" />
+          <input id="{{ widget.full }}_{{ id }}__correction" type="input" style="width:99%" />
         </td>
       </tr>
     </table>
