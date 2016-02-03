@@ -101,7 +101,7 @@ class test_entry_classification_edit extends \cenozo\ui\push\base_edit
         if( '' !== $word_id )
         {
           // check if mispelled and throw an exception
-          if( 'mispelled' === $classification )
+          if( 'mispelled' == $classification || 'mispelled_fr' == $classification )
             throw lib::create( 'exception\notice',
               'The word "'. $word . '" is mispelled and cannot be accepted.',
               __METHOD__ );

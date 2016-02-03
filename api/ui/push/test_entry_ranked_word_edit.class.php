@@ -101,7 +101,7 @@ class test_entry_ranked_word_edit extends \cenozo\ui\push\base_edit
         $word_id = $data['word_id'];
 
         // check if mispelled and throw an exception
-        if( 'mispelled' == $classification )
+        if( 'mispelled' == $classification || 'mispelled_fr' == $classification )
           throw lib::create( 'exception\notice',
             'The word "'. $word . '" is a mispelled word and cannot be accepted.',
             __METHOD__ );
