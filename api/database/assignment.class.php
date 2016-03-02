@@ -158,17 +158,12 @@ class assignment extends \cenozo\database\record
   public static function get_next_available_participant()
   {
     $participant_class_name = lib::get_class_name( 'database\participant' );
-    $recording_class_name = lib::get_class_name( 'database\recording' );
     $region_site_class_name = lib::get_class_name( 'database\region_site' );
 
     $session = lib::create( 'business\session' );
     $db_service = $session->get_service();
     $db_user = $session->get_user();
     $db_site = $session->get_site();
-
-    // update the recordings
-    $recording_class_name = lib::get_class_name( 'database\recording' );
-    $recording_class_name::update_recording_list();
 
     // get the user's languages, defaulting to the service's language if they have none
     $language_mod = lib::create( 'database\modifier' );

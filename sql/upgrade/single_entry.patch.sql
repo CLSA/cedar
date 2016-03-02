@@ -52,6 +52,22 @@ CREATE PROCEDURE single_entry_patch()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
       
+    SET @test = ( SELECT COUNT(*) FROM operation WHERE subject = "recording" AND name = "update" );
+    IF @test = 0 THEN
+      INSERT INTO operation( type, subject, name, restricted, description ) VALUES
+      ( "push", "recording", "update", true, "Updates the recording list." );
+    END IF;
+      
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO role_has_operation( role_id, operation_id ) ",
+      "SELECT role.id, operation.id ",
+      "FROM ", @cenozo, ".role, operation ",
+      "WHERE subject = 'recording' AND operation.name = 'update' ",
+      "AND role.name = 'administrator'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+      
     SELECT "Copying user_has_cohort data from baseline instance" AS "";
     
     SET @test = ( SELECT COUNT(*) FROM user_has_cohort );
