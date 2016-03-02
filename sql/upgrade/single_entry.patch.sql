@@ -303,10 +303,28 @@ CREATE PROCEDURE single_entry_patch()
       AND TABLE_NAME = "recording"
       AND COLUMN_NAME = "visit" );
     IF @test = 1 THEN
-      SET @sql = CONCAT( "ALTER TABLE recording DROP COLUMN visit" );
-      PREPARE statement FROM @sql;
-      EXECUTE statement;
-      DEALLOCATE PREPARE statement;
+      ALTER TABLE recording DROP COLUMN visit;
+    END IF;
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = "recording"
+      AND CONSTRAINT_NAME = "uq_visit_participant_id_test_id" );
+    IF @test = 1 THEN
+      ALTER TABLE recording DROP KEY uq_visit_participant_id_test_id;
+      ALTER TABLE recording ADD UNIQUE KEY uq_participant_id_test_id( participant_id, test_id );
+    END IF;
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.TABLE_CONSTRAINTS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = "recording"
+      AND CONSTRAINT_NAME = "uq_visit_participant_id_filename" );
+    IF @test = 0 THEN
+      ALTER TABLE recording ADD UNIQUE KEY uq_participant_id_filename( participant_id, filename );
     END IF;
 
     SELECT "Allowing recording.test_id to be null" AS "";

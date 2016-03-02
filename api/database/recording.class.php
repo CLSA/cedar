@@ -97,7 +97,7 @@ class recording extends \cenozo\database\record
 
     // now convert from temporary records into the recording table
     static::db()->execute(
-      'INSERT IGNORE INTO recording( participant_id, test_id, filename ) '.
+      'REPLACE INTO recording( participant_id, test_id, filename ) '.
       'SELECT participant.id, test.id, filename '.
       'FROM temp_recording '.
       'JOIN participant ON temp_recording.uid = participant.uid '.
