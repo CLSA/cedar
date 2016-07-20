@@ -67,7 +67,7 @@ class dictionary_report extends \cenozo\ui\pull\base_report
     $contents = array();
     foreach( $word_class_name::select( $word_mod ) as $db_word )
     {
-      $contents[] = array( $db_word->word, $db_word->get_language()->code );
+      $contents[] = array( $db_word->word, $db_word->get_language()->code, $db_word->get_usage_count() );
     }
 
     $word_count = $db_dictionary->get_word_count();
@@ -75,7 +75,7 @@ class dictionary_report extends \cenozo\ui\pull\base_report
                       ' Dictionary ( ' . $word_count . ' entries )' );
 
     // create the content and header arrays using the data
-    $header = array( 'Word', 'Language'  );
+    $header = array( 'Word', 'Language', 'usage'  );
     $this->add_table( NULL, $header, $contents );
   }
 }
