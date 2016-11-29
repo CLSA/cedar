@@ -1,5 +1,0 @@
-create default data sql that creates cedar service in cenozo, add cohort access to
-cedar service, create a cedar site and admin user
-
-add columns to dictionary report inidcate whether dictionary is an 
-intrusion, variant, or standard dictionary

@@ -1,31 +1,37 @@
 Cedar
 ==========
 
-Web-based computer-assisted double data entry management software which
-coordinates the transcription of cognitive responses from CLSA participants' audio
-recordings captured during CATI, in-home and DCS interviews.
+Web-based computer-assisted data entry management software which coordinates the transcription of cognitive
+responses from CLSA participants' audio recordings captured during CATI, in-home and DCS interviews.
 
-See doc/install.readme for install instructions.
-
-api/
-  This is where the programming interface belongs.
+src/
+  This is where the source code belongs.
   This includes all packages, classes, functions, settings, etc.
 
 aux/
   Any auxiliary files which are needed by the software go here.
 
-tpl/
-  This is where display templates belong.
-  This includes twig templates, javascript, etc.
-
 web/
   This is the public web directory that a web server links to.
+
+web/api/
+  The root of the restful web API
+
+web/app/
+  This is where the client-side source code goes.
+
+web/app/
+  Application-specific extensions to the Angular-based web application
 
 doc/
   All documentation for Cedar is found here including the apigen generated API
   documentation and design documents.
 
-sql/
+doc/report/
+  Spreadsheet-based report templates are stored here
+
+db/
   This is where all sql needed to install the application belongs.
-  This includes database schemas, default data and script to upgrade from older
+  This includes database schemas, default data and script to upgrade from older 
   versions.
+  

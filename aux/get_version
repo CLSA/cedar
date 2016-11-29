@@ -5,7 +5,7 @@
  * @author Patrick Emond <emondpd@mcmaster.ca>
  */
 
-$filename = 'web/settings.ini.php';
+$filename = 'settings.ini.php';
 
 // validate arguments
 if( 1 != $argc )
@@ -36,4 +36,4 @@ if( !isset( $SETTINGS ) ||
   exit( 4 );
 }
 
-print $SETTINGS['general']['version']."\n";
+printf( "%s %s\n", $SETTINGS['general']['version'], $SETTINGS['general']['build'] );

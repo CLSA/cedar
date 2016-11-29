@@ -1,0 +1,30 @@
+<?php
+/**
+ * settings.local.ini.php
+ *
+ * Defines local initialization settings for cedar, overriding default settings found in
+ * settings.ini.php
+ */
+
+global $SETTINGS;
+
+// whether or not to run the application in development mode
+$SETTINGS['general']['development_mode'] = false;
+
+// the file path to the framework and application
+$SETTINGS['path']['CENOZO'] = '/path/to/cenozo';
+
+// the path to the log file
+$SETTINGS['path']['LOG_FILE'] = $SETTINGS['path']['APPLICATION'].'/log';
+
+// database settings (the driver, server and prefixes are set in the framework's settings)
+$SETTINGS['db']['username'] = 'put your database username here';
+$SETTINGS['db']['password'] = 'put your database password here';
+
+// the root directory where comprehensive recordings are located
+// (must be an absolute path that the asterisk server's user has access to)
+$SETTINGS['path']['RECORDINGS'] = $SETTINGS['path']['APPLICATION'].'/path/to/recordings';
+$SETTINGS['url']['RECORDINGS'] = 'recordings';
+
+// where to store the file which tracks when the last sync was performed
+$SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/web/last_sync';
