@@ -5,12 +5,13 @@ CREATE PROCEDURE patch_access()
 
     -- determine the @cenozo, @v1_cenozo database names and the @application name
     SET @cenozo = (
-      SELECT unique_constraint_schema
+      SELECT DISTINCT REPLACE( unique_constraint_schema, "v1_", "" )
       FROM information_schema.referential_constraints
-      WHERE constraint_schema = DATABASE()
+      WHERE constraint_schema IN( CONCAT( "v1_", DATABASE() ), DATABASE() )
       AND constraint_name IN ( "fk_activity_site_id", "fk_access_site_id" )
       GROUP BY unique_constraint_schema );
     SET @v1_cenozo = ( SELECT CONCAT( "v1_", @cenozo ) );
+    SET @v1_cedar = ( SELECT CONCAT( "v1_", DATABASE() ) );
     SET @application = (
       SELECT RIGHT(
         DATABASE(),
@@ -71,6 +72,33 @@ CREATE PROCEDURE patch_access()
       "JOIN ", @v1_cenozo, ".service ON v1_site.service_id = service.id ",
       "JOIN ", @cenozo, ".application ON service.name = application.name ",
       "WHERE application.name = '", @application, "'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Importing user settings from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO user_has_cohort( update_timestamp, create_timestamp, user_id, cohort_id ) ",
+      "SELECT v1_user_has_cohort.update_timestamp, v1_user_has_cohort.create_timestamp, user.id, cohort.id ",
+      "FROM access ",
+      "CROSS JOIN ", @cenozo, ".cohort ",
+      "JOIN ", @cenozo, ".user ON access.user_id = user.id ",
+      "JOIN ", @v1_cenozo, ".user v1_user ON user.name = v1_user.name ",
+      "JOIN ", @v1_cenozo, ".cohort v1_cohort ON cohort.name = v1_cohort.name ",
+      "JOIN ", @v1_cedar, ".user_has_cohort v1_user_has_cohort ",
+        "ON v1_user.id = v1_user_has_cohort.user_id ",
+       "AND v1_cohort.id = v1_user_has_cohort.cohort_id" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO user_has_language( update_timestamp, create_timestamp, user_id, language_id ) ",
+      "SELECT user_has_language.update_timestamp, user_has_language.create_timestamp, ",
+             "user_has_language.user_id, language_id ",
+      "FROM ", @cenozo, ".user_has_language ",
+      "JOIN access ON user_has_language.user_id = access.user_id" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;

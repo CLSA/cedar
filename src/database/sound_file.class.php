@@ -1,8 +1,8 @@
 <?php
 /**
- * recording.class.php
- *
- * @author Dean Inglis <inglisd@mcmaster.ca>
+ * sound_file.class.php
+ * 
+ * @author Patrick Emond <emondpd@mcmaster.ca>
  * @filesource
  */
 
@@ -10,38 +10,25 @@ namespace cedar\database;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
- * recording: record
+ * sound_file: record
  */
-class recording extends \cenozo\database\record
+class sound_file extends \cenozo\database\record
 {
   /**
-   * Gets the file associated with this recording
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @return string
+   * Adds any sound files found in the recordings path which are newer than the last time this method was called
+   * 
+   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
-  public function get_filename()
-  {
-    return sprintf( '%s/%s', $this->get_participant()->uid, $this->filename );
-  }
-
-  /**
-   * Builds the recording list based on recording files found in the RECORDING path (if set)
-   *
-   * @author Dean Inglis <inglisd@mcmaster.ca>
-   * @access public
-   */
-  public static function update_recording_list()
+  public static function update_sound_file_list()
   {
     $participant_class_name = lib::get_class_name( 'database\participant' );
-    $test_class_name = lib::get_class_name( 'database\test' );
     $setting_manager = lib::create( 'business\setting_manager' );
     $last_sync_file = $setting_manager->get_setting( 'general', 'last_sync_file' );
 
     // create a temporary table to put raw data into
     static::db()->execute(
-      'CREATE TEMPORARY TABLE temp_recording ( '.
+      'CREATE TEMPORARY TABLE temp_sound_file ( '.
         'uid char(7) NOT NULL, '.
         'name varchar(100) NULL DEFAULT NULL, '.
         'filename varchar(100) NOT NULL, '.
@@ -56,7 +43,7 @@ class recording extends \cenozo\database\record
              : sprintf( 'find -L %s -type f | grep -v "\-in."', RECORDINGS_PATH );
     $file_list = array();
     exec( $command, $file_list );
-    
+
     // organize files by participant
     $count = 0;
     $insert = '';
@@ -72,7 +59,7 @@ class recording extends \cenozo\database\record
       if( 1000 <= $count )
       {
         static::db()->execute(
-          sprintf( 'INSERT INTO temp_recording( uid, name, filename ) VALUES %s', $insert ) );
+          sprintf( 'INSERT INTO temp_sound_file( uid, name, filename ) VALUES %s', $insert ) );
         $count = 0;
         $insert = '';
       }
@@ -92,24 +79,23 @@ class recording extends \cenozo\database\record
     if( 0 < $count )
     {
       static::db()->execute(
-        sprintf( 'INSERT INTO temp_recording( uid, name, filename ) VALUES %s', $insert ) );
+        sprintf( 'INSERT INTO temp_sound_file( uid, name, filename ) VALUES %s', $insert ) );
     }
 
-    // now convert from temporary records into the recording table
+    // now convert from temporary records into the sound_file table
     static::db()->execute(
-      'REPLACE INTO recording( participant_id, test_id, filename ) '.
-      'SELECT participant.id, test.id, filename '.
-      'FROM temp_recording '.
-      'JOIN participant ON temp_recording.uid = participant.uid '.
-      'LEFT JOIN test ON temp_recording.name = test.recording_name' );
-
-    static::db()->execute( 'DROP TABLE temp_recording' );
+      'REPLACE INTO sound_file( participant_id, sound_file_type_id, filename ) '.
+      'SELECT participant.id, NULL, filename '.
+      'FROM temp_sound_file '.
+      'JOIN participant ON temp_sound_file.uid = participant.uid'
+    );
+    static::db()->execute( 'DROP TABLE temp_sound_file' );
 
     // now update the sync file to track when the last sync was done
     if( !file_exists( $last_sync_file ) )
       file_put_contents(
         $last_sync_file,
-        'This file is used to track which recordings have been read into the database, DO NOT REMOVE.' );
+        'This file is used to track which sound files have been read into the database, DO NOT REMOVE.' );
 
     touch( $last_sync_file );
   }

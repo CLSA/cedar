@@ -1,34 +1,16 @@
-DROP PROCEDURE IF EXISTS patch_service;
-  DELIMITER //
-  CREATE PROCEDURE patch_service()
-  BEGIN
+SELECT "Creating new service table" AS "";
 
-    SELECT "Creating new service table" AS "";
-
-    SET @test = (
-      SELECT COUNT(*)
-      FROM information_schema.TABLES
-      WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = "service" );
-    IF @test = 0 THEN
-      -- add new service_table
-      CREATE TABLE IF NOT EXISTS service(
-        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        update_timestamp TIMESTAMP NOT NULL,
-        create_timestamp TIMESTAMP NOT NULL,
-        method ENUM('DELETE','GET','PATCH','POST','PUT') NOT NULL,
-        subject VARCHAR(45) NOT NULL,
-        resource TINYINT(1) NOT NULL DEFAULT 0,
-        restricted TINYINT(1) NOT NULL DEFAULT 1,
-        PRIMARY KEY (id),
-        UNIQUE INDEX uq_method_subject_resource (method ASC, subject ASC, resource ASC))
-      ENGINE = InnoDB;
-    END IF;
-  END //
-DELIMITER ;
-
-CALL patch_service();
-DROP PROCEDURE IF EXISTS patch_service;
+CREATE TABLE IF NOT EXISTS service(
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  update_timestamp TIMESTAMP NOT NULL,
+  create_timestamp TIMESTAMP NOT NULL,
+  method ENUM('DELETE','GET','PATCH','POST','PUT') NOT NULL,
+  subject VARCHAR(45) NOT NULL,
+  resource TINYINT(1) NOT NULL DEFAULT 0,
+  restricted TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  UNIQUE INDEX uq_method_subject_resource (method ASC, subject ASC, resource ASC))
+ENGINE = InnoDB;
 
 -- rebuild the service list
 DELETE FROM service;
@@ -188,6 +170,13 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'user', 'GET', 0, 0 ),
 ( 'user', 'GET', 1, 0 ),
 ( 'user', 'PATCH', 1, 1 ),
-( 'user', 'POST', 0, 1 );
+( 'user', 'POST', 0, 1 ),
 
 -- application services
+( 'sound_file', 'GET', 0, 0 ),
+( 'sound_file', 'GET', 1, 0 ),
+( 'transcription', 'DELETE', 1, 0 ),
+( 'transcription', 'GET', 0, 0 ),
+( 'transcription', 'GET', 1, 0 ),
+( 'transcription', 'PATCH', 1, 0 ),
+( 'transcription', 'POST', 0, 0 );

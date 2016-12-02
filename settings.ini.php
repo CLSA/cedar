@@ -36,4 +36,4 @@ $SETTINGS['path']['RECORDINGS'] = NULL;
 $SETTINGS['url']['RECORDINGS'] = NULL;
 
 // where to store the file which tracks when the last sync was performed
-$SETTINGS['general']['last_sync_file'] = NULL;
+$SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/last_sync';

@@ -5,9 +5,9 @@ CREATE PROCEDURE patch_access()
 
     -- determine the @cenozo database name
     SET @cenozo = (
-      SELECT unique_constraint_schema
+      SELECT DISTINCT REPLACE( unique_constraint_schema, "v1_", "" )
       FROM information_schema.referential_constraints
-      WHERE constraint_schema = DATABASE()
+      WHERE constraint_schema IN( CONCAT( "v1_", DATABASE() ), DATABASE() )
       AND constraint_name IN ( "fk_activity_site_id", "fk_access_site_id" )
       GROUP BY unique_constraint_schema );
 

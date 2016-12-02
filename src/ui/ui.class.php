@@ -14,17 +14,36 @@ use cenozo\lib, cenozo\log, cedar\util;
  */
 class ui extends \cenozo\ui\ui
 {
-  /**
+  /** 
    * Extends the parent method
    */
-  protected function get_report_items()
+  protected function build_module_list()
   {
-    $list = parent::get_report_items();
+    parent::build_module_list();
+
+    $module = $this->get_module( 'user' );
+    if( !is_null( $module ) ) $module->add_child( 'transcription', 'access' );
+  }
+
+  /**
+   * Extends the sparent method
+   */
+  protected function build_listitem_list()
+  {
     $db_role = lib::create( 'business\session' )->get_role();
 
-    // typists get no list items
-    if( 'typist' == $db_role->name ) $list = array();
+    // don't generate the parent list items for typists
+    if( 'typist' != $db_role->name ) parent::build_listitem_list();
 
-    return $list;
+    // add application-specific states to the base list
+    $this->add_listitem( 'Transcriptions', 'transcription' );
+  }
+
+  /**
+   * Extend the parent method
+   */
+  protected function get_utility_items()
+  {
+    return 'typist' == lib::create( 'business\session' )->get_role()->name ? array() : parent::get_utility_items();
   }
 }
