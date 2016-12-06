@@ -15,9 +15,9 @@ define( function() {
         column: 'user.name',
         title: 'User'
       },
-      participant: {
+      uid: {
         column: 'participant.uid',
-        title: 'UID'
+        title: 'Participant'
       },
       site: {
         column: 'site.name',
@@ -28,7 +28,7 @@ define( function() {
         title: 'Start',
         type: 'datetimesecond'
       },
-      start_datetime: {
+      end_datetime: {
         column: 'end_datetime',
         title: 'End',
         type: 'datetimesecond'
@@ -41,39 +41,36 @@ define( function() {
   } );
 
   module.addInputGroup( '', {
-    user_id: {
-      title: 'User',
-      type: 'lookup-typeahead',
-      typeahead: {
-        table: 'user',
-        select: 'CONCAT( first_name, " ", last_name, " (", name, ")" )',
-        where: [ 'first_name', 'last_name', 'name' ]
-      }
-    },
-    participant: {
+    uid: {
       column: 'participant.uid',
       title: 'Participant',
       type: 'string',
       constant: true
     },
-    site_id: {
+    user_id: {
+      title: 'User',
+      type: 'enum'
+    },
+    site: {
       column: 'site.name',
       title: 'Site',
       type: 'string',
+      exclude: 'add',
       constant: true
     },
     start_datetime: {
       column: 'start_datetime',
       title: 'Start Date & Time',
       type: 'datetimesecond',
-      max: 'end_datetime'
+      exclude: 'add',
+      constant: true
     },
     end_datetime: {
       column: 'end_datetime',
       title: 'End Date & Time',
       type: 'datetimesecond',
-      min: 'start_datetime',
-      max: 'now'
+      exclude: 'add',
+      constant: true
     }
   } );
 
@@ -124,9 +121,31 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTranscriptionAddFactory', [
-    'CnBaseAddFactory',
-    function( CnBaseAddFactory ) {
-      var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
+    'CnBaseAddFactory', 'CnModalMessageFactory',
+    function( CnBaseAddFactory, CnModalMessageFactory ) {
+      var object = function( parentModel ) {
+        var self = this;
+        CnBaseAddFactory.construct( this, parentModel );
+
+        // extend onNew
+        this.onNew = function( record ) {
+          return this.$$onNew( record ).then( function() {
+            return self.parentModel.updateUserList( self.parentModel.getParentIdentifier().identifier );
+          } );
+        };
+
+        // extend onAddError (must handle 409 errors in a special way)
+        this.onAddError = function( response ) {
+          if( 409 == response.status ) {
+              CnModalMessageFactory.instance( {
+                title: 'Cannot Add Transcription',
+                message: 'A new transcription cannot be made because the participant already has a ' +
+                         'transcription.  Only one transcription can exist per participant.',
+                error: true
+              } ).show().then( function() { self.parentModel.transitionToLastState(); } );
+          } else this.$$onAddError( response );
+        };
+      };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
   ] );
@@ -144,7 +163,17 @@ define( function() {
   cenozo.providers.factory( 'CnTranscriptionViewFactory', [
     'CnBaseViewFactory',
     function( CnBaseViewFactory ) {
-      var object = function( parentModel, root ) { CnBaseViewFactory.construct( this, parentModel, root ); }
+      var object = function( parentModel, root ) {
+        var self = this;
+        CnBaseViewFactory.construct( this, parentModel, root );
+
+        // extend onView
+        this.onView = function() {
+          return this.$$onView().then( function() {
+            return self.parentModel.updateUserList( 'uid=' + self.record.uid );
+          } );
+        };
+      }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
   ] );
@@ -152,15 +181,71 @@ define( function() {
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTranscriptionModelFactory', [
     'CnBaseModelFactory',
-    'CnTranscriptionAddFactory', 'CnTranscriptionListFactory', 'CnTranscriptionViewFactory', 'CnHttpFactory',
+    'CnTranscriptionAddFactory', 'CnTranscriptionListFactory', 'CnTranscriptionViewFactory',
+    'CnHttpFactory', 'CnModalMessageFactory',
     function( CnBaseModelFactory,
-              CnTranscriptionAddFactory, CnTranscriptionListFactory, CnTranscriptionViewFactory, CnHttpFactory ) {
+              CnTranscriptionAddFactory, CnTranscriptionListFactory, CnTranscriptionViewFactory,
+              CnHttpFactory, CnModalMessageFactory ) {
       var object = function( root ) {
         var self = this;
         CnBaseModelFactory.construct( this, module );
         this.addModel = CnTranscriptionAddFactory.instance( this );
         this.listModel = CnTranscriptionListFactory.instance( this );
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
+
+        // special function to update the user list
+        this.updateUserList = function( participantIdentifier ) {
+          return CnHttpFactory.instance( {
+            path: 'participant/' + participantIdentifier,
+            data: { select: { column: [ { table: 'site', column: 'id', alias: 'site_id' } ] } }
+          } ).get().then( function( response ) {
+            // show a warning if the user doesn't have a site
+            if( null == response.data.site_id ) {
+              CnModalMessageFactory.instance( {
+                title: 'Participant Has No Site',
+                message: 'This transcription\'s participant is not associated with a site. Transcriptions ' +
+                         'cannot be added or viewed until the participant is assigned to a site.',
+                error: true
+              } ).show().then( function() { self.transitionToLastState(); } );
+            }
+
+            return CnHttpFactory.instance( {
+              path: 'user',
+              data: {
+                select: { column: [ 'id', 'name', 'first_name', 'last_name' ] },
+                modifier: {
+                  join: [ {
+                    table: 'access',
+                    onleft: 'user.id',
+                    onright: 'access.user_id'
+                  }, {
+                    table: 'role',
+                    onleft: 'access.role_id',
+                    onright: 'role.id'
+                  } ],
+                  where: [ {
+                    column: 'role.name',
+                    operator: '=',
+                    value: 'typist'
+                  }, {
+                    column: 'access.site_id',
+                    operator: '=',
+                    value: response.data.site_id
+                  } ],
+                  order: 'name'
+                }
+              }
+            } ).query().then( function( response ) {
+              self.metadata.columnList.user_id.enumList = [];
+              response.data.forEach( function( item ) {
+                self.metadata.columnList.user_id.enumList.push( {
+                  value: item.id,
+                  name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
+                } );
+              } );
+            } );
+          } );
+        };
       };
 
       return {

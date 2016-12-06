@@ -21,6 +21,9 @@ class ui extends \cenozo\ui\ui
   {
     parent::build_module_list();
 
+    $module = $this->get_module( 'participant' );
+    if( !is_null( $module ) ) $module->add_child( 'transcription', 'address' );
+
     $module = $this->get_module( 'user' );
     if( !is_null( $module ) ) $module->add_child( 'transcription', 'access' );
   }
@@ -33,7 +36,17 @@ class ui extends \cenozo\ui\ui
     $db_role = lib::create( 'business\session' )->get_role();
 
     // don't generate the parent list items for typists
-    if( 'typist' != $db_role->name ) parent::build_listitem_list();
+    if( 'typist' != $db_role->name )
+    {
+      parent::build_listitem_list();
+
+      // remove certain default list items
+      $this->remove_listitem( 'Availability Types' );
+      $this->remove_listitem( 'Form Types' );
+      $this->remove_listitem( 'Quotas' );
+      $this->remove_listitem( 'Settings' );
+      $this->remove_listitem( 'Sources' );
+    }
 
     // add application-specific states to the base list
     $this->add_listitem( 'Transcriptions', 'transcription' );

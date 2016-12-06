@@ -14,11 +14,20 @@ use cenozo\lib, cenozo\log, cedar\util;
  */
 class module extends \cenozo\service\site_restricted_participant_module
 {
-  /**
+  /** 
    * Extend parent method
    */
-  public function validate()
+  public function pre_write( $record )
   {
-    parent::validate();
+    parent::pre_write( $record );
+
+    $now = util::get_datetime_object();
+
+    if( 'POST' == $this->get_method() )
+    {   
+      $session = lib::create( 'business\session' );
+      $record->site_id = $session->get_site()->id;
+      $record->start_datetime = $now;
+    }   
   }
 }

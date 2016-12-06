@@ -27,5 +27,8 @@ class module extends \cenozo\service\participant\module
       'participant.id',
       'participant_sound_file_total.participant_id'
     );
+
+    if( $select->has_table_columns( 'transcription' ) )
+      $modifier->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
   }
 }

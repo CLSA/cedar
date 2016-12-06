@@ -4,9 +4,15 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
 
   var module = cenozoApp.module( 'participant' );
 
+  // add the participant's transcription details as a hidden variable
+  module.addInput( '', 'transcription_id', {
+    column: 'transcription.id',
+    type: 'hidden'
+  } );
+
   module.addExtraOperation( 'list', {
     title: 'Update Sound Files',
-    isIncluded: function( $state, model ) { return model.listModel.updateSoundFilesAllowed(); },
+    isIncluded: function( $state, model ) { return model.listModel.canUpdateSoundFiles(); },
     operation: function( $state, model ) {
       model.listModel.updateSoundFiles().then( function() {
         model.listModel.onList( true );
@@ -17,11 +23,13 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
   // extend the list factory
   cenozo.providers.decorator( 'CnParticipantListFactory', [
     '$delegate', 'CnSession', 'CnHttpFactory', 'CnModalConfirmFactory',
-    function( $delegate, CnSession, CnHttpFactory, CnModalConfirmFactory ) { 
+    function( $delegate, CnSession, CnHttpFactory, CnModalConfirmFactory ) {
       var instance = $delegate.instance;
-      $delegate.instance = function( parentModel ) { 
+      $delegate.instance = function( parentModel ) {
         var object = instance( parentModel );
-        object.updateSoundFilesAllowed = function() { return 2 < CnSession.role.tier; };
+
+        // define custom functions
+        object.canUpdateSoundFiles = function() { return 2 < CnSession.role.tier; };
         object.updateSoundFiles = function() {
           return CnModalConfirmFactory.instance( {
             title: 'Update Sound Files',
@@ -33,6 +41,43 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
             if( response ) return CnHttpFactory.instance( { path: 'sound_file?update=1' } ).count();
           } )
         };
+
+        return object;
+      };
+      return $delegate;
+    }
+  ] );
+
+  // extend the view factory
+  cenozo.providers.decorator( 'CnParticipantViewFactory', [
+    '$delegate',
+    function( $delegate ) {
+      var instance = $delegate.instance;
+      $delegate.instance = function( parentModel, root ) {
+        var object = instance( parentModel, root );
+
+        // extend onView
+        object.onView = function() {
+          return object.$$onView().then( function() {
+            if( angular.isDefined( object.transcriptionModel ) ) {
+              object.transcriptionModel.getAddEnabled = function() {
+                return angular.isDefined( object.transcriptionModel.module.actions.add ) &&
+                       null == object.record.transcription_id;
+              };
+            }
+          } );
+        };
+
+        // overrride transcription list's onDelete
+        object.deferred.promise.then( function() {
+          if( angular.isDefined( object.transcriptionModel ) ) {
+            object.transcriptionModel.listModel.onDelete = function( record ) {
+              return object.transcriptionModel.listModel.$$onDelete( record ).then( function() {
+                object.onView();
+              } );
+            };
+          }
+        } );
         return object;
       };
       return $delegate;
