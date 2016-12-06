@@ -45,6 +45,7 @@ define( function() {
       column: 'participant.uid',
       title: 'Participant',
       type: 'string',
+      exclude: 'add',
       constant: true
     },
     user_id: {
@@ -192,6 +193,9 @@ define( function() {
         this.addModel = CnTranscriptionAddFactory.instance( this );
         this.listModel = CnTranscriptionListFactory.instance( this );
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
+
+        // don't show add button when viewing transcription list
+        this.getAddEnabled = function() { return 'transcription' != this.getSubjectFromState(); };
 
         // special function to update the user list
         this.updateUserList = function( participantIdentifier ) {
