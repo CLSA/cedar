@@ -1,0 +1,43 @@
+<cn-record-view ng-show="false" model="model"></cn-record-view>
+<div class="record-view rounded">
+  <div class="container-fluid bg-primary rounded-top"
+           data-toggle="collapse"
+           data-target="#Rey1View"
+           ng-click="collapsed = !collapsed"
+           style="cursor:pointer;">
+    <h4>
+      <div class="pull-right">
+        <i class="glyphicon glyphicon-refresh glyph-hover btn-primary btn-header"
+           ng-if="isComplete"
+           ng-click="refresh(); $event.stopPropagation()"
+           tooltip="Click to refresh data"
+           tooltip-placement="left"></i>
+        <i class="glyphicon glyph-hover btn-primary btn-header"
+           ng-class="collapsed ? 'glyphicon-collapse-down' : 'glyphicon-collapse-up'"
+           tooltip="Click to expand details"
+           tooltip-placement="left"></i>
+      </div>
+      REY 1
+      <span ng-if="!isComplete">(Loading&hellip;)</span>
+    </h4>
+  </div>
+  <form name="form" class="form-horizontal" novalidate>
+    <div class="form-body collapse" ng-class="{'in':!initCollapsed}" id="Rey1View">
+      <div class="form-group first-form-group">
+        <label for="value" class="col-sm-3 control-label">Value</label>
+        <div class="col-sm-9">
+          <select id="value"
+                  name="value"
+                  ng-model="model.viewModel.record.value"
+                  class="form-control">
+            <option value="">(empty)</option>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-footer text-right rounded-bottom bg-info">
+    </div>
+  </form>
+</div>

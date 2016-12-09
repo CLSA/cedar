@@ -11,6 +11,15 @@ SOURCE writelog.sql
 SOURCE sound_file_type.sql
 SOURCE sound_file.sql
 SOURCE transcription.sql
+SOURCE transcription_has_language.sql
+SOURCE test_type.sql
+SOURCE test_entry.sql
+SOURCE test_entry_has_language.sql
+SOURCE test_entry_action.sql
+SOURCE rey1_data.sql
+SOURCE rey2_data.sql
+SOURCE aft_data.sql
+SOURCE mat_data.sql
 SOURCE user_has_cohort.sql
 SOURCE user_has_language.sql
 

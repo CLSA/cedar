@@ -24,6 +24,12 @@ class ui extends \cenozo\ui\ui
     $module = $this->get_module( 'participant' );
     if( !is_null( $module ) ) $module->add_child( 'transcription', 'address' );
 
+    $module = $this->get_module( 'test_entry' );
+    if( !is_null( $module ) ) $module->add_child( 'test_entry_action' );
+
+    $module = $this->get_module( 'transcription' );
+    if( !is_null( $module ) ) $module->add_child( 'test_entry' );
+
     $module = $this->get_module( 'user' );
     if( !is_null( $module ) ) $module->add_child( 'transcription', 'access' );
   }

@@ -11,13 +11,14 @@ define( function() {
       pluralPossessive: 'transcriptions\''
     },
     columnList: {
-      user: {
-        column: 'user.name',
-        title: 'User'
-      },
       uid: {
         column: 'participant.uid',
         title: 'Participant'
+      },
+      user: {
+        column: 'user.name',
+        title: 'User',
+        isIncluded: function( $state, model ) { return !model.isTypist(); }
       },
       site: {
         column: 'site.name',
@@ -183,16 +184,18 @@ define( function() {
   cenozo.providers.factory( 'CnTranscriptionModelFactory', [
     'CnBaseModelFactory',
     'CnTranscriptionAddFactory', 'CnTranscriptionListFactory', 'CnTranscriptionViewFactory',
-    'CnHttpFactory', 'CnModalMessageFactory',
+    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory',
     function( CnBaseModelFactory,
               CnTranscriptionAddFactory, CnTranscriptionListFactory, CnTranscriptionViewFactory,
-              CnHttpFactory, CnModalMessageFactory ) {
+              CnSession, CnHttpFactory, CnModalMessageFactory ) {
       var object = function( root ) {
         var self = this;
         CnBaseModelFactory.construct( this, module );
         this.addModel = CnTranscriptionAddFactory.instance( this );
         this.listModel = CnTranscriptionListFactory.instance( this );
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
+
+        this.isTypist = function() { return 'typist' == CnSession.role.name; };
 
         // don't show add button when viewing transcription list
         this.getAddEnabled = function() { return 'transcription' != this.getSubjectFromState(); };
