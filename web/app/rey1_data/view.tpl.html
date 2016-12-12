@@ -29,6 +29,7 @@
           <select id="value"
                   name="value"
                   ng-model="model.viewModel.record.value"
+                  ng-change="patch()"
                   class="form-control">
             <option value="">(empty)</option>
             <option value="1">Yes</option>

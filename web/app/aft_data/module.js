@@ -31,6 +31,11 @@ define( function() {
         scope: { model: '=?' },
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnAftDataModelFactory.root;
+
+          $scope.patch = function() {
+            if( $scope.model.getEditEnabled() )
+              $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
+          };
         }
       };
     }
