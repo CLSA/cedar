@@ -43,25 +43,20 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnRey2DataViewFactory', [
-    'CnBaseViewFactory',
-    function( CnBaseViewFactory ) {
-      var object = function( parentModel, root ) { CnBaseViewFactory.construct( this, parentModel, root ); }
+    'CnBaseDataViewFactory',
+    function( CnBaseDataViewFactory ) {
+      var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
   ] );
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnRey2DataModelFactory', [
-    'CnBaseModelFactory', 'CnRey2DataViewFactory', '$state',
-    function( CnBaseModelFactory, CnRey2DataViewFactory, $state ) {
+    'CnBaseDataModelFactory', 'CnRey2DataViewFactory',
+    function( CnBaseDataModelFactory, CnRey2DataViewFactory ) {
       var object = function( root ) {
-        var self = this;
-        CnBaseModelFactory.construct( this, module );
+        CnBaseDataModelFactory.construct( this, module );
         this.viewModel = CnRey2DataViewFactory.instance( this, root );
-
-        this.getServiceResourcePath = function( resource ) {
-          return 'rey2_data/test_entry_id=' + $state.params.identifier;
-        };
       };
 
       return {
