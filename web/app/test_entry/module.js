@@ -26,7 +26,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         column: 'test_type.name',
         title: 'Type'
       },
-      completed: {
+      submitted: {
         title: 'Completed',
         type: 'boolean'
       }
@@ -48,8 +48,8 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       title: 'Type',
       constant: true
     },
-    completed: {
-      title: 'Completed',
+    submitted: {
+      title: 'Submitted',
       type: 'boolean',
       constant: true
     }

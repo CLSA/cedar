@@ -18,7 +18,8 @@ define( function() {
   } );
 
   module.addInputGroup( '', {
-    value: { type: 'boolean' },
+    submitted: { column: 'test_entry.submitted', type: 'boolean' },
+    value: { type: 'boolean' }
   } );
 
   /* ######################################################################################################## */
@@ -46,9 +47,6 @@ define( function() {
             if( $scope.model.getEditEnabled() )
               $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
           };
-
-
-
         }
       };
     }

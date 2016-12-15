@@ -37,8 +37,6 @@ define( 'VOIP_CEDAR_BASE_ERRNO',       950000 );
 /**
  * "notice" error codes
  */
-define( 'NOTICE__CEDAR_BUSINESS_ASSIGNMENT_MANAGER__RESET_TEST_ENTRY__ERRNO',
-        NOTICE_CEDAR_BASE_ERRNO + 1 );
 
 /**
  * "permission" error codes
@@ -47,10 +45,8 @@ define( 'NOTICE__CEDAR_BUSINESS_ASSIGNMENT_MANAGER__RESET_TEST_ENTRY__ERRNO',
 /**
  * "runtime" error codes
  */
-define( 'RUNTIME__CEDAR_BUSINESS_ASSIGNMENT_MANAGER__RETURN_TEST_ENTRY__ERRNO',
-        RUNTIME_CEDAR_BASE_ERRNO + 1 );
 define( 'RUNTIME__CEDAR_DATABASE_TEST_ENTRY__GET_DATA_TABLE_NAME__ERRNO',
-        RUNTIME_CEDAR_BASE_ERRNO + 2 );
+        RUNTIME_CEDAR_BASE_ERRNO + 1 );
 
 /**
  * "system" error codes

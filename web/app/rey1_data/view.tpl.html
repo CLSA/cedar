@@ -40,10 +40,16 @@
     </div>
     <div class="form-footer text-right rounded-bottom bg-info">
       <div class="btn-group pull-left">
-        <button class="btn btn-default">
+        <button ng-if="model.viewModel.record.submitted"
+                class="btn btn-default"
+                ng-disabled="model.isWorking || !isComplete"
+                ng-click="model.viewModel.returnToTypist()">
           Return to Typist
         </button>
-        <button class="btn btn-default">
+        <button ng-if="!model.viewModel.record.submitted"
+                class="btn btn-default"
+                ng-disabled="model.isWorking || !isComplete"
+                ng-click="model.viewModel.forceSubmit()">
           Force Submit
         </button>
       </div>

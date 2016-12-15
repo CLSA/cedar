@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS test_entry (
   create_timestamp TIMESTAMP NOT NULL,
   transcription_id INT UNSIGNED NOT NULL,
   test_type_id INT UNSIGNED NOT NULL,
-  completed TINYINT(1) NOT NULL DEFAULT 0,
+  submitted TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (id),
   INDEX fk_transcription_id (transcription_id ASC),
   INDEX fk_test_type_id (test_type_id ASC),
