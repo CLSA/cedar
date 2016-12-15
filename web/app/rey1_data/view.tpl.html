@@ -1,4 +1,3 @@
-<cn-record-view ng-show="false" model="model"></cn-record-view>
 <div class="record-view rounded">
   <div class="container-fluid bg-primary rounded-top"
            data-toggle="collapse"
@@ -30,6 +29,7 @@
                   name="value"
                   ng-model="model.viewModel.record.value"
                   ng-change="patch()"
+                  ng-disabled="!isComplete"
                   class="form-control">
             <option value="">(empty)</option>
             <option value="1">Yes</option>
@@ -39,6 +39,19 @@
       </div>
     </div>
     <div class="form-footer text-right rounded-bottom bg-info">
+      <div class="btn-group pull-left">
+        <button class="btn btn-default">
+          Return to Typist
+        </button>
+        <button class="btn btn-default">
+          Force Submit
+        </button>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary">
+          View Transcription
+        </button>
+      </div>
     </div>
   </form>
 </div>

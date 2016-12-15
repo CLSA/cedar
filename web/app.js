@@ -20,6 +20,8 @@ cenozo.factory( 'CnBaseDataViewFactory', [
 
         // write a custom onView function
         object.onView = function() {
+          object.isLoading = true;
+
           // start by confirming whether or not this is the correct test type for the test entry
           var path = parentModel.getServiceCollectionPath();
           var type = path.substring( path.lastIndexOf( '/' ) + 1 )
@@ -30,7 +32,11 @@ cenozo.factory( 'CnBaseDataViewFactory', [
             path: path,
             data: { select: { column: [ { table: 'test_type', column: 'name' } ] } } 
           } ).get().then( function( response ) { 
-            if( type == response.data.name ) return object.$$onView();
+            if( type == response.data.name ) {
+              return object.$$onView().then( function() {
+                object.record.value = object.record.value ? 1 : 0;
+              } );
+            }
           } );
         };  
       }

@@ -32,10 +32,23 @@ define( function() {
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnRey1DataModelFactory.root;
 
+          $scope.isComplete = false;
+          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
+
+          $scope.refresh = function() {
+            if( $scope.isComplete ) {
+              $scope.isComplete = false;
+              $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
+            }
+          };
+
           $scope.patch = function() {
             if( $scope.model.getEditEnabled() )
               $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
           };
+
+
+
         }
       };
     }
