@@ -2,52 +2,13 @@ define( function() {
   'use strict';
 
   try { var module = cenozoApp.module( 'aft_data', true ); } catch( err ) { console.warn( err ); return; }
-  angular.extend( module, {
-    identifier: {
-      parent: {
-        subject: 'test_entry',
-        column: 'test_entry_id',
-      }
-    },
-    name: {
-      singular: 'AFT Data',
-      plural: 'AFT Data',
-      possessive: 'AFT Data\'s',
-      pluralPossessive: 'AFT Data\''
-    }
-  } );
-
-  module.addInputGroup( '', {
-    value: { type: 'boolean' },
-  } );
+  cenozoApp.initDataModule( module, 'AFT' );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnAftDataView', [
     'CnAftDataModelFactory',
     function( CnAftDataModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnAftDataModelFactory.root;
-
-          $scope.isComplete = false;
-          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
-
-          $scope.refresh = function() {
-            if( $scope.isComplete ) {
-              $scope.isComplete = false;
-              $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
-            }
-          };
-
-          $scope.patch = function() {
-            if( $scope.model.getEditEnabled() )
-              $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
-          };
-        }
-      };
+      return cenozoApp.initDataViewDirective( module, CnAftDataModelFactory.root );
     }
   ] );
 

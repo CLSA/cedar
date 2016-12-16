@@ -2,53 +2,13 @@ define( function() {
   'use strict';
 
   try { var module = cenozoApp.module( 'rey1_data', true ); } catch( err ) { console.warn( err ); return; }
-  angular.extend( module, {
-    identifier: {
-      parent: {
-        subject: 'test_entry',
-        column: 'test_entry_id',
-      }
-    },
-    name: {
-      singular: 'REY1 Data',
-      plural: 'REY1 Data',
-      possessive: 'REY1 Data\'s',
-      pluralPossessive: 'REY1 Data\''
-    }
-  } );
-
-  module.addInputGroup( '', {
-    submitted: { column: 'test_entry.submitted', type: 'boolean' },
-    value: { type: 'boolean' }
-  } );
+  cenozoApp.initDataModule( module, 'REY 1' );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnRey1DataView', [
     'CnRey1DataModelFactory',
     function( CnRey1DataModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnRey1DataModelFactory.root;
-
-          $scope.isComplete = false;
-          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
-
-          $scope.refresh = function() {
-            if( $scope.isComplete ) {
-              $scope.isComplete = false;
-              $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
-            }
-          };
-
-          $scope.patch = function() {
-            if( $scope.model.getEditEnabled() )
-              $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
-          };
-        }
-      };
+      return cenozoApp.initDataViewDirective( module, CnRey1DataModelFactory.root );
     }
   ] );
 

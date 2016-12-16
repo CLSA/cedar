@@ -11,21 +11,75 @@ cenozo.controller( 'HeaderCtrl', [
 ] );
 
 /* ######################################################################################################## */
+cenozoApp.initDataModule = function( module, name ) {
+  angular.extend( module, {
+    identifier: {
+      parent: {
+        subject: 'test_entry',
+        column: 'test_entry_id'
+      }
+    },
+    name: {
+      singular: name + ' Data',
+      plural: name + ' Data',
+      possessive: name + ' Data\'s',
+      pluralPossessive: name + ' Data\'s'
+    }
+  } );
+
+  // these inputs are not used directly, but they are needed for the custom module
+  module.addInputGroup( '', {
+    transcription_id: { column: 'test_entry.transcription_id', type: 'string' },
+    submitted: { column: 'test_entry.submitted', type: 'boolean' },
+    value: { type: 'boolean' }
+  } );
+};
+
+/* ######################################################################################################## */
+cenozoApp.initDataViewDirective = function( module, model ) {
+  return {
+    templateUrl: module.getFileUrl( 'view.tpl.html' ),
+    restrict: 'E',
+    scope: { model: '=?' },
+    controller: function( $scope ) {
+      if( angular.isUndefined( $scope.model ) ) $scope.model = model;
+      
+      $scope.isComplete = false;
+      $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
+      
+      $scope.refresh = function() {
+        if( $scope.isComplete ) { 
+          $scope.isComplete = false;
+          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
+        } 
+      };
+      
+      $scope.patch = function() {
+        if( $scope.model.getEditEnabled() )
+          $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
+      };  
+    } 
+  };
+};
+
+
+/* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory',
-  function( CnBaseViewFactory, CnHttpFactory ) {
+  'CnBaseViewFactory', 'CnHttpFactory', '$state',
+  function( CnBaseViewFactory, CnHttpFactory, $state ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
 
-        function getTranscriptionPath() {
+        object.getTranscriptionPath = function() {
           var path = parentModel.getServiceCollectionPath();
           return path.substring( 0, path.lastIndexOf( '/' ) );
         }
 
-        function getDataType() {
+        object.getDataType = function() {
           var path = parentModel.getServiceCollectionPath();
-          return path.substring( path.lastIndexOf( '/' ) + 1 ).substring( 0, path.indexOf( '_' ) ).toUpperCase();
+          var type = path.substring( path.lastIndexOf( '/' ) + 1 );
+          return type.substring( 0, type.indexOf( '_' ) ).toUpperCase();
         }
 
         object.isWorking = false;
@@ -36,10 +90,10 @@ cenozo.factory( 'CnBaseDataViewFactory', [
 
           // start by confirming whether or not this is the correct test type for the test entry
           return CnHttpFactory.instance( {
-            path: getTranscriptionPath(),
+            path: object.getTranscriptionPath(),
             data: { select: { column: [ { table: 'test_type', column: 'name' } ] } } 
           } ).get().then( function( response ) { 
-            if( getDataType() == response.data.name ) {
+            if( object.getDataType() == response.data.name ) {
               return object.$$onView().then( function() {
                 object.record.value = object.record.value ? 1 : 0;
               } );
@@ -50,7 +104,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
         object.returnToTypist = function() {
           object.isWorking = true;
           return CnHttpFactory.instance( {
-            path: getTranscriptionPath(),
+            path: object.getTranscriptionPath(),
             data: { submitted: false }
           } ).patch().then( function() {
             object.record.submitted = false;
@@ -61,12 +115,16 @@ cenozo.factory( 'CnBaseDataViewFactory', [
         object.forceSubmit = function() {
           object.isWorking = true;
           return CnHttpFactory.instance( {
-            path: getTranscriptionPath(),
+            path: object.getTranscriptionPath(),
             data: { submitted: true }
           } ).patch().then( function() {
             object.record.submitted = true;
             object.isWorking = false;
           } );
+        };
+
+        object.viewTranscription = function() {
+          return $state.go( 'transcription.view', { identifier: object.record.transcription_id } );
         };
       }
     };

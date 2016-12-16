@@ -27,7 +27,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         title: 'Type'
       },
       submitted: {
-        title: 'Completed',
+        title: 'Submitted',
         type: 'boolean'
       }
     },
