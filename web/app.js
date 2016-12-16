@@ -29,7 +29,6 @@ cenozoApp.initDataModule = function( module, name ) {
 
   // these inputs are not used directly, but they are needed for the custom module
   module.addInputGroup( '', {
-    transcription_id: { column: 'test_entry.transcription_id', type: 'string' },
     submitted: { column: 'test_entry.submitted', type: 'boolean' },
     value: { type: 'boolean' }
   } );
@@ -40,19 +39,12 @@ cenozoApp.initDataViewDirective = function( module, model ) {
   return {
     templateUrl: module.getFileUrl( 'view.tpl.html' ),
     restrict: 'E',
-    scope: { model: '=?' },
+    scope: { model: '=?', editEnabled: '=' },
     controller: function( $scope ) {
       if( angular.isUndefined( $scope.model ) ) $scope.model = model;
       
       $scope.isComplete = false;
       $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
-      
-      $scope.refresh = function() {
-        if( $scope.isComplete ) { 
-          $scope.isComplete = false;
-          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
-        } 
-      };
       
       $scope.patch = function() {
         if( $scope.model.getEditEnabled() )
@@ -65,13 +57,13 @@ cenozoApp.initDataViewDirective = function( module, model ) {
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory', '$state',
-  function( CnBaseViewFactory, CnHttpFactory, $state ) {
+  'CnBaseViewFactory', 'CnHttpFactory',
+  function( CnBaseViewFactory, CnHttpFactory ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
 
-        object.getTranscriptionPath = function() {
+        object.getTestEntryPath = function() {
           var path = parentModel.getServiceCollectionPath();
           return path.substring( 0, path.lastIndexOf( '/' ) );
         }
@@ -82,50 +74,22 @@ cenozo.factory( 'CnBaseDataViewFactory', [
           return type.substring( 0, type.indexOf( '_' ) ).toUpperCase();
         }
 
-        object.isWorking = false;
-
         // write a custom onView function
         object.onView = function() {
           object.isLoading = true;
 
           // start by confirming whether or not this is the correct test type for the test entry
           return CnHttpFactory.instance( {
-            path: object.getTranscriptionPath(),
+            path: object.getTestEntryPath(),
             data: { select: { column: [ { table: 'test_type', column: 'name' } ] } } 
           } ).get().then( function( response ) { 
             if( object.getDataType() == response.data.name ) {
               return object.$$onView().then( function() {
-                object.record.value = object.record.value ? 1 : 0;
+                if( 'boolean' == typeof object.record.value ) object.record.value = object.record.value ? 1 : 0;
               } );
             }
           } );
         };  
-
-        object.returnToTypist = function() {
-          object.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: object.getTranscriptionPath(),
-            data: { submitted: false }
-          } ).patch().then( function() {
-            object.record.submitted = false;
-            object.isWorking = false;
-          } );
-        };
-
-        object.forceSubmit = function() {
-          object.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: object.getTranscriptionPath(),
-            data: { submitted: true }
-          } ).patch().then( function() {
-            object.record.submitted = true;
-            object.isWorking = false;
-          } );
-        };
-
-        object.viewTranscription = function() {
-          return $state.go( 'transcription.view', { identifier: object.record.transcription_id } );
-        };
       }
     };
   }
@@ -133,8 +97,8 @@ cenozo.factory( 'CnBaseDataViewFactory', [
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataModelFactory', [
-  'CnBaseModelFactory', '$state',
-  function( CnBaseModelFactory, $state ) {
+  'CnBaseModelFactory', 'CnSession', '$state',
+  function( CnBaseModelFactory, CnSession, $state ) {
     return {
       construct: function( object, module ) {
         CnBaseModelFactory.construct( object, module );
@@ -143,6 +107,11 @@ cenozo.factory( 'CnBaseDataModelFactory', [
           var path = object.getServiceCollectionPath();
           var type = path.substring( path.lastIndexOf( '/' ) + 1 );
           return type + '/test_entry_id=' + $state.params.identifier;
+        };
+
+        object.isTypist = function() {
+          console.log( 'typist' == CnSession.role.name );
+          return 'typist' == CnSession.role.name;
         };
       }
     };

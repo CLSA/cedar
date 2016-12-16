@@ -1,65 +1,15 @@
-<div class="record-view rounded">
-  <div class="container-fluid bg-primary rounded-top"
-           data-toggle="collapse"
-           data-target="#View"
-           ng-click="collapsed = !collapsed"
-           style="cursor:pointer;">
-    <h4>
-      <div class="pull-right">
-        <i class="glyphicon glyphicon-refresh glyph-hover btn-primary btn-header"
-           ng-if="isComplete"
-           ng-click="refresh(); $event.stopPropagation()"
-           tooltip="Click to refresh data"
-           tooltip-placement="left"></i>
-        <i class="glyphicon glyph-hover btn-primary btn-header"
-           ng-class="collapsed ? 'glyphicon-collapse-down' : 'glyphicon-collapse-up'"
-           tooltip="Click to expand details"
-           tooltip-placement="left"></i>
-      </div>
-      {{ model.module.name.singular }}
-      <span ng-if="!isComplete">(Loading&hellip;)</span>
-    </h4>
+<div class="form-group first-form-group">
+  <label for="value" class="col-sm-3 control-label">Value</label>
+  <div class="col-sm-9">
+    <select id="value"
+            name="value"
+            ng-model="model.viewModel.record.value"
+            ng-change="patch()"
+            ng-disabled="!isComplete || !editEnabled"
+            class="form-control">
+      <option value="">(empty)</option>
+      <option value="1">Yes</option>
+      <option value="0">No</option>
+    </select>
   </div>
-  <form name="form" class="form-horizontal" novalidate>
-    <div class="form-body collapse" ng-class="{'in':!initCollapsed}" id="View">
-      <div class="form-group first-form-group">
-        <label for="value" class="col-sm-3 control-label">Value</label>
-        <div class="col-sm-9">
-          <select id="value"
-                  name="value"
-                  ng-model="model.viewModel.record.value"
-                  ng-change="patch()"
-                  ng-disabled="!isComplete"
-                  class="form-control">
-            <option value="">(empty)</option>
-            <option value="1">Yes</option>
-            <option value="0">No</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="form-footer text-right rounded-bottom bg-info">
-      <div class="btn-group pull-left">
-        <button ng-if="model.viewModel.record.submitted"
-                class="btn btn-default"
-                ng-disabled="model.isWorking || !isComplete"
-                ng-click="model.viewModel.returnToTypist()">
-          Return to Typist
-        </button>
-        <button ng-if="!model.viewModel.record.submitted"
-                class="btn btn-default"
-                ng-disabled="model.isWorking || !isComplete"
-                ng-click="model.viewModel.forceSubmit()">
-          Force Submit
-        </button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-primary"
-                ng-disabled="!isComplete"
-                ng-click="model.viewModel.viewTranscription()">
-          View Transcription
-        </button>
-      </div>
-    </div>
-  </form>
 </div>

@@ -1,9 +1,78 @@
 <cn-record-view ng-show="false" model="model"></cn-record-view>
-<div class="vertical-spacer" ng-switch="model.viewModel.record.test_type_name">
-  <cn-aft-data-view ng-switch-when="AFT" model="model.viewModel.AftDataModel"></cn-aft-data-view>
-  <cn-mat-data-view ng-switch-when="MAT" model="model.viewModel.MatDataModel"></cn-mat-data-view>
-  <cn-rey1-data-view ng-switch-when="REY1" model="model.viewModel.Rey1DataModel"></cn-rey1-data-view>
-  <cn-rey2-data-view ng-switch-when="REY2" model="model.viewModel.Rey2DataModel"></cn-rey2-data-view>
+<div class="vertical-spacer">
+  <div class="record-view rounded">
+    <div class="container-fluid bg-primary rounded-top"
+             data-toggle="collapse"
+             data-target="#View"
+             ng-click="collapsed = !collapsed"
+             style="cursor:pointer;">
+      <h4>
+        <div class="pull-right">
+          <i class="glyphicon glyphicon-refresh glyph-hover btn-primary btn-header"
+             ng-if="isComplete"
+             ng-click="refresh(); $event.stopPropagation()"
+             tooltip="Click to refresh data"
+             tooltip-placement="left"></i>
+          <i class="glyphicon glyph-hover btn-primary btn-header"
+             ng-class="collapsed ? 'glyphicon-collapse-down' : 'glyphicon-collapse-up'"
+             tooltip="Click to expand details"
+             tooltip-placement="left"></i>
+        </div>
+        {{ model.viewModel.record.test_type_name }} Data
+        <span ng-if="!model.getEditEnabled()">(read only)</span>
+        <span ng-if="!isComplete">(Loading&hellip;)</span>
+      </h4>
+    </div>
+    <form name="form" class="form-horizontal" novalidate>
+      <div id="View"
+           class="form-body collapse"
+           ng-class="{'in':!initCollapsed}"
+           ng-switch="model.viewModel.record.test_type_name">
+        <cn-aft-data-view ng-switch-when="AFT"
+                          model="model.viewModel.AftDataModel"
+                          edit-enabled="model.getEditEnabled()"></cn-aft-data-view>
+        <cn-mat-data-view ng-switch-when="MAT"
+                          model="model.viewModel.MatDataModel"
+                          edit-enabled="model.getEditEnabled()"></cn-mat-data-view>
+        <cn-rey1-data-view ng-switch-when="REY1"
+                           model="model.viewModel.Rey1DataModel"
+                           edit-enabled="model.getEditEnabled()"></cn-rey1-data-view>
+        <cn-rey2-data-view ng-switch-when="REY2"
+                           model="model.viewModel.Rey2DataModel"
+                           edit-enabled="model.getEditEnabled()"></cn-rey2-data-view>
+      </div>
+      <div class="form-footer text-right rounded-bottom bg-info">
+        <div class="btn-group pull-left" ng-if="isTypist()">
+          <button class="btn btn-default"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="model.viewModel.submit()">
+            Submit
+          </button>
+        </div>
+        <div class="btn-group pull-left" ng-if="!isTypist()">
+          <button ng-if="model.viewModel.record.submitted"
+                  class="btn btn-default"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="model.viewModel.returnToTypist()">
+            Return to Typist
+          </button>
+          <button ng-if="!model.viewModel.record.submitted"
+                  class="btn btn-default"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="model.viewModel.forceSubmit()">
+            Force Submit
+          </button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary"
+                  ng-disabled="!isComplete"
+                  ng-click="model.viewModel.viewTranscription()">
+            View Transcription
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 <div class="vertical-spacer" ng-repeat="child in model.module.children">
   <cn-record-list ng-if="model.viewModel[child.subject.camel+'Model']"

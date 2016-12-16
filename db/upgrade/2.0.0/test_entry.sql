@@ -22,3 +22,24 @@ CREATE TABLE IF NOT EXISTS test_entry (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS test_entry_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER test_entry_AFTER_UPDATE AFTER UPDATE ON test_entry FOR EACH ROW
+BEGIN
+  IF NEW.submitted != OLD.submitted THEN
+    -- set parent transcription's end_datetime based on whether all test entries have been submitted
+    SET @unsubmitted = (
+      SELECT COUNT(*)
+      FROM test_entry
+      WHERE transcription_id = NEW.transcription_id
+      AND submitted = 0
+    );
+    UPDATE transcription
+    SET end_datetime = IF( @unsubmitted, NULL, UTC_TIMESTAMP() )
+    WHERE id = NEW.transcription_id;
+  END IF;
+END$$
+
+DELIMITER ;
