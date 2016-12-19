@@ -1,1 +1,2 @@
-cron.daily
+daily_cron
+minute_cron
