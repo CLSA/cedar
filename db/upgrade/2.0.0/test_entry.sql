@@ -29,6 +29,14 @@ DROP TRIGGER IF EXISTS test_entry_AFTER_UPDATE $$
 CREATE DEFINER = CURRENT_USER TRIGGER test_entry_AFTER_UPDATE AFTER UPDATE ON test_entry FOR EACH ROW
 BEGIN
   IF NEW.submitted != OLD.submitted THEN
+    -- close any open activity if the test entry has been submitted
+    IF NEW.submitted THEN
+      UPDATE test_entry_activity
+      SET end_datetime = UTC_TIMESTAMP()
+      WHERE test_entry_id = NEW.id
+      AND end_datetime IS NULL;
+    END IF;
+
     -- set parent transcription's end_datetime based on whether all test entries have been submitted
     SET @unsubmitted = (
       SELECT COUNT(*)

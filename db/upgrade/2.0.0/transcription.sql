@@ -52,3 +52,21 @@ DELIMITER ;
 -- now call the procedure and remove the procedure
 CALL patch_transcription();
 DROP PROCEDURE IF EXISTS patch_transcription;
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS transcription_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER transcription_AFTER_UPDATE AFTER UPDATE ON transcription FOR EACH ROW
+BEGIN
+  IF OLD.user_id IS NOT NULL AND NEW.user_id != OLD.user_id THEN
+    -- close any open activity belonging to the old user
+    UPDATE test_entry_activity
+    JOIN test_entry ON test_entry_activity.test_entry_id = test_entry.id
+    SET test_entry_activity.end_datetime = UTC_TIMESTAMP()
+    WHERE test_entry_activity.user_id = OLD.user_id
+    AND test_entry_activity.end_datetime IS NULL
+    AND test_entry.transcription_id = NEW.id;  
+  END IF;
+END$$
+
+DELIMITER ;
