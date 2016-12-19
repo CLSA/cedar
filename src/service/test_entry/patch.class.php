@@ -22,6 +22,6 @@ class patch extends \cenozo\service\patch
     parent::finish();
 
     // make a note that the test entry has been opened (this will only happen for typists)
-    if( $this->get_argument( 'close', false ) ) $this->get_leaf_record()->close_action();
+    if( $this->get_argument( 'close', false ) ) $this->get_leaf_record()->close_activity();
   }
 }

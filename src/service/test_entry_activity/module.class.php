@@ -6,7 +6,7 @@
  * @filesource
  */
 
-namespace cedar\service\test_entry_action;
+namespace cedar\service\test_entry_activity;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
@@ -28,10 +28,10 @@ class module extends \cenozo\service\site_restricted_participant_module
     if( 300 > $this->get_status()->get_code() )
     {
       // special restricts for typists
-      $db_test_entry_action = $this->get_resource();
-      if( 'typist' == $db_role->name && !is_null( $db_test_entry_action ) )
+      $db_test_entry_activity = $this->get_resource();
+      if( 'typist' == $db_role->name && !is_null( $db_test_entry_activity ) )
       {
-        $db_transcription = $db_test_entry_action->get_test_entry()->get_transcription();
+        $db_transcription = $db_test_entry_activity->get_test_entry()->get_transcription();
         if( $db_user->id != $db_transcription->user_id || !is_null( $db_transcription->end_datetime ) )
         {
           $this->get_status()->set_code( 403 );
@@ -51,7 +51,7 @@ class module extends \cenozo\service\site_restricted_participant_module
     $db_role = $session->get_role();
     $db_user = $session->get_user();
 
-    $modifier->join( 'test_entry', 'test_entry_action.test_entry_id', 'test_entry.id' );
+    $modifier->join( 'test_entry', 'test_entry_activity.test_entry_id', 'test_entry.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
 
     // special restricts for typists

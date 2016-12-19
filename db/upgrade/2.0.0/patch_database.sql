@@ -15,7 +15,7 @@ SOURCE transcription_has_language.sql
 SOURCE test_type.sql
 SOURCE test_entry.sql
 SOURCE test_entry_has_language.sql
-SOURCE test_entry_action.sql
+SOURCE test_entry_activity.sql
 SOURCE rey1_data.sql
 SOURCE rey2_data.sql
 SOURCE aft_data.sql

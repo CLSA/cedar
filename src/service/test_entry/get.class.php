@@ -22,6 +22,6 @@ class get extends \cenozo\service\get
     parent::finish();
 
     // make a note that the test entry has been opened (this will only happen for typists)
-    $this->get_leaf_record()->open_action();
+    $this->get_leaf_record()->open_activity();
   }
 }
