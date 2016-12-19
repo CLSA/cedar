@@ -102,7 +102,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         },
         link: function( scope, element ) {
           // close the test entry
-          scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close(); } );
+          scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close( false ); } );
         }
       };
     }
@@ -181,14 +181,19 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           } );
         };
 
-        this.close = function() {
+        this.close = function( transition ) {
+          if( angular.isUndefined( transition ) ) transition = true;
           if( 'typist' == CnSession.role.name ) {
             return CnHttpFactory.instance( {
               path: this.parentModel.getServiceResourcePath() + '?close=1'
             } ).patch().then( function() {
               self.record.submitted = true;
               self.isWorking = false;
-              return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
+              if( transition ) {
+                return self.parentModel.transitionToParentViewState(
+                  'transcription', self.record.transcription_id
+                );
+              }
             } );
           }
         };
