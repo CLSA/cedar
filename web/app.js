@@ -26,12 +26,6 @@ cenozoApp.initDataModule = function( module, name ) {
       pluralPossessive: name + ' Data\'s'
     }
   } );
-
-  // these inputs are not used directly, but they are needed for the custom module
-  module.addInputGroup( '', {
-    submitted: { column: 'test_entry.submitted', type: 'boolean' },
-    value: { type: 'boolean' }
-  } );
 };
 
 /* ######################################################################################################## */

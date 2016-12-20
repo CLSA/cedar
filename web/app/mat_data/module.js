@@ -3,6 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'mat_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'MAT' );
+  module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnMatDataView', [

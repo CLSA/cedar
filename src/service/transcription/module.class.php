@@ -48,11 +48,26 @@ class module extends \cenozo\service\site_restricted_participant_module
     $db_role = $session->get_role();
     $db_user = $session->get_user();
 
+    if( $select->has_table_columns( 'user' ) ) $modifier->left_join( 'user', 'transcription.user_id', 'user.id' );
+
     // special restricts for typists
     if( 'typist' == $db_role->name )
     {
       $modifier->where( 'transcription.user_id', '=', $db_user->id );
-      $modifier->where( 'transcription.end_datetime', '=', NULL );
+      $modifier->where( 'transcription.assigned_count', '>', 0 );
+    }
+
+    if( $select->has_column( 'state' ) )
+    {
+      $select->add_column(
+        'CONCAT_WS( ", ", '.
+          'IF( 0 < assigned_count, "assigned", NULL ), '.
+          'IF( 0 < deferred_count, "deferred", NULL ), '.
+          'IF( 0 = assigned_count AND 0 = deferred_count, "completed", NULL ) '.
+        ')',
+        'state',
+        false
+      );
     }
   }
 

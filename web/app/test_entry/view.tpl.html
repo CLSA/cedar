@@ -42,26 +42,51 @@
                            edit-enabled="model.getEditEnabled()"></cn-rey2-data-view>
       </div>
       <div class="form-footer text-right rounded-bottom bg-info">
+
         <div class="btn-group pull-left" ng-if="isTypist()">
+          <button class="btn btn-default"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="model.viewModel.defer()">
+            Defer
+          </button>
           <button class="btn btn-default"
                   ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
                   ng-click="model.viewModel.submit()">
             Submit
           </button>
         </div>
-        <div class="btn-group pull-left" ng-if="!isTypist()">
-          <button ng-if="model.viewModel.record.submitted"
-                  class="btn btn-default"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                  ng-click="model.viewModel.returnToTypist()">
-            Return to Typist
-          </button>
-          <button ng-if="!model.viewModel.record.submitted"
-                  class="btn btn-default"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                  ng-click="model.viewModel.forceSubmit()">
-            Force Submit
-          </button>
+        <div ng-if="!isTypist()">
+          <div class="btn-group pull-left" ng-if="'assigned' == model.viewModel.record.state">
+            <button class="btn btn-default"
+                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-click="model.viewModel.defer()">
+              Defer
+            </button>
+            <button class="btn btn-default"
+                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-click="model.viewModel.submit()">
+              Force Submit
+            </button>
+          </div>
+          <div class="btn-group pull-left" ng-if="'deferred' == model.viewModel.record.state">
+            <button class="btn btn-default"
+                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-click="model.viewModel.returnToTypist()">
+              Return to Typist
+            </button>
+            <button class="btn btn-default"
+                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-click="model.viewModel.submit()">
+              Force Submit
+            </button>
+          </div>
+          <div class="btn-group pull-left" ng-if="'submitted' == model.viewModel.record.state">
+            <button class="btn btn-default"
+                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-click="model.viewModel.returnToTypist()">
+              Return to Typist
+            </button>
+          </div>
         </div>
         <div class="btn-group">
           <button class="btn btn-primary"

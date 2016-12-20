@@ -3,6 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'aft_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'AFT' );
+  module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnAftDataView', [

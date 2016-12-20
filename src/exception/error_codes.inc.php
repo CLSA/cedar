@@ -9,14 +9,14 @@
 /**
  * Error number category defines.
  */
-define( 'ARGUMENT_CEDAR_BASE_ERRNO',   150000 );
-define( 'DATABASE_CEDAR_BASE_ERRNO',   250000 );
-define( 'LDAP_CEDAR_BASE_ERRNO',       350000 );
-define( 'NOTICE_CEDAR_BASE_ERRNO',     450000 );
-define( 'PERMISSION_CEDAR_BASE_ERRNO', 550000 );
-define( 'RUNTIME_CEDAR_BASE_ERRNO',    650000 );
-define( 'SYSTEM_CEDAR_BASE_ERRNO',     750000 );
-define( 'VOIP_CEDAR_BASE_ERRNO',       950000 );
+define( 'ARGUMENT_CEDAR_BASE_ERRNO',   170000 );
+define( 'DATABASE_CEDAR_BASE_ERRNO',   270000 );
+define( 'LDAP_CEDAR_BASE_ERRNO',       370000 );
+define( 'NOTICE_CEDAR_BASE_ERRNO',     470000 );
+define( 'PERMISSION_CEDAR_BASE_ERRNO', 570000 );
+define( 'RUNTIME_CEDAR_BASE_ERRNO',    670000 );
+define( 'SYSTEM_CEDAR_BASE_ERRNO',     770000 );
+define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
 
 /**
  * "argument" error codes
@@ -47,6 +47,8 @@ define( 'VOIP_CEDAR_BASE_ERRNO',       950000 );
  */
 define( 'RUNTIME__CEDAR_DATABASE_TEST_ENTRY__GET_DATA_TABLE_NAME__ERRNO',
         RUNTIME_CEDAR_BASE_ERRNO + 1 );
+define( 'RUNTIME__CEDAR_DATABASE_TRANSCRIPTION__SAVE__ERRNO',
+        RUNTIME_CEDAR_BASE_ERRNO + 2 );
 
 /**
  * "system" error codes

@@ -26,9 +26,9 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         column: 'test_type.name',
         title: 'Type'
       },
-      submitted: {
-        title: 'Submitted',
-        type: 'boolean'
+      state: {
+        title: 'State',
+        type: 'string'
       }
     },
     defaultOrder: {
@@ -48,9 +48,9 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       title: 'Type',
       constant: true
     },
-    submitted: {
-      title: 'Submitted',
-      type: 'boolean',
+    state: {
+      title: 'State',
+      type: 'enum',
       constant: true
     }
   } );
@@ -101,8 +101,8 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           $scope.isTypist = function() { return 'typist' == CnSession.role.name; };
         },
         link: function( scope, element ) {
-          // close the test entry
-          scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close( false ); } );
+          // close the test entry activity
+          scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close(); } );
         }
       };
     }
@@ -139,33 +139,11 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         this.onView = function() {
           return this.$$onView().then( function() {
             if( 'typist' == CnSession.role.name ) {
-              // turn off edit privilege if entry has been submitted
+              // turn off edit privilege if entry is not assigned
               self.parentModel.getEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() && !self.record.submitted;
+                return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
               };
             }
-          } );
-        };
-
-        this.returnToTypist = function() {
-          this.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: this.parentModel.getServiceResourcePath(),
-            data: { submitted: false }
-          } ).patch().then( function() {
-            self.record.submitted = false;
-            self.isWorking = false;
-          } );
-        };
-
-        this.forceSubmit = function() {
-          this.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: this.parentModel.getServiceResourcePath(),
-            data: { submitted: true }
-          } ).patch().then( function() {
-            self.record.submitted = true;
-            self.isWorking = false;
           } );
         };
 
@@ -173,27 +151,53 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           this.isWorking = true;
           return CnHttpFactory.instance( {
             path: this.parentModel.getServiceResourcePath(),
-            data: { submitted: true }
+            data: { state: 'submitted' }
           } ).patch().then( function() {
-            self.record.submitted = true;
+            self.record.state = 'submitted';
             self.isWorking = false;
-            return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
+            if( 'typist' == CnSession.role.name )
+              return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
           } );
         };
 
-        this.close = function( transition ) {
-          if( angular.isUndefined( transition ) ) transition = true;
+        this.defer = function() {
+          this.isWorking = true;
+          return CnHttpFactory.instance( {
+            path: this.parentModel.getServiceResourcePath(),
+            data: { state: 'deferred' }
+          } ).patch().then( function() {
+            self.record.state = 'deferred';
+            self.isWorking = false;
+            if( 'typist' == CnSession.role.name )
+              return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
+          } );
+        };
+
+        this.returnToTypist = function() {
+          this.isWorking = true;
+          return CnHttpFactory.instance( {
+            path: this.parentModel.getServiceResourcePath(),
+            data: { state: 'assigned' }
+          } ).patch().then( function() {
+            self.record.state = 'assigned';
+            self.isWorking = false;
+          } );
+        };
+
+        this.close = function() {
           if( 'typist' == CnSession.role.name ) {
+            this.isWorking = true;
             return CnHttpFactory.instance( {
-              path: this.parentModel.getServiceResourcePath() + '?close=1'
-            } ).patch().then( function() {
-              self.record.submitted = true;
-              self.isWorking = false;
-              if( transition ) {
-                return self.parentModel.transitionToParentViewState(
-                  'transcription', self.record.transcription_id
-                );
+              path: this.parentModel.getServiceResourcePath() + '?close=1',
+              onError: function( response ) {
+                // ignore 403 errors since records may automatically be unassigned
+                if( 403 != response.status ) {
+                  console.info( 'The "403 (Forbidden)" error found abive is normal and can be ignored.' );
+                  return CnModalMessageFactory.httpError( response );
+                }
               }
+            } ).patch().then( function() {
+              self.isWorking = false;
             } );
           }
         };

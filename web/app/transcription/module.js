@@ -18,11 +18,19 @@ define( function() {
       user: {
         column: 'user.name',
         title: 'User',
-        isIncluded: function( $state, model ) { return !model.isTypist(); }
+        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        help: 'Which user the transcription is assigned to'
       },
       site: {
         column: 'site.name',
-        title: 'Site'
+        title: 'Site',
+        isIncluded: function( $state, model ) { return !model.isTypist(); }
+      },
+      state: {
+        title: 'State',
+        type: 'string',
+        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        help: 'One of "assigned", "deferred" or "completed"'
       },
       start_datetime: {
         column: 'start_datetime',
@@ -32,7 +40,8 @@ define( function() {
       end_datetime: {
         column: 'end_datetime',
         title: 'End',
-        type: 'datetimesecond'
+        type: 'datetimesecond',
+        help: 'Only set once all test entries have been submitted'
       }
     },
     defaultOrder: {
@@ -51,14 +60,22 @@ define( function() {
     },
     user_id: {
       title: 'User',
-      type: 'enum'
+      type: 'hidden',
+      help: 'Which user the transcription is assigned to'
     },
     site: {
       column: 'site.name',
       title: 'Site',
-      type: 'string',
+      type: 'hidden',
       exclude: 'add',
       constant: true
+    },
+    state: {
+      title: 'State',
+      type: 'hidden',
+      exclude: 'add',
+      constant: true,
+      help: 'One of "assigned", "deferred" or "completed"'
     },
     start_datetime: {
       column: 'start_datetime',
@@ -72,7 +89,8 @@ define( function() {
       title: 'End Date & Time',
       type: 'datetimesecond',
       exclude: 'add',
-      constant: true
+      constant: true,
+      help: 'Only set when the state is "completed"'
     }
   } );
 
@@ -116,6 +134,19 @@ define( function() {
         scope: { model: '=?' },
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
+
+          $scope.model.viewModel.afterView( function() {
+            // make sure the metadata has been created
+            $scope.model.metadata.getPromise().then( function() {
+              var cnRecordViewScope = cenozo.findChildDirectiveScope( $scope, 'cnRecordView' );
+              if( !cnRecordViewScope ) throw new Error( 'Cannot find cnRecordView scope' );
+
+              var inputArray = cnRecordViewScope.dataArray[0].inputArray;
+              inputArray.findByProperty( 'key', 'user_id' ).type = $scope.model.isTypist() ? 'hidden' : 'enum';
+              inputArray.findByProperty( 'key', 'site' ).type = $scope.model.isTypist() ? 'hidden' : 'string';
+              inputArray.findByProperty( 'key', 'state' ).type = $scope.model.isTypist() ? 'hidden' : 'string';
+            } );
+          } );
         }
       };
     }
@@ -197,8 +228,55 @@ define( function() {
 
         this.isTypist = function() { return 'typist' == CnSession.role.name; };
 
-        // don't show add button when viewing transcription list
-        this.getAddEnabled = function() { return 'transcription' != this.getSubjectFromState(); };
+        // adding transcriptions is different for typists and everyone else
+        this.getAddEnabled = function() {
+          if( 'typist' == CnSession.role.name ) {
+            // only show the add button directly in the transcription list and when we have
+            // no other open transcription
+            return 'transcription' == this.getSubjectFromState() && 0 == this.listModel.cache.length;
+          } else {
+            // for everyone else don't show the add button directly in the transcription list
+            return 'transcription' != this.getSubjectFromState();
+          }
+        };
+
+        // adding transcriptions is different for typists and everyone else
+        this.getEditEnabled = function() {
+          return this.$$getEditEnabled() && 'completed' != this.viewModel.record.state;
+        };
+
+        // override transitionToAddState
+        this.transitionToAddState = function() {
+          // typists immediately get a new transcription (no add state required)
+          return 'typist' == CnSession.role.name
+            ? CnHttpFactory.instance( {
+                path: 'transcription',
+                data: { user_id: CnSession.user.id },
+                onError: function( response ) {
+                  if( 408 == response.status ) {
+                    // 408 means there are currently no participants available
+                    CnModalMessageFactory.instance( {
+                      title: 'No Participants Available',
+                      message: response.data,
+                      error: true
+                    } ).show();
+                  } else if( 409 == response.status ) {
+                    // 409 means there is a conflict (user cannot start new transcriptions)
+                    CnModalMessageFactory.instance( {
+                      title: 'Cannot Begin New Transcription',
+                      message: response.data,
+                      error: true
+                    } ).show().then( self.onLoad );
+                  } else CnModalMessageFactory.httpError( response );
+                }
+              } ).post().then( function ( response ) {
+                // immediately view the new transcription
+                return self.transitionToViewState( {
+                  getIdentifier: function() { return self.getIdentifierFromRecord( { id: response.data } ); }
+                } );
+              } )
+            : this.$$transitionToAddState(); // everyone else gets the default behaviour
+        };
 
         // special function to update the user list
         this.updateUserList = function( participantIdentifier ) {

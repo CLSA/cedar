@@ -3,6 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'rey2_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'REY 2' );
+  module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnRey2DataView', [

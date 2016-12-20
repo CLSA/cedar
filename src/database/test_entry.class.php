@@ -63,7 +63,7 @@ class test_entry extends \cenozo\database\record
     $db_user = $session->get_user();
 
     // only open activity for typists
-    if( 'typist' == $db_role->name && !$this->submitted )
+    if( 'typist' == $db_role->name && 'assigned' == $this->state )
     {
       // check to see if the activity record already exists
       $modifier = lib::create( 'database\modifier' );
