@@ -17,9 +17,14 @@ define( function() {
       },
       user: {
         column: 'user.name',
-        title: 'User',
+        title: 'Assigned',
         isIncluded: function( $state, model ) { return !model.isTypist(); },
         help: 'Which user the transcription is assigned to'
+      },
+      user_list: {
+        title: 'User List',
+        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        help: 'Which users have worked with at least one test-entry, ordered by first access date'
       },
       site: {
         column: 'site.name',

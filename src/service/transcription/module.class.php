@@ -57,6 +57,19 @@ class module extends \cenozo\service\site_restricted_participant_module
       $modifier->where( 'transcription.assigned_count', '>', 0 );
     }
 
+    if( $select->has_column( 'user_list' ) )
+    {
+      $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
+      $modifier->join( 'test_entry_activity', 'test_entry.id', 'test_entry_activity.test_entry_id' );
+      $modifier->join( 'user', 'test_entry_activity.user_id', 'activity_user.id', '', 'activity_user' );
+      $modifier->group( 'transcription.id' );
+      $select->add_column(
+        'GROUP_CONCAT( DISTINCT activity_user.name ORDER BY test_entry_activity.start_datetime )',
+        'user_list',
+        false
+      );
+    }
+
     if( $select->has_column( 'state' ) )
     {
       $select->add_column(
