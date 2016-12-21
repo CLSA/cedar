@@ -26,6 +26,11 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         column: 'test_type.name',
         title: 'Type'
       },
+      user_list: {
+        title: 'User List',
+        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        help: 'Which users have worked with the test-entry, ordered by first access date'
+      },
       state: {
         title: 'State',
         type: 'string'
@@ -72,8 +77,8 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTestEntryView', [
-    'CnTestEntryModelFactory', 'CnSession', '$q',
-    function( CnTestEntryModelFactory, CnSession, $q ) {
+    'CnTestEntryModelFactory',
+    function( CnTestEntryModelFactory ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -97,8 +102,6 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
               $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
             }
           };
-
-          $scope.isTypist = function() { return 'typist' == CnSession.role.name; };
         },
         link: function( scope, element ) {
           // close the test entry activity
@@ -213,14 +216,16 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestEntryModelFactory', [
     'CnBaseModelFactory', 'CnTestEntryListFactory', 'CnTestEntryViewFactory',
-    'CnHttpFactory', 'CnModalMessageFactory',
+    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory',
     function( CnBaseModelFactory, CnTestEntryListFactory, CnTestEntryViewFactory,
-              CnHttpFactory, CnModalMessageFactory ) {
+              CnSession, CnHttpFactory, CnModalMessageFactory ) {
       var object = function( root ) {
         var self = this;
         CnBaseModelFactory.construct( this, module );
         this.listModel = CnTestEntryListFactory.instance( this );
         this.viewModel = CnTestEntryViewFactory.instance( this, root );
+
+        this.isTypist = function() { return 'typist' == CnSession.role.name; };
 
         this.transitionToParentViewState = function( subject, identifier ) {
           // check if the user still has access to the transcription before proceeding

@@ -43,7 +43,7 @@
       </div>
       <div class="form-footer text-right rounded-bottom bg-info">
 
-        <div class="btn-group pull-left" ng-if="isTypist()">
+        <div class="btn-group pull-left" ng-if="model.isTypist()">
           <button class="btn btn-default"
                   ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
                   ng-click="model.viewModel.defer()">
@@ -55,7 +55,7 @@
             Submit
           </button>
         </div>
-        <div ng-if="!isTypist()">
+        <div ng-if="!model.isTypist()">
           <div class="btn-group pull-left" ng-if="'assigned' == model.viewModel.record.state">
             <button class="btn btn-default"
                     ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
