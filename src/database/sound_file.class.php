@@ -38,17 +38,22 @@ class sound_file extends \cenozo\database\record
 
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
-    $command = file_exists( $last_sync_file )
-             ? sprintf( 'find -L %s -type f -newer %s | grep -v "\-in."', RECORDINGS_PATH, $last_sync_file )
-             : sprintf( 'find -L %s -type f | grep -v "\-in."', RECORDINGS_PATH );
+    $command = sprintf(
+      'find -L %s -type f -printf "%p\t%TY-%Tm-%Td %TT\n" %s | grep -v "\-in."',
+      RECORDINGS_PATH,
+      file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : ''
+    )
     $file_list = array();
     exec( $command, $file_list );
 
     // organize files by participant
     $count = 0;
     $insert = '';
-    foreach( $file_list as $file )
+    foreach( $file_list as $row )
     {
+      $parts = explode( "\t", $row );
+      $file = $parts[0];
+      $date = $parts[1];
       $last_slash = strrpos( $file, '/' );
       $second_last_slash = strrpos( $file, '/', $last_slash - strlen( $file ) - 1 );
       $uid = substr( $file, $second_last_slash+1, $last_slash - $second_last_slash - 1 );
