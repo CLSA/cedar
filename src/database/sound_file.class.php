@@ -32,6 +32,7 @@ class sound_file extends \cenozo\database\record
         'uid char(7) NOT NULL, '.
         'name varchar(100) NULL DEFAULT NULL, '.
         'filename varchar(100) NOT NULL, '.
+        'datetime DATETIME NOT NULL, '.
         'KEY dk_uid ( uid ), '.
         'KEY dk_name ( name ) '.
       ')' );
@@ -39,10 +40,11 @@ class sound_file extends \cenozo\database\record
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f -printf "%p\t%TY-%Tm-%Td %TT\n" %s | grep -v "\-in."',
+      'find -L %s -type f -printf "%s" %s | grep -v "\-in."',
       RECORDINGS_PATH,
+      '%p\t%TY-%Tm-%Td %TT\n',
       file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : ''
-    )
+    );
     $file_list = array();
     exec( $command, $file_list );
 
@@ -52,8 +54,8 @@ class sound_file extends \cenozo\database\record
     foreach( $file_list as $row )
     {
       $parts = explode( "\t", $row );
+      $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
       $file = $parts[0];
-      $date = $parts[1];
       $last_slash = strrpos( $file, '/' );
       $second_last_slash = strrpos( $file, '/', $last_slash - strlen( $file ) - 1 );
       $uid = substr( $file, $second_last_slash+1, $last_slash - $second_last_slash - 1 );
@@ -64,7 +66,7 @@ class sound_file extends \cenozo\database\record
       if( 1000 <= $count )
       {
         static::db()->execute(
-          sprintf( 'INSERT INTO temp_sound_file( uid, name, filename ) VALUES %s', $insert ) );
+          sprintf( 'INSERT INTO temp_sound_file( uid, name, filename, datetime ) VALUES %s', $insert ) );
         $count = 0;
         $insert = '';
       }
@@ -74,23 +76,24 @@ class sound_file extends \cenozo\database\record
               ? substr( $filename, 0, strrpos( $filename, '.' ) )
               : NULL;
         $insert .= ( 1 < $count ? ',' : '' )
-                  .sprintf( '( %s, %s, %s )',
+                  .sprintf( '( %s, %s, %s, %s )',
                             static::db()->format_string( $uid ),
                             static::db()->format_string( $name ),
-                            static::db()->format_string( $filename ) );
+                            static::db()->format_string( $filename ),
+                            static::db()->format_string( $datetime ) );
       }
     }
 
     if( 0 < $count )
     {
       static::db()->execute(
-        sprintf( 'INSERT INTO temp_sound_file( uid, name, filename ) VALUES %s', $insert ) );
+        sprintf( 'INSERT INTO temp_sound_file( uid, name, filename, datetime ) VALUES %s', $insert ) );
     }
 
     // now convert from temporary records into the sound_file table
     static::db()->execute(
-      'REPLACE INTO sound_file( participant_id, sound_file_type_id, filename ) '.
-      'SELECT participant.id, NULL, filename '.
+      'REPLACE INTO sound_file( participant_id, sound_file_type_id, filename, datetime ) '.
+      'SELECT participant.id, NULL, filename, datetime '.
       'FROM temp_sound_file '.
       'JOIN participant ON temp_sound_file.uid = participant.uid'
     );

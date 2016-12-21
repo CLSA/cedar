@@ -20,9 +20,11 @@ DROP PROCEDURE IF EXISTS patch_sound_file;
         "participant_id INT UNSIGNED NOT NULL, ",
         "sound_file_type_id INT UNSIGNED NULL DEFAULT NULL, ",
         "filename VARCHAR(255) NOT NULL, ",
+        "datetime DATETIME NOT NULL, ",
         "PRIMARY KEY (id), ",
         "INDEX fk_participant_id (participant_id ASC), ",
         "INDEX fk_sound_file_type_id (sound_file_type_id ASC), ",
+        "INDEX dk_datetime (datetime ASC), ",
         "CONSTRAINT fk_sound_file_participant_id ",
           "FOREIGN KEY (participant_id) ",
           "REFERENCES ", @cenozo, ".participant (id) ",
@@ -49,6 +51,13 @@ DELIMITER $$
 
 DROP TRIGGER IF EXISTS sound_file_AFTER_INSERT $$
 CREATE DEFINER = CURRENT_USER TRIGGER sound_file_AFTER_INSERT AFTER INSERT ON sound_file FOR EACH ROW
+BEGIN
+  CALL update_participant_sound_file_total( NEW.participant_id );
+END$$
+
+
+DROP TRIGGER IF EXISTS sound_file_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER sound_file_AFTER_UPDATE AFTER UPDATE ON sound_file FOR EACH ROW
 BEGIN
   CALL update_participant_sound_file_total( NEW.participant_id );
 END$$

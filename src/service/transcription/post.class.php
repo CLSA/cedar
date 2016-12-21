@@ -60,20 +60,13 @@ class post extends \cenozo\service\post
             'participant.id',
             'participant_sound_file_total.participant_id'
           );
+          // order by sound file datetime so we get older recordings first
+          $participant_mod->order( 'participant_sound_file_total.datetime' );
           
           // join to the transcription table to make sure the participant doesn't have an existing transcription
           $participant_mod->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
           $participant_mod->where( 'transcription.id', '=', NULL );
 
-          // joining to the event table may cause participants to be non-distinct, but we're limiting
-          // to one row so it doesn't matter
-          $join_mod = lib::create( 'database\modifier' );
-          $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
-          $join_mod->where( 'event.event_type_id', '=', 33 ); // TODO: change 33 to setting
-          $participant_mod->join_modifier( 'event', $join_mod, 'left' );
-          // order by event datetime, putting those without events at the end of the list
-          $participant_mod->order( 'IFNULL( event.datetime, UTC_TIMESTAMP() )' );
-          $participant_mod->limit( 1 );
           $participant_list = $participant_class_name::select( $participant_sel, $participant_mod );
 
           if( 0 == count( $participant_list ) )
