@@ -50,7 +50,6 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Availability Types' );
       $this->remove_listitem( 'Form Types' );
       $this->remove_listitem( 'Quotas' );
-      $this->remove_listitem( 'Settings' );
       $this->remove_listitem( 'Sources' );
     }
 

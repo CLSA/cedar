@@ -18,6 +18,7 @@ DROP PROCEDURE IF EXISTS patch_setting;
         "update_timestamp TIMESTAMP NOT NULL, ",
         "create_timestamp TIMESTAMP NOT NULL, ",
         "site_id INT UNSIGNED NOT NULL, ",
+        "max_working_transcriptions INT UNSIGNED NOT NULL DEFAULT 1, ",
         "PRIMARY KEY (id), ",
         "INDEX fk_site_id (site_id ASC), ",
         "UNIQUE INDEX uq_site_id (site_id ASC), ",

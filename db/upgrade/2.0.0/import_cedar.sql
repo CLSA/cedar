@@ -106,13 +106,23 @@ CREATE PROCEDURE patch_access()
          "AND v1_language.id = v1_region_site.language_id ",
         "JOIN ", @v1_cenozo, ".service v1_service ON v1_region_site.service_id = v1_service.id ",
         "WHERE v1_service.name = '", @application, "'" );
-      SELECT @sql;
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
     END IF;
 
     SELECT "Importing user settings from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO setting( site_id, max_working_transcriptions ) ",
+      "SELECT site.id, 1 ",
+      "FROM ", @cenozo, ".site "
+      "JOIN ", @cenozo, ".application_has_site ON site.id = application_has_site.site_id ",
+      "JOIN ", @cenozo, ".application ON application_has_site.application_id = application.id ",
+      "WHERE application.name = '", @application, "'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
 
     SET @sql = CONCAT(
       "INSERT IGNORE INTO user_has_cohort( update_timestamp, create_timestamp, user_id, cohort_id ) ",

@@ -21,40 +21,10 @@ define( function() {
         column: 'site.name',
         title: 'Site'
       },
-      call_without_webphone: {
-        title: 'No-Webphone',
-        type: 'boolean',
-        help: 'Allow users to make calls without being connected to the webphone'
-      },
-      calling_start_time: {
-        title: 'Start Call',
-        type: 'time_notz',
-        help: 'The earliest time to assign participants (in their local time)'
-      },
-      calling_end_time: {
-        title: 'End Call',
-        type: 'time_notz',
-        help: 'The latest time to assign participants (in their local time)'
-      },
-      short_appointment: {
-        title: 'Short Ap.',
+      max_working_transcriptions: {
+        title: 'Max Transcriptions',
         type: 'number',
-        help: 'The length of time, in minutes, of a short appointment'
-      },
-      long_appointment: {
-        title: 'Long Ap.',
-        type: 'number',
-        help: 'The length of time, in minutes, of a long appointment'
-      },
-      pre_call_window: {
-        title: 'Pre-Call',
-        type: 'number',
-        help: 'How many minutes before an appointment that a participant can be assigned'
-      },
-      post_call_window: {
-        title: 'Post-Call',
-        type: 'number',
-        help: 'How many minutes after an appointment before it is considered missed'
+        help: 'The maximum number of transcriptions a typist may work on at one time.'
       }
     },
     defaultOrder: {
@@ -70,100 +40,13 @@ define( function() {
       type: 'string',
       constant: true
     },
-    call_without_webphone: {
-      title: 'Allow calls without a webphone',
-      type: 'boolean',
-      help: 'Allow users to make calls without being connected to the webphone'
-    },
-    calling_start_time: {
-      title: 'Earliest Call Time',
-      type: 'time_notz',
-      help: 'The earliest time to assign participants (in their local time)'
-    },
-    calling_end_time: {
-      title: 'Latest Call Time',
-      type: 'time_notz',
-      help: 'The latest time to assign participants (in their local time)'
-    },
-    short_appointment: {
-      title: 'Short Appointment Length',
+    max_working_transcriptions: {
+      title: 'Max Working Transcriptions',
       type: 'string',
       format: 'integer',
-      minValue: 0,
-      help: 'The length of time, in minutes, of a short appointment'
-    },
-    long_appointment: {
-      title: 'Long Appointment Length',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'The length of time, in minutes, of a long appointment'
-    },
-    pre_call_window: {
-      title: 'Pre-Appointment Window',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes before an appointment that a participant can be assigned'
-    },
-    post_call_window: {
-      title: 'Post-Appointment Window',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after an appointment before it is considered missed'
-    }
-  } );
-
-  module.addInputGroup( 'Last Call Wait Times', {
-    contacted_wait: {
-      title: 'Contacted Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "contacted" call result to allow a participant to be called'
-    },
-    busy_wait: {
-      title: 'Busy Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "busy" call result to allow a participant to be called'
-    },
-    fax_wait: {
-      title: 'Fax Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "fax" call result to allow a participant to be called'
-    },
-    no_answer_wait: {
-      title: 'No Answer Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "no answer" call result to allow a participant to be called'
-    },
-    not_reached_wait: {
-      title: 'Not Reached Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "not reached" call result to allow a participant to be called'
-    },
-    hang_up_wait: {
-      title: 'Hang Up Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "hang up" call result to allow a participant to be called'
-    },
-    soft_refusal_wait: {
-      title: 'Soft Refusal Wait',
-      type: 'string',
-      format: 'integer',
-      minValue: 0,
-      help: 'How many minutes after a "soft refusal" call result to allow a participant to be called'
+      help: 'The maximum number of transcriptions a typist may work on at one time.  Note that typist ' +
+            'may get beyond than this limit as a result of deferred transcriptions being returned to ' +
+            'their working list.'
     }
   } );
 

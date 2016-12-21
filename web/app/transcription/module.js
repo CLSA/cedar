@@ -233,7 +233,8 @@ define( function() {
           if( 'typist' == CnSession.role.name ) {
             // only show the add button directly in the transcription list and when we have
             // no other open transcription
-            return 'transcription' == this.getSubjectFromState() && 0 == this.listModel.cache.length;
+            return 'transcription' == this.getSubjectFromState() &&
+                   CnSession.setting.maxWorkingTranscriptions > this.listModel.cache.length;
           } else {
             // for everyone else don't show the add button directly in the transcription list
             return 'transcription' != this.getSubjectFromState();

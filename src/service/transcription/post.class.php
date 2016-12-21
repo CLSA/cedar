@@ -27,6 +27,7 @@ class post extends \cenozo\service\post
       $session = lib::create( 'business\session' );
       $db_user = $session->get_user();
       $db_role = $session->get_role();
+      $db_site = $session->get_site();
 
       // only typists can create transcriptions directly
       if( 'typist' != $db_role->name )
@@ -35,13 +36,18 @@ class post extends \cenozo\service\post
       }
       else
       {
+        $max_transcriptions = $db_site->get_setting()->max_working_transcriptions;
+
         // make sure the typist is allowed to create a new transcription
         $transcription_mod = lib::create( 'database\modifier' );
         $transcription_mod->where( 'end_datetime', '=', NULL );
-        if( 0 < $db_user->get_transcription_count( $transcription_mod ) )
+        if( $max_transcriptions <= $db_user->get_transcription_count( $transcription_mod ) )
         {
-          $this->set_data(
-            'You cannot begin a new transcription until you submit those already assigned to you.' ); 
+          $this->set_data( sprintf(
+            'You cannot begin a new transcription because you may not have more than %d working '.
+            'transcriptions at a time.',
+            $max_transcriptions
+          ) ); 
           $this->status->set_code( 409 );
         }
         else // make sure there is a participant available for a new transcription
