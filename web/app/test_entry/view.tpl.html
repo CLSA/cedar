@@ -28,6 +28,13 @@
            class="form-body collapse"
            ng-class="{'in':!initCollapsed}"
            ng-switch="model.viewModel.record.test_type_name">
+        <div class="vertical-spacer" ng-if="'deferred' == model.viewModel.record.state">
+          <div class="form-group first-form-group">
+            <label for="value" class="col-sm-3 control-label">Deferral Note</label>
+            <div class="col-sm-9 form-text" style="white-space:pre-wrap;">{{ model.viewModel.record.note }}</div>
+          </div>
+          <hr />
+        </div>
         <cn-aft-data-view ng-switch-when="AFT"
                           model="model.viewModel.AftDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-aft-data-view>

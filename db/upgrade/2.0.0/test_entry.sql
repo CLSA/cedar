@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS test_entry (
   transcription_id INT UNSIGNED NOT NULL,
   test_type_id INT UNSIGNED NOT NULL,
   state ENUM('assigned', 'deferred', 'submitted') NOT NULL DEFAULT 'assigned',
+  note TEXT NULL,
   PRIMARY KEY (id),
   INDEX fk_transcription_id (transcription_id ASC),
   INDEX fk_test_type_id (test_type_id ASC),

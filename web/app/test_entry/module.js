@@ -57,6 +57,10 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       title: 'State',
       type: 'enum',
       constant: true
+    },
+    note: {
+      title: 'Deferral Note',
+      constant: true
     }
   } );
 
@@ -124,10 +128,10 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   cenozo.providers.factory( 'CnTestEntryViewFactory', [
     'CnBaseViewFactory',
     'CnAftDataModelFactory', 'CnMatDataModelFactory', 'CnRey1DataModelFactory', 'CnRey2DataModelFactory', 
-    'CnSession', 'CnHttpFactory', '$state',
+    'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state',
     function( CnBaseViewFactory,
               CnAftDataModelFactory, CnMatDataModelFactory, CnRey1DataModelFactory, CnRey2DataModelFactory,
-              CnSession, CnHttpFactory, $state ) {
+              CnSession, CnHttpFactory, CnModalTextFactory, $state ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
@@ -165,14 +169,25 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
 
         this.defer = function() {
           this.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: this.parentModel.getServiceResourcePath(),
-            data: { state: 'deferred' }
-          } ).patch().then( function() {
-            self.record.state = 'deferred';
-            self.isWorking = false;
-            if( 'typist' == CnSession.role.name )
-              return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
+          return CnModalTextFactory.instance( {
+            title: 'Deferral Message',
+            message: 'Please provide the reason for deferral:',
+            minLength: 'typist' == CnSession.role.name ? 10 : 0
+          } ).show().then( function( response ) {
+            if( response ) {
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath(),
+                data: { state: 'deferred', note: response }
+              } ).patch().then( function() {
+                self.record.state = 'deferred';
+                self.record.note = response;
+                self.isWorking = false;
+                if( 'typist' == CnSession.role.name )
+                  return self.parentModel.transitionToParentViewState(
+                    'transcription', self.record.transcription_id
+                  );
+              } );
+            } else self.isWorking = false;
           } );
         };
 
@@ -180,7 +195,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           this.isWorking = true;
           return CnHttpFactory.instance( {
             path: this.parentModel.getServiceResourcePath(),
-            data: { state: 'assigned' }
+            data: { state: 'assigned', note: null }
           } ).patch().then( function() {
             self.record.state = 'assigned';
             self.isWorking = false;
