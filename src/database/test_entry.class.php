@@ -15,6 +15,33 @@ use cenozo\lib, cenozo\log, cedar\util;
 class test_entry extends \cenozo\database\record
 {
   /**
+   * Override parent method
+   */
+  public static function get_unique_record( $column, $value )
+  {
+    $test_type_class_name = lib::get_class_name( 'database\test_type' );
+
+    // add (transcription_id,test_type_rank) as artificial unique record type
+    if( is_array( $column ) &&
+        2 == count( $column ) &&
+        in_array( 'transcription_id', $column ) &&
+        in_array( 'test_type_rank', $column ) )
+    {
+      $index = array_search( 'test_type_rank', $column );
+      if( false !== $index ) {
+        $db_test_type = $test_type_class_name::get_unique_record( 'rank', $value[$index] );
+        if( !is_null( $db_test_type ) )
+        {
+          $column[$index] = 'test_type_id';
+          $value[$index] = $db_test_type->id;
+        }
+      }
+    }
+
+    return parent::get_unique_record( $column, $value );
+  }
+
+  /**
    * TODO: document
    */
   public function get_data()

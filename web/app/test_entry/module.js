@@ -211,6 +211,32 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           } );
         };
 
+        this.previous = function() {
+          var rank = this.record.test_type_rank;
+          return 1 == rank ?
+            self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id ) :
+            self.openRank( rank - 1 );
+        };
+
+        this.next = function() {
+          var rank = this.record.test_type_rank;
+          return this.parentModel.metadata.columnList.test_type_id.maxRank == rank ?
+            self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id ) :
+            self.openRank( rank + 1 );
+        };
+
+        this.openRank = function( rank ) {
+          return CnHttpFactory.instance( {
+            path: 'test_entry/transcription_id=' + self.record.transcription_id + ';test_type_rank=' + rank
+          } ).get().then( function( response ) {
+            var record = response.data;
+            record.getIdentifier = function() {
+              return self.parentModel.getIdentifierFromRecord( response.data );
+            };
+            return self.parentModel.transitionToViewState( record );
+          } );
+        };
+
         this.close = function() {
           if( 'typist' == CnSession.role.name ) {
             this.isWorking = true;
@@ -264,6 +290,17 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
             }
           } ).get().then( function() {
             return self.$$transitionToParentViewState( subject, identifier );
+          } );
+        };
+
+        // extend getMetadata
+        this.getMetadata = function() {
+          return this.$$getMetadata().then( function() {
+            return CnHttpFactory.instance( {
+              path: 'test_type'
+            } ).count().then( function( response ) {
+              self.metadata.columnList.test_type_id.maxRank = parseInt( response.headers( 'Total' ) );
+            } );
           } );
         };
       };

@@ -167,6 +167,7 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'test_entry', 'PATCH', 1, 0 ),
 ( 'test_entry_activity', 'GET', 0, 1 ),
 ( 'test_entry_activity', 'GET', 1, 1 ),
+( 'test_type', 'GET', 0, 0 ),
 ( 'transcription', 'DELETE', 1, 1 ),
 ( 'transcription', 'GET', 0, 0 ),
 ( 'transcription', 'GET', 1, 0 ),
