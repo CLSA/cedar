@@ -92,10 +92,15 @@ class sound_file extends \cenozo\database\record
 
     // now convert from temporary records into the sound_file table
     static::db()->execute(
-      'REPLACE INTO sound_file( participant_id, sound_file_type_id, filename, datetime ) '.
-      'SELECT participant.id, NULL, filename, datetime '.
+      'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
+      'SELECT participant.id, test_type.id, filename, datetime '.
       'FROM temp_sound_file '.
-      'JOIN participant ON temp_sound_file.uid = participant.uid'
+      'JOIN participant ON temp_sound_file.uid = participant.uid '.
+      'LEFT JOIN test_type ON filename RLIKE ( '.
+        'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
+        'FROM test_type_filename_format '.
+        'WHERE test_type_id = test_type.id '.
+      ')'
     );
     static::db()->execute( 'DROP TABLE temp_sound_file' );
 

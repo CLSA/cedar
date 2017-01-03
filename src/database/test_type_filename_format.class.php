@@ -1,6 +1,6 @@
 <?php
 /**
- * sound_file_type.class.php
+ * test_type_filename_format.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
  * @filesource
@@ -10,6 +10,6 @@ namespace cedar\database;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
- * sound_file_type: record
+ * test_type_filename_format: record
  */
-class sound_file_type extends \cenozo\database\record {}
+class test_type_filename_format extends \cenozo\database\record {}

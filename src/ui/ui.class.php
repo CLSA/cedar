@@ -31,6 +31,9 @@ class ui extends \cenozo\ui\ui
       $module->add_choose( 'language' );
     }
 
+    $module = $this->get_module( 'test_type' );
+    if( !is_null( $module ) ) $module->add_child( 'test_type_filename_format' );
+
     $module = $this->get_module( 'transcription' );
     if( !is_null( $module ) )
     {
@@ -59,6 +62,7 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Form Types' );
       $this->remove_listitem( 'Quotas' );
       $this->remove_listitem( 'Sources' );
+      $this->add_listitem( 'Test Types', 'test_type' );
     }
 
     // add application-specific states to the base list
