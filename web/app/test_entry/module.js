@@ -31,6 +31,10 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         isIncluded: function( $state, model ) { return !model.isTypist(); },
         help: 'Which users have worked with the test-entry, ordered by first access date'
       },
+      language_list: {
+        title: 'Language List',
+        help: 'Which languages the test entry has been associated with'
+      },
       state: {
         title: 'State',
         type: 'string'
@@ -149,6 +153,11 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
               // turn off edit privilege if entry is not assigned
               self.parentModel.getEditEnabled = function() {
                 return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
+              };
+              self.languageModel.getChooseEnabled = function() {
+                return self.languageModel.$$getChooseEnabled() &&
+                       self.parentModel.$$getEditEnabled() &&
+                       'assigned' == self.record.state;
               };
             }
           } );

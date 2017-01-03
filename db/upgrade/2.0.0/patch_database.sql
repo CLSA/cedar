@@ -25,6 +25,7 @@ SOURCE user_has_language.sql
 
 SOURCE participant_sound_file_total.sql
 SOURCE update_participant_sound_file_total.sql
+SOURCE update_transcription_has_language.sql
 
 SOURCE import_cedar.sql
 

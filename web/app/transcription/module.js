@@ -26,6 +26,10 @@ define( function() {
         isIncluded: function( $state, model ) { return !model.isTypist(); },
         help: 'Which users have worked with at least one test-entry, ordered by first access date'
       },
+      language_list: {
+        title: 'Language List',
+        help: 'Which languages the transcription has been associated with (based on all test-entries)'
+      },
       site: {
         column: 'site.name',
         title: 'Site',
@@ -204,6 +208,14 @@ define( function() {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
+
+        // never allow the language list to be changed directly, this is done automatically by the database
+        this.deferred.promise.then( function() {
+          if( angular.isDefined( self.languageModel ) ) {
+            self.languageModel.getChooseEnabled = function() { return false; };
+            self.languageModel.listModel.heading = 'Language List (based on all test-entries)';
+          }
+        } );
 
         // extend onView
         this.onView = function() {

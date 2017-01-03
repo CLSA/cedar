@@ -61,6 +61,9 @@ class transcription extends \cenozo\database\record
         $db_test_entry->test_type_id = $test_type['id'];
         $db_test_entry->save();
         $db_test_entry->get_data(); // this will create the test data for this entry
+
+        // add the participant's preferred language to the test entry
+        $db_test_entry->add_language( $this->get_participant()->language_id );
       }
     }
   }

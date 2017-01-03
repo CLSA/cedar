@@ -63,12 +63,24 @@ class module extends \cenozo\service\site_restricted_participant_module
 
     if( $select->has_column( 'user_list' ) )
     {
-      $modifier->join( 'test_entry_activity', 'test_entry.id', 'test_entry_activity.test_entry_id' );
-      $modifier->join( 'user', 'test_entry_activity.user_id', 'activity_user.id', '', 'activity_user' );
+      $modifier->left_join( 'test_entry_activity', 'test_entry.id', 'test_entry_activity.test_entry_id' );
+      $modifier->join( 'user', 'test_entry_activity.user_id', 'activity_user.id', 'left', 'activity_user' );
       $modifier->group( 'test_entry.id' );
       $select->add_column(
         'GROUP_CONCAT( DISTINCT activity_user.name ORDER BY test_entry_activity.start_datetime )',
         'user_list',
+        false
+      );
+    }
+
+    if( $select->has_column( 'language_list' ) )
+    {
+      $modifier->left_join( 'test_entry_has_language', 'test_entry.id', 'test_entry_has_language.test_entry_id' );
+      $modifier->left_join( 'language', 'test_entry_has_language.language_id', 'language.id' );
+      $modifier->group( 'test_entry.id' );
+      $select->add_column(
+        'GROUP_CONCAT( DISTINCT language.code ORDER BY language.code )',
+        'language_list',
         false
       );
     }

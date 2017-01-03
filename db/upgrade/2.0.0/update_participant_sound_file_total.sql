@@ -11,7 +11,6 @@ BEGIN
   SELECT participant_id, COUNT(*), MIN( datetime )
   FROM sound_file
   WHERE participant_id = proc_participant_id;
-END
-$$
+END$$
 
 DELIMITER ;

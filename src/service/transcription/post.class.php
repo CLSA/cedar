@@ -41,6 +41,7 @@ class post extends \cenozo\service\post
         // make sure the typist is allowed to create a new transcription
         $transcription_mod = lib::create( 'database\modifier' );
         $transcription_mod->where( 'end_datetime', '=', NULL );
+        $transcription_mod->where( 'assigned_count', '>', 0 );
         if( $max_transcriptions <= $db_user->get_transcription_count( $transcription_mod ) )
         {
           $this->set_data( sprintf(
