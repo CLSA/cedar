@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS mat_data (
   value TINYINT(1) NULL DEFAULT NULL,
   PRIMARY KEY (id),
   INDEX fk_test_entry_id (test_entry_id ASC),
-  UNIQUE INDEX `uq_test_entry_id` (`test_entry_id` ASC),
+  UNIQUE INDEX uq_test_entry_id (test_entry_id ASC),
   CONSTRAINT fk_mat_data_test_entry_id
     FOREIGN KEY (test_entry_id)
     REFERENCES test_entry (id)

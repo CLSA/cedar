@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS test_entry (
   INDEX fk_transcription_id (transcription_id ASC),
   INDEX fk_test_type_id (test_type_id ASC),
   UNIQUE INDEX uq_transcription_test_type_id (transcription_id ASC, test_type_id ASC),
-  INDEX `dk_state` (`state` ASC),
+  INDEX dk_state (state ASC),
   CONSTRAINT fk_test_entry_transcription_id
     FOREIGN KEY (transcription_id)
     REFERENCES transcription (id)
