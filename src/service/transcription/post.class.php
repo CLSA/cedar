@@ -53,6 +53,7 @@ class post extends \cenozo\service\post
         }
         else // make sure there is a participant available for a new transcription
         {
+          // the participant has to have sound files
           $participant_sel = lib::create( 'database\select' );
           $participant_sel->add_column( 'id' );
           $participant_mod = lib::create( 'database\modifier' );
@@ -61,6 +62,15 @@ class post extends \cenozo\service\post
             'participant.id',
             'participant_sound_file_total.participant_id'
           );
+
+          // the participant's default language must be spoken by the typist
+          if( 0 < $db_user->get_language_count() )
+          {
+            $participant_mod->join(
+              'user_has_language', 'participant.language_id', 'user_has_language.language_id' );
+            $participant_mod->where( 'user_has_language.user_id', '=', $db_user->id );
+          }
+
           // order by sound file datetime so we get older recordings first
           $participant_mod->order( 'participant_sound_file_total.datetime' );
           
