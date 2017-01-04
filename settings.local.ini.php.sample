@@ -21,8 +21,7 @@ $SETTINGS['path']['LOG_FILE'] = $SETTINGS['path']['APPLICATION'].'/log';
 $SETTINGS['db']['username'] = 'put your database username here';
 $SETTINGS['db']['password'] = 'put your database password here';
 
-// the root directory where comprehensive recordings are located
-// (must be an absolute path that the asterisk server's user has access to)
+// the directory where sound files are located
 $SETTINGS['path']['RECORDINGS'] = $SETTINGS['path']['APPLICATION'].'/path/to/recordings';
 $SETTINGS['url']['RECORDINGS'] = 'recordings';
 

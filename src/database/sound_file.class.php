@@ -30,11 +30,9 @@ class sound_file extends \cenozo\database\record
     static::db()->execute(
       'CREATE TEMPORARY TABLE temp_sound_file ( '.
         'uid char(7) NOT NULL, '.
-        'name varchar(100) NULL DEFAULT NULL, '.
-        'filename varchar(100) NOT NULL, '.
+        'filename varchar(255) NOT NULL, '.
         'datetime DATETIME NOT NULL, '.
-        'KEY dk_uid ( uid ), '.
-        'KEY dk_name ( name ) '.
+        'KEY dk_uid ( uid )'.
       ')' );
 
     // If the last sync file is present then only get files which were created after it was
@@ -59,26 +57,22 @@ class sound_file extends \cenozo\database\record
       $last_slash = strrpos( $file, '/' );
       $second_last_slash = strrpos( $file, '/', $last_slash - strlen( $file ) - 1 );
       $uid = substr( $file, $second_last_slash+1, $last_slash - $second_last_slash - 1 );
-      $filename = substr( $file, $last_slash+1 );
+      $filename = str_replace( RECORDINGS_PATH.'/', '', $file );
 
       // divide inserting data into groups of 1000 records
       $count++;
       if( 1000 <= $count )
       {
         static::db()->execute(
-          sprintf( 'INSERT INTO temp_sound_file( uid, name, filename, datetime ) VALUES %s', $insert ) );
+          sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
         $count = 0;
         $insert = '';
       }
       else
       {
-        $name = false === strpos( $filename, '-out.wav' )
-              ? substr( $filename, 0, strrpos( $filename, '.' ) )
-              : NULL;
         $insert .= ( 1 < $count ? ',' : '' )
-                  .sprintf( '( %s, %s, %s, %s )',
+                  .sprintf( '( %s, %s, %s )',
                             static::db()->format_string( $uid ),
-                            static::db()->format_string( $name ),
                             static::db()->format_string( $filename ),
                             static::db()->format_string( $datetime ) );
       }
@@ -87,7 +81,7 @@ class sound_file extends \cenozo\database\record
     if( 0 < $count )
     {
       static::db()->execute(
-        sprintf( 'INSERT INTO temp_sound_file( uid, name, filename, datetime ) VALUES %s', $insert ) );
+        sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
     }
 
     // now convert from temporary records into the sound_file table

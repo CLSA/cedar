@@ -145,6 +145,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
+        this.soundFileList = [];
         // add the test entry's data model
         this.AftDataModel = CnAftDataModelFactory.instance();
         this.MatDataModel = CnMatDataModelFactory.instance();
@@ -165,6 +166,14 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
                        'assigned' == self.record.state;
               };
             }
+
+            // get the sound file list for this test-entry
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/sound_file',
+              data: { select: { column: [ 'name', 'url' ] } }
+            } ).query().then( function( response ) {
+              self.soundFileList = response.data;
+            } );
           } );
         };
 

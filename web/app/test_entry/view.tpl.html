@@ -47,6 +47,18 @@
         <cn-rey2-data-view ng-switch-when="REY2"
                            model="model.viewModel.Rey2DataModel"
                            edit-enabled="model.getEditEnabled()"></cn-rey2-data-view>
+        <hr />
+        <div class="container-fluid vertical-spacer">
+          <span ng-if="0 == model.viewModel.soundFileList.length" class="text-info">
+            There are no sound files available for this test.
+          </span>
+          <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
+            <label for="" class="col-sm-3 control-label">{{ soundFile.name }}</label>
+            <div class="col-sm-9">
+              <audio class="full-width" controls><source src="{{ soundFile.url }}" type="audio/wav" /></audio>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="form-footer text-right rounded-bottom bg-info">
 

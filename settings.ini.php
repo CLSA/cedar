@@ -30,8 +30,7 @@ $SETTINGS['interface']['alpha_numeric_max_rank'] = 60;
 // the default number hours before an assignment can be deleted
 $SETTINGS['interface']['assignment_retention_time'] = 8;
 
-// the root directory where comprehensive recordings are located
-// (must be an absolute path that the asterisk server's user has access to)
+// the directory where sound files are located
 $SETTINGS['path']['RECORDINGS'] = NULL;
 $SETTINGS['url']['RECORDINGS'] = NULL;
 
