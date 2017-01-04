@@ -143,19 +143,6 @@ define( function() {
         scope: { model: '=?' },
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
-
-          $scope.model.viewModel.afterView( function() {
-            // make sure the metadata has been created
-            $scope.model.metadata.getPromise().then( function() {
-              var cnRecordViewScope = cenozo.findChildDirectiveScope( $scope, 'cnRecordView' );
-              if( !cnRecordViewScope ) throw new Error( 'Cannot find cnRecordView scope' );
-
-              var inputArray = cnRecordViewScope.dataArray[0].inputArray;
-              inputArray.findByProperty( 'key', 'user_id' ).type = $scope.model.isTypist() ? 'hidden' : 'enum';
-              inputArray.findByProperty( 'key', 'site' ).type = $scope.model.isTypist() ? 'hidden' : 'string';
-              inputArray.findByProperty( 'key', 'state' ).type = $scope.model.isTypist() ? 'hidden' : 'string';
-            } );
-          } );
         }
       };
     }
@@ -244,6 +231,13 @@ define( function() {
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
 
         this.isTypist = function() { return 'typist' == CnSession.role.name; };
+
+        if( !this.isTypist() ) {
+          var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;
+          inputList.user_id.type = 'enum';
+          inputList.site.type = 'string';
+          inputList.state.type = 'string';
+        }
 
         // adding transcriptions is different for typists and everyone else
         this.getAddEnabled = function() {
