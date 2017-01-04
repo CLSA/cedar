@@ -18,7 +18,7 @@
              tooltip="Click to expand details"
              tooltip-placement="left"></i>
         </div>
-        {{ model.viewModel.record.test_type_name }} Data
+        {{ model.viewModel.record.test_type_title }} ({{ model.viewModel.record.test_type_name }}) Data
         <span ng-if="!model.getEditEnabled()">(read only)</span>
         <span ng-if="!isComplete">(Loading&hellip;)</span>
       </h4>

@@ -57,6 +57,11 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       title: 'Type',
       constant: true
     },
+    test_type_title: {
+      column: 'test_type.title',
+      title: 'Title',
+      constant: true
+    },
     state: {
       title: 'State',
       type: 'enum',
