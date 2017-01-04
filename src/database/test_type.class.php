@@ -19,6 +19,6 @@ class test_type extends \cenozo\database\record
    */
   public function get_data_table_name()
   {
-    return sprintf( '%s_data', strtolower( $this->name ) );
+    return sprintf( '%s_data', strtolower( str_replace( ' ', '_', $this->name ) ) );
   }
 }

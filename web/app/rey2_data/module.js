@@ -2,7 +2,7 @@ define( function() {
   'use strict';
 
   try { var module = cenozoApp.module( 'rey2_data', true ); } catch( err ) { console.warn( err ); return; }
-  cenozoApp.initDataModule( module, 'REY 2' );
+  cenozoApp.initDataModule( module, 'REY2' );
   module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS test_type (
 ENGINE = InnoDB;
 
 INSERT IGNORE INTO test_type( name, rank, title, description ) VALUES 
-( 'REY 1', 1, 'Immediate Word List', 'Immediate recall of the Rey-Osterrieth word-list test.' ),
-( 'REY 2', 2, 'Delayed Word List', 'Delayed recall of the Rey-Osterrieth word-list test.' ),
+( 'REY1', 1, 'Immediate Word List', 'Immediate recall of the Rey-Osterrieth word-list test.' ),
+( 'REY2', 2, 'Delayed Word List', 'Delayed recall of the Rey-Osterrieth word-list test.' ),
 ( 'AFT', 3, 'Animal Fluency', 'Verbal fluency test of animal names.' ),
 ( 'MAT', 4, 'Mental Alternation', 'Mental alternation test of numbers and letter.' );

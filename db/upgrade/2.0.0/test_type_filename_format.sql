@@ -38,7 +38,7 @@ FROM test_type, (
   SELECT "REY I-out" AS name UNION
   SELECT "COG_WRDLSTREC_COF1" AS name
 ) AS format
-WHERE test_type.name = "REY 1";
+WHERE test_type.name = "REY1";
 
 INSERT IGNORE INTO test_type_filename_format( test_type_id, format )
 SELECT test_type.id, format.name
@@ -46,4 +46,4 @@ FROM test_type, (
   SELECT "REY II-out" AS name UNION
   SELECT "COG_WRDLST2_REC_COF1" AS name
 ) AS format
-WHERE test_type.name = "REY 2";
+WHERE test_type.name = "REY2";
