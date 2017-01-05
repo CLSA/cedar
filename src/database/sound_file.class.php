@@ -92,7 +92,7 @@ class sound_file extends \cenozo\database\record
       'JOIN participant ON temp_sound_file.uid = participant.uid '.
       'LEFT JOIN test_type ON filename RLIKE ( '.
         'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
-        'FROM test_type_filename_format '.
+        'FROM filename_format '.
         'WHERE test_type_id = test_type.id '.
       ')'
     );

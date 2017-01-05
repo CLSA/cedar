@@ -1,7 +1,7 @@
 define( function() {
   'use strict';
 
-  try { var module = cenozoApp.module( 'test_type_filename_format', true ); } catch( err ) { console.warn( err ); return; }
+  try { var module = cenozoApp.module( 'defer_type', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {
       parent: {
@@ -10,75 +10,75 @@ define( function() {
       }
     },
     name: {
-      singular: 'test type filename format',
-      plural: 'test type filename formats',
-      possessive: 'test type filename format\'s',
-      pluralPossessive: 'test type filename formats\''
+      singular: 'defer type',
+      plural: 'defer types',
+      possessive: 'defer type\'s',
+      pluralPossessive: 'defer types\''
     },
     columnList: {
-      format: { title: 'Format' },
+      message: { title: 'Message' },
     },
     defaultOrder: {
-      column: 'test_type_filename_format.format',
+      column: 'defer_type.message',
       reverse: false
     }
   } );
 
   module.addInputGroup( '', {
-    format: {
-      title: 'Format',
+    message: {
+      title: 'Message',
       type: 'string',
-      help: 'A regular expression used to match recording filenames to the parent test type.'
+      help: 'A pre-defined message which can be applied to this test-type when it is deferred.'
     }
   } );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestTypeFilenameFormatAdd', [
-    'CnTestTypeFilenameFormatModelFactory',
-    function( CnTestTypeFilenameFormatModelFactory ) {
+  cenozo.providers.directive( 'cnDeferTypeAdd', [
+    'CnDeferTypeModelFactory',
+    function( CnDeferTypeModelFactory ) {
       return {
         templateUrl: module.getFileUrl( 'add.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?' },
         controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestTypeFilenameFormatModelFactory.root;
+          if( angular.isUndefined( $scope.model ) ) $scope.model = CnDeferTypeModelFactory.root;
         }
       };
     }
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestTypeFilenameFormatList', [
-    'CnTestTypeFilenameFormatModelFactory',
-    function( CnTestTypeFilenameFormatModelFactory ) {
+  cenozo.providers.directive( 'cnDeferTypeList', [
+    'CnDeferTypeModelFactory',
+    function( CnDeferTypeModelFactory ) {
       return {
         templateUrl: module.getFileUrl( 'list.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?' },
         controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestTypeFilenameFormatModelFactory.root;
+          if( angular.isUndefined( $scope.model ) ) $scope.model = CnDeferTypeModelFactory.root;
         }
       };
     }
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestTypeFilenameFormatView', [
-    'CnTestTypeFilenameFormatModelFactory',
-    function( CnTestTypeFilenameFormatModelFactory ) {
+  cenozo.providers.directive( 'cnDeferTypeView', [
+    'CnDeferTypeModelFactory',
+    function( CnDeferTypeModelFactory ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?' },
         controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestTypeFilenameFormatModelFactory.root;
+          if( angular.isUndefined( $scope.model ) ) $scope.model = CnDeferTypeModelFactory.root;
         }
       };
     }
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestTypeFilenameFormatAddFactory', [
+  cenozo.providers.factory( 'CnDeferTypeAddFactory', [
     'CnBaseAddFactory', 'CnModalMessageFactory',
     function( CnBaseAddFactory, CnModalMessageFactory ) {
       var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
@@ -87,7 +87,7 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestTypeFilenameFormatListFactory', [
+  cenozo.providers.factory( 'CnDeferTypeListFactory', [
     'CnBaseListFactory',
     function( CnBaseListFactory ) {
       var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
@@ -96,7 +96,7 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestTypeFilenameFormatViewFactory', [
+  cenozo.providers.factory( 'CnDeferTypeViewFactory', [
     'CnBaseViewFactory',
     function( CnBaseViewFactory ) {
       var object = function( parentModel, root ) { CnBaseViewFactory.construct( this, parentModel, root ); }
@@ -105,20 +105,20 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestTypeFilenameFormatModelFactory', [
+  cenozo.providers.factory( 'CnDeferTypeModelFactory', [
     'CnBaseModelFactory',
-    'CnTestTypeFilenameFormatAddFactory',
-    'CnTestTypeFilenameFormatListFactory',
-    'CnTestTypeFilenameFormatViewFactory',
+    'CnDeferTypeAddFactory',
+    'CnDeferTypeListFactory',
+    'CnDeferTypeViewFactory',
     function( CnBaseModelFactory,
-              CnTestTypeFilenameFormatAddFactory,
-              CnTestTypeFilenameFormatListFactory,
-              CnTestTypeFilenameFormatViewFactory ) {
+              CnDeferTypeAddFactory,
+              CnDeferTypeListFactory,
+              CnDeferTypeViewFactory ) {
       var object = function( root ) {
         CnBaseModelFactory.construct( this, module );
-        this.addModel = CnTestTypeFilenameFormatAddFactory.instance( this );
-        this.listModel = CnTestTypeFilenameFormatListFactory.instance( this );
-        this.viewModel = CnTestTypeFilenameFormatViewFactory.instance( this, root );
+        this.addModel = CnDeferTypeAddFactory.instance( this );
+        this.listModel = CnDeferTypeListFactory.instance( this );
+        this.viewModel = CnDeferTypeViewFactory.instance( this, root );
       };
 
       return {

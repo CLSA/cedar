@@ -11,7 +11,8 @@ SOURCE writelog.sql
 SOURCE transcription.sql
 SOURCE transcription_has_language.sql
 SOURCE test_type.sql
-SOURCE test_type_filename_format.sql
+SOURCE defer_type.sql
+SOURCE filename_format.sql
 SOURCE sound_file.sql
 SOURCE test_entry.sql
 SOURCE test_entry_has_language.sql

@@ -6,7 +6,7 @@
  * @filesource
  */
 
-namespace cedar\service\test_type_filename_format;
+namespace cedar\service\defer_type;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
