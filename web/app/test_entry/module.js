@@ -8,14 +8,15 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
     identifier: {
       parent: {
         subject: 'transcription',
-        column: 'transcription_id',
+        column: 'transcription.uid'
       }
     },
     name: {
       singular: 'test entry',
       plural: 'test entries',
       possessive: 'test entry\'s',
-      pluralPossessive: 'test entries\''
+      pluralPossessive: 'test entries\'',
+      friendlyColumn: 'test_type_name'
     },
     columnList: {
       test_type_rank: {
@@ -89,6 +90,34 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   ] );
 
   /* ######################################################################################################## */
+  cenozo.providers.directive( 'cnTestEntryNotes', [
+    'CnTestEntryNotesFactory', '$timeout',
+    function( CnTestEntryNotesFactory, $timeout) {
+      return {
+        templateUrl: cenozo.getFileUrl( 'cenozo', 'notes.tpl.html' ),
+        restrict: 'E',
+        controller: function( $scope ) {
+          $scope.model = CnTestEntryNotesFactory.instance();
+
+          // trigger the elastic directive when adding a note or undoing
+          $scope.addNote = function() {
+            $scope.model.addNote();
+            $timeout( function() { angular.element( '#newNote' ).trigger( 'change' ) }, 100 );
+          };
+
+          $scope.undo = function( id ) {
+            $scope.model.undo( id );
+            $timeout( function() { angular.element( '#note' + id ).trigger( 'change' ) }, 100 );
+          };
+
+          $scope.refresh = function() { $scope.model.onView(); };
+          $scope.model.onView();
+        }
+      };
+    }
+  ] );
+
+  /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTestEntryView', [
     'CnTestEntryModelFactory',
     function( CnTestEntryModelFactory ) {
@@ -136,7 +165,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestEntryViewFactory', [
     'CnBaseViewFactory',
-    'CnAftDataModelFactory', 'CnMatDataModelFactory', 'CnRey1DataModelFactory', 'CnRey2DataModelFactory', 
+    'CnAftDataModelFactory', 'CnMatDataModelFactory', 'CnRey1DataModelFactory', 'CnRey2DataModelFactory',
     'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state',
     function( CnBaseViewFactory,
               CnAftDataModelFactory, CnMatDataModelFactory, CnRey1DataModelFactory, CnRey2DataModelFactory,
@@ -223,6 +252,10 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
             self.record.state = 'assigned';
             self.isWorking = false;
           } );
+        };
+
+        this.viewNotes = function() {
+          $state.go( 'test_entry.notes', { identifier: this.record.getIdentifier() } );
         };
 
         this.previous = function() {
@@ -326,4 +359,37 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
     }
   ] );
 
+  /* ######################################################################################################## */
+  cenozo.providers.factory( 'CnTestEntryNotesFactory', [
+    'CnBaseNoteFactory', 'CnSession', '$state',
+    function( CnBaseNoteFactory, CnSession, $state ) {
+      var object = function() {
+        var self = this;
+        CnBaseNoteFactory.construct( this, module );
+
+        var noteModule = cenozoApp.module( 'test_entry_note' );
+        angular.extend( this, {
+          noteSubject: 'test_entry_note',
+          allowDelete: angular.isDefined( noteModule.actions.delete ),
+          allowEdit: angular.isDefined( noteModule.actions.edit )
+        } );
+
+        this.onView().then( function() {
+          CnSession.setBreadcrumbTrail(
+            [ {
+              title: 'Test Entries',
+              go: function() { $state.go( 'test_entry.list' ); }
+            }, {
+              title: self.uid,
+              go: function() { $state.go( 'test_entry.view', { identifier: $state.params.identifier } ); }
+            }, {
+              title: 'Notes'
+            } ]
+          );
+        } );
+      };
+
+      return { instance: function() { return new object( false ); } };
+    }
+  ] );
 } );

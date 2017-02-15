@@ -54,6 +54,12 @@ class module extends \cenozo\service\site_restricted_participant_module
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
 
+    if( $select->has_table_column( 'transcription', 'uid' ) )
+    {
+      $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+      $select->add_table_column( 'transcription', 'participant.uid', 'transcription_uid', false );
+    }
+
     // special restricts for typists
     if( 'typist' == $db_role->name )
     {

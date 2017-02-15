@@ -3,7 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'transcription', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
-    identifier: {},
+    identifier: { column: 'uid' },
     name: {
       singular: 'transcription',
       plural: 'transcriptions',
@@ -239,17 +239,13 @@ define( function() {
           inputList.state.type = 'string';
         }
 
-        // adding transcriptions is different for typists and everyone else
+        // only show the add transcription button for typists
+        // (the participant module will add it manually for other roles when necessary)
         this.getAddEnabled = function() {
-          if( 'typist' == CnSession.role.name ) {
-            // only show the add button directly in the transcription list and when we have
-            // no other open transcription
-            return 'transcription' == this.getSubjectFromState() &&
-                   CnSession.setting.maxWorkingTranscriptions > this.listModel.cache.length;
-          } else {
-            // for everyone else don't show the add button directly in the transcription list
-            return 'transcription' != this.getSubjectFromState();
-          }
+          return 'typist' == CnSession.role.name &&
+                 'transcription' == this.getSubjectFromState() &&
+                 CnSession.setting.maxWorkingTranscriptions > this.listModel.cache.length;
+                 
         };
 
         // adding transcriptions is different for typists and everyone else

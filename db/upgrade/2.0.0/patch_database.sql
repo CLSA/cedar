@@ -11,12 +11,12 @@ SOURCE writelog.sql
 SOURCE transcription.sql
 SOURCE transcription_has_language.sql
 SOURCE test_type.sql
-SOURCE defer_type.sql
 SOURCE filename_format.sql
 SOURCE sound_file.sql
 SOURCE test_entry.sql
 SOURCE test_entry_has_language.sql
 SOURCE test_entry_activity.sql
+SOURCE test_entry_note.sql
 SOURCE rey1_data.sql
 SOURCE rey2_data.sql
 SOURCE aft_data.sql
@@ -33,4 +33,3 @@ SOURCE import_cedar.sql
 SOURCE update_version_number.sql
 
 COMMIT;
-

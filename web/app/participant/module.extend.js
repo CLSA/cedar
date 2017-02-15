@@ -57,16 +57,14 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
         var object = instance( parentModel, root );
 
         // extend onView
-        object.onView = function() {
-          return object.$$onView().then( function() {
-            if( angular.isDefined( object.transcriptionModel ) ) {
-              object.transcriptionModel.getAddEnabled = function() {
-                return angular.isDefined( object.transcriptionModel.module.actions.add ) &&
-                       null == object.record.transcription_id;
-              };
-            }
-          } );
-        };
+        object.afterView( function() {
+          if( angular.isDefined( object.transcriptionModel ) ) {
+            object.transcriptionModel.getAddEnabled = function() {
+              return angular.isDefined( object.transcriptionModel.module.actions.add ) &&
+                     null == object.record.transcription_id;
+            };
+          }
+        } );
 
         // overrride transcription list's onDelete
         object.deferred.promise.then( function() {

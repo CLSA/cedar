@@ -29,6 +29,7 @@ class ui extends \cenozo\ui\ui
     {
       $module->add_child( 'test_entry_activity' );
       $module->add_choose( 'language' );
+      $module->add_action( 'notes', '/{identifier}?{search}' );
     }
 
     $module = $this->get_module( 'test_type' );

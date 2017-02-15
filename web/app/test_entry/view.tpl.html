@@ -68,6 +68,9 @@
                   ng-click="model.viewModel.defer()">
             Defer
           </button>
+          <button class="btn btn-default" ng-click="model.viewModel.viewNotes()">
+            Notes
+          </button>
           <button class="btn btn-default"
                   ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
                   ng-click="model.viewModel.submit()">
@@ -81,6 +84,9 @@
                     ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
                     ng-click="model.viewModel.defer()">
               Defer
+            </button>
+            <button class="btn btn-default" ng-click="model.viewModel.viewNotes()">
+              Notes
             </button>
             <button class="btn btn-default"
                     ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"

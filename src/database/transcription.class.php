@@ -67,4 +67,23 @@ class transcription extends \cenozo\database\record
       }
     }
   }
+
+  /**
+   * Extend parent method
+   */
+  public static function get_unique_record( $column, $value )
+  {
+    $record = NULL;
+
+    // use the unique participant_id key to accept uid as a column value
+    if( 'uid' == $column ||
+        ( is_array( $column ) && 1 == count( $column ) && in_array( 'uid', $column ) ) )
+    {
+      $participant_class_name = lib::get_class_name( 'database\participant' );
+      $db_participant = $participant_class_name::get_unique_record( $column, $value );
+      return is_null( $db_participant ) ?
+        NULL : parent::get_unique_record( 'participant_id', $db_participant->id );
+    }
+    else return parent::get_unique_record( $column, $value );
+  }
 }
