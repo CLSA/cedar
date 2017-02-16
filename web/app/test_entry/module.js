@@ -67,10 +67,6 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       title: 'State',
       type: 'enum',
       constant: true
-    },
-    note: {
-      title: 'Deferral Note',
-      constant: true
     }
   } );
 
@@ -97,7 +93,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         templateUrl: cenozo.getFileUrl( 'cenozo', 'notes.tpl.html' ),
         restrict: 'E',
         controller: function( $scope ) {
-          $scope.model = CnTestEntryNotesFactory.instance();
+          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestEntryNotesFactory.instance();
 
           // trigger the elastic directive when adding a note or undoing
           $scope.addNote = function() {
@@ -166,23 +162,32 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   cenozo.providers.factory( 'CnTestEntryViewFactory', [
     'CnBaseViewFactory',
     'CnAftDataModelFactory', 'CnMatDataModelFactory', 'CnRey1DataModelFactory', 'CnRey2DataModelFactory',
-    'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state',
+    'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state', '$q',
     function( CnBaseViewFactory,
               CnAftDataModelFactory, CnMatDataModelFactory, CnRey1DataModelFactory, CnRey2DataModelFactory,
-              CnSession, CnHttpFactory, CnModalTextFactory, $state ) {
+              CnSession, CnHttpFactory, CnModalTextFactory, $state, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
         this.soundFileList = [];
-        // add the test entry's data model
+        
+        // add the test entry's data models
         this.AftDataModel = CnAftDataModelFactory.instance();
         this.MatDataModel = CnMatDataModelFactory.instance();
         this.Rey1DataModel = CnRey1DataModelFactory.instance();
         this.Rey2DataModel = CnRey2DataModelFactory.instance();
         this.isWorking = false;
+        this.noteCount = 0;
 
         this.onView = function() {
+          // get the number of notes
+          CnHttpFactory.instance( {
+            path: self.parentModel.getServiceResourcePath() + '/test_entry_note'
+          } ).count().then( function( response ) {
+            self.noteCount = response.headers( 'Total' );
+          } );
+
           return this.$$onView().then( function() {
             if( 'typist' == CnSession.role.name ) {
               // turn off edit privilege if entry is not assigned
@@ -214,32 +219,58 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           } ).patch().then( function() {
             self.record.state = 'submitted';
             self.isWorking = false;
-            if( 'typist' == CnSession.role.name )
-              return self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id );
+            if( 'typist' == CnSession.role.name ) {
+              return self.parentModel.transitionToParentViewState(
+                'transcription', 'uid=' + self.record.transcription_uid
+              );
+            }
           } );
         };
 
+        function defer() {
+          self.isWorking = true;
+          return CnHttpFactory.instance( {
+            path: self.parentModel.getServiceResourcePath(),
+            data: { state: 'deferred' }
+          } ).patch().then( function() {
+            self.record.state = 'deferred';
+            self.isWorking = false;
+            if( 'typist' == CnSession.role.name ) {
+              return self.parentModel.transitionToParentViewState(
+                'transcription', 'uid=' + self.record.transcription_uid
+              );
+            }
+          } );
+        }
+
         this.defer = function() {
-          this.isWorking = true;
-          return CnModalTextFactory.instance( {
-            title: 'Deferral Message',
-            message: 'Please provide the reason for deferral:',
-            minLength: 'typist' == CnSession.role.name ? 10 : 0
-          } ).show().then( function( response ) {
-            if( response ) {
-              return CnHttpFactory.instance( {
-                path: self.parentModel.getServiceResourcePath(),
-                data: { state: 'deferred', note: response }
-              } ).patch().then( function() {
-                self.record.state = 'deferred';
-                self.record.note = response;
-                self.isWorking = false;
-                if( 'typist' == CnSession.role.name )
-                  return self.parentModel.transitionToParentViewState(
-                    'transcription', self.record.transcription_id
-                  );
-              } );
-            } else self.isWorking = false;
+          // force a new message if the last one wasn't left by the current user
+          return CnHttpFactory.instance( {
+            path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+            data: {
+              select: { column: [ 'user_id' ] },
+              modifier: { order: { datetime: true }, limit: 1 }
+            }
+          } ).query().then( function( response ) {
+            // don't defer until the last note left was left by the current user
+            return !angular.isArray( response.data ) ||
+                   0 == response.data.length ||
+                   response.data[0].user_id != CnSession.user.id ?
+              CnModalTextFactory.instance( {
+                title: 'Deferral Message',
+                message: 'Please provide the reason for deferral:',
+                minLength: 'typist' == CnSession.role.name ? 10 : 0
+              } ).show().then( function( response ) {
+                if( response ) {
+                  return $q.all( [
+                    CnHttpFactory.instance( {
+                      path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+                      data: { user_id: CnSession.user.id, datetime: moment().format(), note: response }
+                    } ).post(),
+                    defer()
+                  ] );
+                }
+              } ) : defer();
           } );
         };
 
@@ -247,7 +278,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           this.isWorking = true;
           return CnHttpFactory.instance( {
             path: this.parentModel.getServiceResourcePath(),
-            data: { state: 'assigned', note: null }
+            data: { state: 'assigned' }
           } ).patch().then( function() {
             self.record.state = 'assigned';
             self.isWorking = false;
@@ -261,20 +292,23 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         this.previous = function() {
           var rank = this.record.test_type_rank;
           return 1 == rank ?
-            self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id ) :
-            self.openRank( rank - 1 );
+            self.parentModel.transitionToParentViewState(
+              'transcription', 'uid=' + self.record.transcription_uid
+            ) : self.transitionToTestTypeRank( rank - 1 );
         };
 
         this.next = function() {
           var rank = this.record.test_type_rank;
           return this.parentModel.metadata.columnList.test_type_id.maxRank == rank ?
-            self.parentModel.transitionToParentViewState( 'transcription', self.record.transcription_id ) :
-            self.openRank( rank + 1 );
+            self.parentModel.transitionToParentViewState(
+              'transcription', 'uid=' + self.record.transcription_uid
+            ) : self.transitionToTestTypeRank( rank + 1 );
         };
 
-        this.openRank = function( rank ) {
+        this.transitionToTestTypeRank = function( rank ) {
+          console.log( self.record );
           return CnHttpFactory.instance( {
-            path: 'test_entry/transcription_id=' + self.record.transcription_id + ';test_type_rank=' + rank
+            path: 'test_entry/uid=' + self.record.transcription_uid + ';test_type_rank=' + rank
           } ).get().then( function( response ) {
             var record = response.data;
             record.getIdentifier = function() {
@@ -303,7 +337,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         };
 
         this.viewTranscription = function() {
-          return $state.go( 'transcription.view', { identifier: this.record.transcription_id } );
+          return $state.go( 'transcription.view', { identifier: 'uid=' + this.record.transcription_uid } );
         };
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
@@ -361,8 +395,8 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestEntryNotesFactory', [
-    'CnBaseNoteFactory', 'CnSession', '$state',
-    function( CnBaseNoteFactory, CnSession, $state ) {
+    'CnBaseNoteFactory', 'CnSession', 'CnHttpFactory', '$state', '$q',
+    function( CnBaseNoteFactory, CnSession, CnHttpFactory, $state, $q ) {
       var object = function() {
         var self = this;
         CnBaseNoteFactory.construct( this, module );
@@ -374,14 +408,40 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           allowEdit: angular.isDefined( noteModule.actions.edit )
         } );
 
-        this.onView().then( function() {
+        $q.all( [
+          this.onView(),
+          CnHttpFactory.instance( {
+            path: 'test_entry/' + $state.params.identifier,
+            data: {
+              select: {
+                column: [ {
+                  table: 'transcription',
+                  column: 'uid',
+                  alias: 'transcription_uid'
+                }, {
+                  table: 'test_type',
+                  column: 'name',
+                  alias: 'test_type_name'
+                } ]
+              }
+            }
+          } ).get().then( function( response ) {
+            self.uid = response.data.transcription_uid;
+            self.test_type_name = response.data.test_type_name;
+          } )
+        ] ).then( function() {
           CnSession.setBreadcrumbTrail(
             [ {
-              title: 'Test Entries',
-              go: function() { $state.go( 'test_entry.list' ); }
+              title: 'Transcription',
+              go: function() { $state.go( 'transcription.list' ); }
             }, {
               title: self.uid,
-              go: function() { $state.go( 'test_entry.view', { identifier: $state.params.identifier } ); }
+              go: function() { $state.go( 'transcription.view', { identifier: 'uid=' + self.uid } ); }
+            }, {
+              title: 'Test Entries',
+            }, {
+              title: self.test_type_name,
+              go: function() { $state.go( 'test_entry.view', $state.params ); }
             }, {
               title: 'Notes'
             } ]
@@ -389,7 +449,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         } );
       };
 
-      return { instance: function() { return new object( false ); } };
+      return { instance: function() { return new object(); } };
     }
   ] );
 } );

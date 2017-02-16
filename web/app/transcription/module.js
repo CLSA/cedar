@@ -242,10 +242,15 @@ define( function() {
         // only show the add transcription button for typists
         // (the participant module will add it manually for other roles when necessary)
         this.getAddEnabled = function() {
-          return 'typist' == CnSession.role.name &&
-                 'transcription' == this.getSubjectFromState() &&
-                 CnSession.setting.maxWorkingTranscriptions > this.listModel.cache.length;
-                 
+          if( 'typist' == CnSession.role.name ) {
+            return this.$$getAddEnabled() &&
+                   'transcription' == this.getSubjectFromState() &&
+                   CnSession.setting.maxWorkingTranscriptions > this.listModel.cache.length;
+          } else {
+            return this.$$getAddEnabled() &&
+                   'participant' == this.getSubjectFromState() &&
+                   'add_transcription' == this.getActionFromState();
+          }
         };
 
         // adding transcriptions is different for typists and everyone else

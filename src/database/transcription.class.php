@@ -75,15 +75,27 @@ class transcription extends \cenozo\database\record
   {
     $record = NULL;
 
-    // use the unique participant_id key to accept uid as a column value
-    if( 'uid' == $column ||
-        ( is_array( $column ) && 1 == count( $column ) && in_array( 'uid', $column ) ) )
+    // convert uid column to participant_id
+    if( 'uid' == $column || ( is_array( $column ) && in_array( 'uid', $column ) ) )
     {
       $participant_class_name = lib::get_class_name( 'database\participant' );
       $db_participant = $participant_class_name::get_unique_record( $column, $value );
-      return is_null( $db_participant ) ?
-        NULL : parent::get_unique_record( 'participant_id', $db_participant->id );
+      if( 'uid' == $column )
+      {
+        $column = 'participant_id';
+        $value = is_null( $db_participant ) ? 0 : $db_participant->id;
+      }
+      else
+      {
+        $index = array_search( 'uid', $column );
+        if( false !== $index )
+        {
+          $column[$index] = 'participant_id';
+          $value[$index] = is_null( $db_participant ) ? 0 : $db_participant->id;
+        }
+      }
     }
-    else return parent::get_unique_record( $column, $value );
+
+    return parent::get_unique_record( $column, $value );
   }
 }

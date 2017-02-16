@@ -21,11 +21,21 @@ class test_entry extends \cenozo\database\record
   {
     $test_type_class_name = lib::get_class_name( 'database\test_type' );
 
-    // add (transcription_id,test_type_rank) as artificial unique record type
-    if( is_array( $column ) &&
-        2 == count( $column ) &&
-        in_array( 'transcription_id', $column ) &&
-        in_array( 'test_type_rank', $column ) )
+    // convert uid column to a transcription_id
+    if( is_array( $column ) && in_array( 'uid', $column ) )
+    {
+      $index = array_search( 'uid', $column );
+      if( false !== $index )
+      {
+        $transcription_class_name = lib::get_class_name( 'database\transcription' );
+        $db_transcription = $transcription_class_name::get_unique_record( 'uid', $value[$index] );
+        $column[$index] = 'transcription_id';
+        $value[$index] = is_null( $db_transcription ) ? 0 : $db_transcription->id;
+      }
+    }
+
+    // add (uid,test_type_rank) as artificial unique record type
+    if( is_array( $column ) && in_array( 'test_type_rank', $column ) )
     {
       $index = array_search( 'test_type_rank', $column );
       if( false !== $index ) {
