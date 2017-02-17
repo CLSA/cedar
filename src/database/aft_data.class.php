@@ -12,4 +12,4 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * aft_data: record
  */
-class aft_data extends \cenozo\database\record {}
+class aft_data extends base_data {}

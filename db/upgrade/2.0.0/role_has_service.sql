@@ -57,7 +57,7 @@ CREATE PROCEDURE patch_role_has_service()
       "FROM ", @cenozo, ".role, service ",
       "WHERE role.name IN( 'typist' ) ",
       "AND service.restricted = 1 ",
-      "AND service.subject IN ( 'aft_data', 'mat_data', 'rey1_data', 'rey2_data', 'participant' )" );
+      "AND service.subject IN ( 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data', 'participant' )" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
@@ -85,8 +85,8 @@ CREATE PROCEDURE patch_role_has_service()
         "SELECT id FROM service ",
         "WHERE subject IN( ",
           "'address', 'alternate', 'application', 'availability_type', 'collection', 'consent', 'consent_type', ",
-          "'defer_type', 'event', 'event_type', 'export', 'export_file', 'export_column', 'export_restriction', ",
-          "'language', 'report_schedule', 'state', 'test_type', 'filename_format' ) ",
+          "'event', 'event_type', 'export', 'export_file', 'export_column', 'export_restriction', 'language', ",
+          "'report_schedule', 'state', 'test_type', 'filename_format' ) ",
         "OR ( subject = 'report_restriction' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'report_type' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'setting' AND method = 'GET' ) ",

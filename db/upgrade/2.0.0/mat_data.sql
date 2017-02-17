@@ -5,10 +5,12 @@ CREATE TABLE IF NOT EXISTS mat_data (
   update_timestamp TIMESTAMP NOT NULL,
   create_timestamp TIMESTAMP NOT NULL,
   test_entry_id INT UNSIGNED NOT NULL,
-  value TINYINT(1) NULL DEFAULT NULL,
+  rank INT UNSIGNED NOT NULL,
+  value VARCHAR(5) NOT NULL,
   PRIMARY KEY (id),
   INDEX fk_test_entry_id (test_entry_id ASC),
   UNIQUE INDEX uq_test_entry_id (test_entry_id ASC),
+  UNIQUE INDEX uq_test_entry_id_rank (test_entry_id ASC, rank ASC),
   CONSTRAINT fk_mat_data_test_entry_id
     FOREIGN KEY (test_entry_id)
     REFERENCES test_entry (id)

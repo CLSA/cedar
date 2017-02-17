@@ -18,7 +18,7 @@
              tooltip="Click to expand details"
              tooltip-placement="left"></i>
         </div>
-        {{ model.viewModel.record.test_type_title }} ({{ model.viewModel.record.test_type_name }}) Data
+        {{ model.viewModel.record.test_type_name }} Data
         <span ng-if="!model.getEditEnabled()">(read only)</span>
         <span ng-if="!isComplete">(Loading&hellip;)</span>
       </h4>
@@ -27,19 +27,22 @@
       <div id="View"
            class="form-body collapse"
            ng-class="{'in':!initCollapsed}"
-           ng-switch="model.viewModel.record.test_type_name">
-        <cn-aft-data-view ng-switch-when="AFT"
+           ng-switch="model.viewModel.record.data_type">
+        <cn-aft-data-view ng-switch-when="aft"
                           model="model.viewModel.AftDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-aft-data-view>
-        <cn-mat-data-view ng-switch-when="MAT"
+        <cn-fas-data-view ng-switch-when="fas"
+                          model="model.viewModel.FasDataModel"
+                          edit-enabled="model.getEditEnabled()"></cn-fas-data-view>
+        <cn-mat-data-view ng-switch-when="mat"
                           model="model.viewModel.MatDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-mat-data-view>
-        <cn-rey1-data-view ng-switch-when="REY1"
-                           model="model.viewModel.Rey1DataModel"
-                           edit-enabled="model.getEditEnabled()"></cn-rey1-data-view>
-        <cn-rey2-data-view ng-switch-when="REY2"
-                           model="model.viewModel.Rey2DataModel"
-                           edit-enabled="model.getEditEnabled()"></cn-rey2-data-view>
+        <cn-premat-data-view ng-switch-when="premat"
+                          model="model.viewModel.PrematDataModel"
+                          edit-enabled="model.getEditEnabled()"></cn-premat-data-view>
+        <cn-rey-data-view ng-switch-when="rey"
+                           model="model.viewModel.ReyDataModel"
+                           edit-enabled="model.getEditEnabled()"></cn-rey-data-view>
         <hr />
         <div class="container-fluid vertical-spacer">
           <span ng-if="0 == model.viewModel.soundFileList.length" class="text-info">

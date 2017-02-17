@@ -1,20 +1,20 @@
 define( function() {
   'use strict';
 
-  try { var module = cenozoApp.module( 'rey1_data', true ); } catch( err ) { console.warn( err ); return; }
-  cenozoApp.initDataModule( module, 'REY1' );
+  try { var module = cenozoApp.module( 'rey_data', true ); } catch( err ) { console.warn( err ); return; }
+  cenozoApp.initDataModule( module, 'REY' );
   module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnRey1DataView', [
-    'CnRey1DataModelFactory',
-    function( CnRey1DataModelFactory ) {
-      return cenozoApp.initDataViewDirective( module, CnRey1DataModelFactory.root );
+  cenozo.providers.directive( 'cnReyDataView', [
+    'CnReyDataModelFactory',
+    function( CnReyDataModelFactory ) {
+      return cenozoApp.initDataViewDirective( module, CnReyDataModelFactory.root );
     }
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnRey1DataViewFactory', [
+  cenozo.providers.factory( 'CnReyDataViewFactory', [
     'CnBaseDataViewFactory',
     function( CnBaseDataViewFactory ) {
       var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
@@ -23,12 +23,12 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnRey1DataModelFactory', [
-    'CnBaseDataModelFactory', 'CnRey1DataViewFactory',
-    function( CnBaseDataModelFactory, CnRey1DataViewFactory ) {
+  cenozo.providers.factory( 'CnReyDataModelFactory', [
+    'CnBaseDataModelFactory', 'CnReyDataViewFactory',
+    function( CnBaseDataModelFactory, CnReyDataViewFactory ) {
       var object = function( root ) {
         CnBaseDataModelFactory.construct( this, module );
-        this.viewModel = CnRey1DataViewFactory.instance( this, root );
+        this.viewModel = CnReyDataViewFactory.instance( this, root );
       };
 
       return {

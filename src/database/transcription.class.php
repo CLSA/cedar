@@ -29,6 +29,9 @@ class transcription extends \cenozo\database\record
       $test_type_sel = lib::create( 'database\select' );
       $test_type_sel->add_column( 'id' );
       $test_type_mod = lib::create( 'database\modifier' );
+      $test_type_mod->join( 'test_type_has_cohort', 'test_type.id', 'test_type_has_cohort.test_type_id' );
+      $test_type_mod->join( 'participant', 'test_type_has_cohort.cohort_id', 'participant.cohort_id' );
+      $test_type_mod->where( 'participant.id', '=', $this->participant_id );
       $test_type_mod->order( 'rank' );
       $test_type_list = $test_type_class_name::select( $test_type_sel, $test_type_mod );
       $this->assigned_count = count( $test_type_list );
@@ -59,8 +62,7 @@ class transcription extends \cenozo\database\record
         $db_test_entry = lib::create( 'database\test_entry' );
         $db_test_entry->transcription_id = $this->id;
         $db_test_entry->test_type_id = $test_type['id'];
-        $db_test_entry->save();
-        $db_test_entry->get_data(); // this will create the test data for this entry
+        $db_test_entry->save(); // this will create the test data for this entry
 
         // add the participant's preferred language to the test entry
         $db_test_entry->add_language( $this->get_participant()->language_id );

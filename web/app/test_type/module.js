@@ -11,19 +11,32 @@ define( function() {
       pluralPossessive: 'test types\''
     },
     columnList: {
-      name: { title: 'Name' }
+      rank: { title: 'Rank' },
+      name: { title: 'Name' },
+      data_type: { title: 'Data Type' }
     },
     defaultOrder: {
-      column: 'test_type.name',
+      column: 'test_type.rank',
       reverse: false
     }
   } );
 
   module.addInputGroup( '', {
+    rank: {
+      title: 'Rank',
+      type: 'string'
+    },
     name: {
       title: 'Name',
-      type: 'string',
-      constant: true
+      type: 'string'
+    },
+    data_type: {
+      title: 'Data Type',
+      type: 'string'
+    },
+    description: {
+      title: 'Description',
+      type: 'text'
     }
   } );
 

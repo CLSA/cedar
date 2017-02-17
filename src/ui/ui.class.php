@@ -35,7 +35,7 @@ class ui extends \cenozo\ui\ui
     $module = $this->get_module( 'test_type' );
     if( !is_null( $module ) )
     {
-      $module->add_child( 'defer_type' );
+      $module->add_child( 'cohort' );
       $module->add_child( 'filename_format' );
     }
 

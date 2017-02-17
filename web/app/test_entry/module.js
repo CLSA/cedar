@@ -1,4 +1,4 @@
-define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( list, name ) {
+define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce( function( list, name ) {
   return list.concat( cenozoApp.module( name ).getRequiredFiles() );
 }, [] ), function() {
   'use strict';
@@ -19,10 +19,6 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
       friendlyColumn: 'test_type_name'
     },
     columnList: {
-      test_type_rank: {
-        column: 'test_type.rank',
-        title: 'Rank'
-      },
       test_type_name: {
         column: 'test_type.name',
         title: 'Type'
@@ -51,16 +47,16 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
     test_type_rank: {
       column: 'test_type.rank',
       title: 'Rank',
-      constant: true
+      type: 'hidden'
     },
     test_type_name: {
       column: 'test_type.name',
-      title: 'Type',
+      title: 'Test Type',
       constant: true
     },
-    test_type_title: {
-      column: 'test_type.title',
-      title: 'Title',
+    data_type: {
+      column: 'test_type.data_type',
+      title: 'Data Type',
       constant: true
     },
     state: {
@@ -130,7 +126,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           $scope.refresh = function() {
             if( $scope.isComplete ) {
               $scope.isComplete = false;
-              var type = $scope.model.viewModel.record.test_type_name.toLowerCase() + 'DataModel';
+              var type = $scope.model.viewModel.record.data_type.toLowerCase() + 'DataModel';
               var dataModel = type.charAt( 0 ).toUpperCase() + type.substring( 1 );
 
               // update the data record
@@ -161,10 +157,12 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestEntryViewFactory', [
     'CnBaseViewFactory',
-    'CnAftDataModelFactory', 'CnMatDataModelFactory', 'CnRey1DataModelFactory', 'CnRey2DataModelFactory',
+    'CnAftDataModelFactory', 'CnFasDataModelFactory', 'CnMatDataModelFactory',
+    'CnPrematDataModelFactory', 'CnReyDataModelFactory',
     'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state', '$q',
     function( CnBaseViewFactory,
-              CnAftDataModelFactory, CnMatDataModelFactory, CnRey1DataModelFactory, CnRey2DataModelFactory,
+              CnAftDataModelFactory, CnFasDataModelFactory, CnMatDataModelFactory,
+              CnPrematDataModelFactory, CnReyDataModelFactory,
               CnSession, CnHttpFactory, CnModalTextFactory, $state, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
@@ -174,9 +172,10 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         
         // add the test entry's data models
         this.AftDataModel = CnAftDataModelFactory.instance();
+        this.FasDataModel = CnFasDataModelFactory.instance();
         this.MatDataModel = CnMatDataModelFactory.instance();
-        this.Rey1DataModel = CnRey1DataModelFactory.instance();
-        this.Rey2DataModel = CnRey2DataModelFactory.instance();
+        this.PrematDataModel = CnPrematDataModelFactory.instance();
+        this.ReyDataModel = CnReyDataModelFactory.instance();
         this.isWorking = false;
         this.noteCount = 0;
 
@@ -289,6 +288,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
           $state.go( 'test_entry.notes', { identifier: this.record.getIdentifier() } );
         };
 
+        /*
         this.previous = function() {
           var rank = this.record.test_type_rank;
           return 1 == rank ?
@@ -306,7 +306,6 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
         };
 
         this.transitionToTestTypeRank = function( rank ) {
-          console.log( self.record );
           return CnHttpFactory.instance( {
             path: 'test_entry/uid=' + self.record.transcription_uid + ';test_type_rank=' + rank
           } ).get().then( function( response ) {
@@ -317,6 +316,7 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
             return self.parentModel.transitionToViewState( record );
           } );
         };
+        */
 
         this.close = function() {
           if( 'typist' == CnSession.role.name ) {
@@ -371,17 +371,6 @@ define( [ 'aft_data', 'mat_data', 'rey1_data', 'rey2_data' ].reduce( function( l
             }
           } ).get().then( function() {
             return self.$$transitionToParentViewState( subject, identifier );
-          } );
-        };
-
-        // extend getMetadata
-        this.getMetadata = function() {
-          return this.$$getMetadata().then( function() {
-            return CnHttpFactory.instance( {
-              path: 'test_type'
-            } ).count().then( function( response ) {
-              self.metadata.columnList.test_type_id.maxRank = parseInt( response.headers( 'Total' ) );
-            } );
           } );
         };
       };

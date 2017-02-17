@@ -17,12 +17,35 @@ CREATE TABLE IF NOT EXISTS filename_format (
 ENGINE = InnoDB;
 
 INSERT IGNORE INTO filename_format( test_type_id, format )
+SELECT test_type.id, "FAS_FREC_COF1"
+FROM test_type
+WHERE test_type.name = "F-Word Fluency (FAS-F)";
+
+INSERT IGNORE INTO filename_format( test_type_id, format )
+SELECT test_type.id, "FAS_AREC_COF1"
+FROM test_type
+WHERE test_type.name = "A-Word Fluency (FAS-A)";
+
+INSERT IGNORE INTO filename_format( test_type_id, format )
+SELECT test_type.id, "FAS_SREC_COF1"
+FROM test_type
+WHERE test_type.name = "S-Word Fluency (FAS-S)";
+
+INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
 FROM test_type, (
   SELECT "Animal List-out" AS name UNION
   SELECT "COG_ANMLLLIST_REC_COF1" AS name
 ) AS format
-WHERE test_type.name = "AFT";
+WHERE test_type.name = "Animal Fluency (AFT)";
+
+INSERT IGNORE INTO filename_format( test_type_id, format )
+SELECT test_type.id, format.name
+FROM test_type, (
+  SELECT "Counting to 20-out" AS name UNION
+  SELECT "Alphabet-out" AS name
+) AS format
+WHERE test_type.name = "Pre Mental Alternation (pre-MAT)";
 
 INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
@@ -30,7 +53,7 @@ FROM test_type, (
   SELECT "MAT Alternation-out" AS name UNION
   SELECT "COG_CNTTMEREC_COF1" AS name
 ) AS format
-WHERE test_type.name = "MAT";
+WHERE test_type.name = "Mental Alternation (MAT)";
 
 INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
@@ -38,7 +61,7 @@ FROM test_type, (
   SELECT "REY I-out" AS name UNION
   SELECT "COG_WRDLSTREC_COF1" AS name
 ) AS format
-WHERE test_type.name = "REY1";
+WHERE test_type.name = "Immediate Word List (REY1)";
 
 INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
@@ -46,4 +69,4 @@ FROM test_type, (
   SELECT "REY II-out" AS name UNION
   SELECT "COG_WRDLST2_REC_COF1" AS name
 ) AS format
-WHERE test_type.name = "REY2";
+WHERE test_type.name = "Delayed Word List (REY2)";

@@ -12,13 +12,4 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * test_type: record
  */
-class test_type extends \cenozo\database\record
-{
-  /**
-   * TODO: document
-   */
-  public function get_data_table_name()
-  {
-    return sprintf( '%s_data', strtolower( str_replace( ' ', '_', $this->name ) ) );
-  }
-}
+class test_type extends \cenozo\database\record {}

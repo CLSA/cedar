@@ -6,7 +6,7 @@
  * @filesource
  */
 
-namespace cedar\service\rey2_data;
+namespace cedar\service\rey_data;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**

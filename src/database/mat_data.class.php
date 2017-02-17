@@ -12,4 +12,4 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * mat_data: record
  */
-class mat_data extends \cenozo\database\record {}
+class mat_data extends base_data {}

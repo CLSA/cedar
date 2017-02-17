@@ -17,6 +17,22 @@ class test_entry extends \cenozo\database\record
   /**
    * Override parent method
    */
+  public function save()
+  {
+    $new_record = is_null( $this->id );
+    parent::save();
+
+    if( $new_record )
+    {
+      // initialize the test entry's data
+      $data_class_name = lib::get_class_name( sprintf( 'database\%s', $this->get_data_table_name() ) );
+      $data_class_name::initialize( $this );
+    }
+  }
+
+  /**
+   * Override parent method
+   */
   public static function get_unique_record( $column, $value )
   {
     $test_type_class_name = lib::get_class_name( 'database\test_type' );
@@ -54,27 +70,6 @@ class test_entry extends \cenozo\database\record
   /**
    * TODO: document
    */
-  public function get_data()
-  {
-    // no promary key means no data
-    if( is_null( $this->id ) ) return NULL;
-
-    $test_data_table_name = sprintf( 'database\%s', $this->get_data_table_name() );
-    $test_data_class_name = lib::get_class_name( $test_data_table_name );
-    $db_test_data = $test_data_class_name::get_unique_record( 'test_entry_id', $this->id );
-    if( is_null( $db_test_data ) )
-    { // the data doesn't exist yet, so create it
-      $db_test_data = lib::create( $test_data_table_name );
-      $db_test_data->test_entry_id = $this->id;
-      $db_test_data->save();
-    }
-
-    return $db_test_data;
-  }
-
-  /**
-   * TODO: document
-   */
   public function get_data_table_name()
   {
     $db_test_type = $this->get_test_type();
@@ -87,7 +82,7 @@ class test_entry extends \cenozo\database\record
       );
     }
 
-    return $db_test_type->get_data_table_name();
+    return $db_test_type->data_type.'_data';
   }
 
   /**

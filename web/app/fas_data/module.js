@@ -1,20 +1,20 @@
 define( function() {
   'use strict';
 
-  try { var module = cenozoApp.module( 'rey2_data', true ); } catch( err ) { console.warn( err ); return; }
-  cenozoApp.initDataModule( module, 'REY2' );
+  try { var module = cenozoApp.module( 'fas_data', true ); } catch( err ) { console.warn( err ); return; }
+  cenozoApp.initDataModule( module, 'FAS' );
   module.addInputGroup( '', { value: { type: 'boolean' } } );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnRey2DataView', [
-    'CnRey2DataModelFactory',
-    function( CnRey2DataModelFactory ) {
-      return cenozoApp.initDataViewDirective( module, CnRey2DataModelFactory.root );
+  cenozo.providers.directive( 'cnFasDataView', [
+    'CnFasDataModelFactory',
+    function( CnFasDataModelFactory ) {
+      return cenozoApp.initDataViewDirective( module, CnFasDataModelFactory.root );
     }
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnRey2DataViewFactory', [
+  cenozo.providers.factory( 'CnFasDataViewFactory', [
     'CnBaseDataViewFactory',
     function( CnBaseDataViewFactory ) {
       var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
@@ -23,12 +23,13 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnRey2DataModelFactory', [
-    'CnBaseDataModelFactory', 'CnRey2DataViewFactory',
-    function( CnBaseDataModelFactory, CnRey2DataViewFactory ) {
+  cenozo.providers.factory( 'CnFasDataModelFactory', [
+    'CnBaseDataModelFactory', 'CnFasDataViewFactory',
+    function( CnBaseDataModelFactory, CnFasDataViewFactory ) {
       var object = function( root ) {
         CnBaseDataModelFactory.construct( this, module );
-        this.viewModel = CnRey2DataViewFactory.instance( this, root );
+        this.viewModel = CnFasDataViewFactory.instance( this, root );
+        this.inputList = [ 'asdf', 'qwer', 'zxcv', 'rawr', 'lkjh', 'oiuy' ];
       };
 
       return {

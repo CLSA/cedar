@@ -1,0 +1,39 @@
+order of tests:
+  FAS F words
+  FAS A words
+  FAS S words
+  REY1
+  AFT
+  counting & alphabet check
+  MAT
+  REY2
+
+REY (1 & 2 identical)
+  table: test_entry_ranked_word
+  defined set of 15 words which are either yes/no/variant_word_id
+  variants from a list of approved words, if not in that list then it's an intrusion instead (and word gets marked as no)
+  may also have 0 to n intrusion_word_id (unordered, but may want it to be ordered)
+  alg for scoring: rank doesn't matter
+
+AFT
+  table: test_entry_classification
+  ordered list of animal names
+  duplicate words are recorded
+  0 to n entries, current max of 65
+
+FAS
+  table: test_entry_classification
+  three separate tests: F, A and S words
+  ordered list of words are recorded
+  primary words: "correct" words, approved and starting with the correct letter
+  intrusion words: words that start with the wrong letter
+  mispelled words: ??
+  variant: ??
+  0 to n entries, current max of 65
+
+MAT
+  table: test_entry_alpha_numeric
+  ordered set of letters (single-letter only) and numbers
+  non-letter-or-numbers are not recorded (ignored)
+  duplicate words are ??? (test db)
+  0 to n entries, current max of 53
