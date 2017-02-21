@@ -1,15 +1,33 @@
-<div class="form-group first-form-group">
-  <label for="value" class="col-sm-3 control-label">Value</label>
-  <div class="col-sm-9">
-    <select id="value"
-            name="value"
-            ng-model="model.viewModel.record.value"
-            ng-change="patch()"
-            ng-disabled="!isComplete || !editEnabled"
-            class="form-control">
-      <option value="">(empty)</option>
-      <option value="1">Yes</option>
-      <option value="0">No</option>
-    </select>
+<div class="container-fluid loading" ng-if="!isComplete"></div>
+<div ng-if="isComplete">
+  <div class="form-group first-form-group">
+    <label for="counting" class="col-sm-3 control-label">Counting</label>
+    <div class="col-sm-9">
+      <select id="counting"
+              name="counting"
+              ng-model="model.viewModel.record.counting"
+              ng-change="patch( 'counting' )"
+              ng-disabled="!isComplete || !editEnabled"
+              class="form-control">
+        <option value="">(empty)</option>
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group first-form-group">
+    <label for="alphabet" class="col-sm-3 control-label">Alphabet</label>
+    <div class="col-sm-9">
+      <select id="alphabet"
+              name="alphabet"
+              ng-model="model.viewModel.record.alphabet"
+              ng-change="patch( 'alphabet' )"
+              ng-disabled="!isComplete || !editEnabled"
+              class="form-control">
+        <option value="">(empty)</option>
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
   </div>
 </div>

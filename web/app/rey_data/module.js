@@ -9,7 +9,16 @@ define( function() {
   cenozo.providers.directive( 'cnReyDataView', [
     'CnReyDataModelFactory',
     function( CnReyDataModelFactory ) {
-      return cenozoApp.initDataViewDirective( module, CnReyDataModelFactory.root );
+      return {
+        templateUrl: module.getFileUrl( 'view.tpl.html' ),
+        restrict: 'E',
+        scope: { model: '=?', editEnabled: '=' },
+        controller: function( $scope ) { 
+          if( angular.isUndefined( $scope.model ) ) $scope.model = CnPrematDataModelFactory.root;
+          $scope.isComplete = false;
+          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
+        }   
+      }
     }
   ] );
 

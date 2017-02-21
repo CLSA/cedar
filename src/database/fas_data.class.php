@@ -12,4 +12,4 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * fas_data: record
  */
-class fas_data extends base_data {}
+class fas_data extends base_rank_data {}

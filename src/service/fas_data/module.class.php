@@ -6,7 +6,7 @@
  * @filesource
  */
 
-namespace cedar\service\aft_data;
+namespace cedar\service\fas_data;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
@@ -21,6 +21,6 @@ class module extends \cedar\service\base_data_module
   {
     parent::prepare_read( $select, $modifier );
 
-    $modifier->join( 'word', 'aft_data.word_id', 'word.id' );
+    $modifier->join( 'word', 'fas_data.word_id', 'word.id' );
   }
 }

@@ -23,7 +23,7 @@
         <span ng-if="!isComplete">(Loading&hellip;)</span>
       </h4>
     </div>
-    <form name="form" class="form-horizontal" novalidate>
+    <div name="form" class="form-horizontal" novalidate>
       <div id="View"
            class="form-body collapse"
            ng-class="{'in':!initCollapsed}"
@@ -133,7 +133,7 @@
           </button>
         </div>
       </div>
-    </form>
+    </div>
   </div>
 </div>
 <div class="vertical-spacer" ng-repeat="child in model.module.children">

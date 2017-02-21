@@ -61,4 +61,17 @@ class base_data_module extends \cenozo\service\site_restricted_participant_modul
       $modifier->where( 'transcription.end_datetime', '=', NULL );
     }
   }
+
+  /**
+   * Extend parent method
+   */
+  public function pre_write( $record )
+  {
+    // if there is a rank and it is blank then set it as the last data
+    if( $record->column_exists( 'rank' ) && is_null( $record->rank ) )
+    {
+      $method = sprintf( 'get_%s_count', $this->get_subject() );
+      $record->rank = $this->get_parent_resource()->$method() + 1;
+    }
+  }
 }

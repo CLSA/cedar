@@ -168,14 +168,15 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
+        this.onViewPromise = null;
         this.soundFileList = [];
         
         // add the test entry's data models
-        this.AftDataModel = CnAftDataModelFactory.instance();
-        this.FasDataModel = CnFasDataModelFactory.instance();
-        this.MatDataModel = CnMatDataModelFactory.instance();
-        this.PrematDataModel = CnPrematDataModelFactory.instance();
-        this.ReyDataModel = CnReyDataModelFactory.instance();
+        this.AftDataModel = CnAftDataModelFactory.instance( parentModel );
+        this.FasDataModel = CnFasDataModelFactory.instance( parentModel );
+        this.MatDataModel = CnMatDataModelFactory.instance( parentModel );
+        this.PrematDataModel = CnPrematDataModelFactory.instance( parentModel );
+        this.ReyDataModel = CnReyDataModelFactory.instance( parentModel );
         this.isWorking = false;
         this.noteCount = 0;
 
@@ -187,7 +188,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             self.noteCount = response.headers( 'Total' );
           } );
 
-          return this.$$onView().then( function() {
+          this.onViewPromise = this.$$onView().then( function() {
             if( 'typist' == CnSession.role.name ) {
               // turn off edit privilege if entry is not assigned
               self.parentModel.getEditEnabled = function() {
@@ -208,6 +209,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               self.soundFileList = response.data;
             } );
           } );
+          return this.onViewPromise;
         };
 
         this.submit = function() {

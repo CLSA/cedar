@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS fas_data (
   word_id INT UNSIGNED NOT NULL,
   PRIMARY KEY (id),
   INDEX fk_test_entry_id (test_entry_id ASC),
-  UNIQUE INDEX uq_test_entry_id (test_entry_id ASC),
   UNIQUE INDEX uq_test_entry_id_rank (test_entry_id ASC, rank ASC),
   INDEX fk_word_id (word_id ASC),
   CONSTRAINT fk_fas_data_test_entry_id

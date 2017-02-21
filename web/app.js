@@ -13,12 +13,12 @@ cenozo.controller( 'HeaderCtrl', [
 /* ######################################################################################################## */
 cenozoApp.initDataModule = function( module, name ) {
   angular.extend( module, {
-    identifier: {
+    identifier: {},/*
       parent: {
         subject: 'test_entry',
         column: 'test_entry_id'
       }
-    },
+    },*/
     name: {
       singular: name + ' Data',
       plural: name + ' Data',
@@ -29,30 +29,9 @@ cenozoApp.initDataModule = function( module, name ) {
 };
 
 /* ######################################################################################################## */
-cenozoApp.initDataViewDirective = function( module, model ) {
-  return {
-    templateUrl: module.getFileUrl( 'view.tpl.html' ),
-    restrict: 'E',
-    scope: { model: '=?', editEnabled: '=' },
-    controller: function( $scope ) {
-      if( angular.isUndefined( $scope.model ) ) $scope.model = model;
-      
-      $scope.isComplete = false;
-      $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
-      
-      $scope.patch = function() {
-        if( $scope.model.getEditEnabled() )
-          $scope.model.viewModel.onPatch( { value: $scope.model.viewModel.record.value } );
-      };  
-    } 
-  };
-};
-
-
-/* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory',
-  function( CnBaseViewFactory, CnHttpFactory ) {
+  'CnBaseViewFactory', 'CnHttpFactory', '$q',
+  function( CnBaseViewFactory, CnHttpFactory, $q ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
@@ -65,7 +44,13 @@ cenozo.factory( 'CnBaseDataViewFactory', [
         object.getDataType = function() {
           var path = parentModel.getServiceCollectionPath();
           var type = path.substring( path.lastIndexOf( '/' ) + 1 );
-          return type.substring( 0, type.indexOf( '_' ) ).toUpperCase();
+          return type.substring( 0, type.indexOf( '_' ) );
+        }
+
+        function convertRecord( record ) {
+          for( var property in record ) {
+            if( 'boolean' == typeof( record[property] ) ) record[property] = record[property] ? 1 : 0;
+          }
         }
 
         // write a custom onView function
@@ -75,11 +60,22 @@ cenozo.factory( 'CnBaseDataViewFactory', [
           // start by confirming whether or not this is the correct test type for the test entry
           return CnHttpFactory.instance( {
             path: object.getTestEntryPath(),
-            data: { select: { column: [ { table: 'test_type', column: 'name' } ] } } 
+            data: { select: { column: [ { table: 'test_type', column: 'data_type' } ] } } 
           } ).get().then( function( response ) { 
-            if( object.getDataType() == response.data.name ) {
-              return object.$$onView().then( function() {
-                if( 'boolean' == typeof object.record.value ) object.record.value = object.record.value ? 1 : 0;
+            if( object.getDataType() == response.data.data_type ) {
+              return $q.all( [
+                parentModel.testEntryModel.viewModel.onViewPromise,
+                object.$$onView()
+              ] ).then( function() {
+                delete object.record.getIdentifier; // we don't need the identifier function
+
+                // convert boolean to integer
+                if( angular.isObject( object.record ) )
+                  for( var property in object.record )
+                    if( 'boolean' == typeof( object.record[property] ) )
+                      object.record[property] = object.record[property] ? 1 : 0;
+
+                if( angular.isDefined( object.onDataView ) ) return object.onDataView();
               } );
             }
           } );
@@ -100,11 +96,12 @@ cenozo.factory( 'CnBaseDataModelFactory', [
         object.getServiceResourcePath = function( resource ) {
           var path = object.getServiceCollectionPath();
           var type = path.substring( path.lastIndexOf( '/' ) + 1 );
-          return type + '/test_entry_id=' + $state.params.identifier;
+          return 'premat_data' == type || 'rey_data' == type
+               ? type + '/test_entry_id=' + $state.params.identifier
+               : 'test_entry/' + $state.params.identifier + '/' + type;
         };
 
         object.isTypist = function() {
-          console.log( 'typist' == CnSession.role.name );
           return 'typist' == CnSession.role.name;
         };
       }

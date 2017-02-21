@@ -5,22 +5,23 @@
   </div>
 </div>
 <hr/>
-<div class="container-fluid">
-  <div ng-if="0 == model.inputList.length" class="text-info">
+<div class="container-fluid loading" ng-if="!isComplete"></div>
+<div class="container-fluid" ng-if="isComplete">
+  <div ng-if="0 == model.viewModel.record.length" class="text-info">
     No words have been entered.
   </div>
-  <div class="row" ng-repeat="input in model.inputList track by $index" ng-if="$index % 4 == 0">
+  <div class="row" ng-repeat="doNotUse in model.viewModel.record track by $index" ng-if="$index % 4 == 0">
     <div class="col-sm-3 input-box"
          ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3]"
-         ng-if="model.inputList[i] != null">
-      <div class="col-xs-10 col-slim">
-        <input class="form-control" type="text" ng-model="model.inputList[i]" disabled></input>
+         ng-if="null != model.viewModel.record[i]">
+      <div class="col-xs-10 col-slim-right">
+        <input class="form-control" type="text" ng-model="model.viewModel.record[i].word" disabled></input>
       </div>
-      <div class="col-xs-2 col-slim">
+      <div class="col-xs-2 col-slim-left">
         <button class="btn btn-danger"
                 tooltip="Delete Word"
                 tooltip-placement="left"
-                ng-click="">
+                ng-click="deleteWord( model.viewModel.record[i].rank )">
           <i class="glyphicon glyphicon-remove"></i>
         </button>
       </div>

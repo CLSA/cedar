@@ -1,4 +1,4 @@
-SELECT "Creating new mat_data table" AS "";
+SELECT "Creating new premat_data table" AS "";
 
 CREATE TABLE IF NOT EXISTS premat_data (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
