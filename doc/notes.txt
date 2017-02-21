@@ -15,11 +15,21 @@ REY (1 & 2 identical)
   may also have 0 to n intrusion_word_id (unordered, but may want it to be ordered)
   alg for scoring: rank doesn't matter
 
+  - make variant dict for each word in the test instead of one dictionary for the whole test
+  - intrusions at any time, not only after words are entered
+  - need to add opposite language as variant
+
 AFT
   table: test_entry_classification
   ordered list of animal names
+  allow words to be re-ordered
   duplicate words are recorded
   0 to n entries, current max of 65
+
+  if in dict, add word
+  if in mispelled dict, doesn't let them add it
+  otherwise adds word to variant list (which gets cleaned)
+    when submitting add "you have variants, are you sure??"
 
 FAS
   table: test_entry_classification
@@ -35,5 +45,5 @@ MAT
   table: test_entry_alpha_numeric
   ordered set of letters (single-letter only) and numbers
   non-letter-or-numbers are not recorded (ignored)
-  duplicate words are ??? (test db)
+  duplicate words are to be recorded
   0 to n entries, current max of 53
