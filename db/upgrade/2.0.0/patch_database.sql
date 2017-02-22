@@ -24,6 +24,7 @@ SOURCE aft_data.sql
 SOURCE fas_data.sql
 SOURCE mat_data.sql
 SOURCE premat_data.sql
+SOURCE rey_data_variant.sql
 SOURCE rey_data.sql
 SOURCE user_has_cohort.sql
 SOURCE user_has_language.sql
