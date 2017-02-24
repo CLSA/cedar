@@ -15,6 +15,25 @@ use cenozo\lib, cenozo\log, cedar\util;
 class rey_data extends base_data
 {
   /**
+   * Extends parent method
+   */
+  public function __set( $column_name, $value )
+  {
+    // Every word in the REY test must either have a yes/no value or a variant, but not both, so
+    // if we are setting a word's value or variant to something non-null then set the other to null
+    if( !is_null( $value ) )
+    {
+      $pos = strpos( $column_name, '_rey_data_variant_id' );
+      $other_column_name = false !== $pos
+                         ? substr( $column_name, 0, $pos )
+                         : $column_name.'_rey_data_variant_id';
+      if( $this->column_exists( $other_column_name ) ) parent::__set( $other_column_name, NULL );
+    }
+
+    parent::__set( $column_name, $value );
+  }
+
+  /**
    * Override parent method
    */
   public static function initialize( $db_test_entry )
@@ -22,6 +41,7 @@ class rey_data extends base_data
     // create a rey_data record for the test entry
     $db_rey_data = new static();
     $db_rey_data->test_entry_id = $db_test_entry->id;
+    $db_rey_data->language_id = $db_test_entry->get_transcription()->get_participant()->language_id;
     $db_rey_data->save();
   }
 }

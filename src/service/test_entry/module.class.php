@@ -53,10 +53,45 @@ class module extends \cenozo\service\site_restricted_participant_module
 
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+
+    if( $select->has_column( 'prev_test_entry_id' ) || $select->has_column( 'next_test_entry_id' ) )
+    {
+      if( $select->has_column( 'prev_test_entry_id' ) )
+      {
+        $modifier->left_join( 'test_type', 'prev_test_type.rank', 'test_type.rank - 1', 'prev_test_type' );
+
+        $join_mod = lib::create( 'database\modifier' );
+        $join_mod->where( 'test_type_has_cohort.cohort_id', '=', 'participant.cohort_id', false );
+        $join_mod->where( 'test_type_has_cohort.test_type_id', '=', 'prev_test_type.id', false );
+        $modifier->join( 'test_type_has_cohort', 'test_type_has_cohort.cohort_id', 'participant.cohort_id' );
+
+        $join_mod = lib::create( 'database\modifier' );
+        $join_mod->where( 'prev_test_entry.transcription_id', '=', 'test_entry.transcription_id', false );
+        $join_mod->where( 'prev_test_entry.test_type_id', '=', 'prev_test_type.id', false );
+        $modifier->join_modifier( 'test_entry', $join_mod, 'left', 'prev_test_entry' );
+        $select->add_column( 'prev_test_entry.id', 'prev_test_entry_id', false );
+      }
+
+      if( $select->has_column( 'next_test_entry_id' ) )
+      {
+        $modifier->left_join( 'test_type', 'next_test_type.rank', 'test_type.rank + 1', 'next_test_type' );
+
+        $join_mod = lib::create( 'database\modifier' );
+        $join_mod->where( 'test_type_has_cohort.cohort_id', '=', 'participant.cohort_id', false );
+        $join_mod->where( 'test_type_has_cohort.test_type_id', '=', 'next_test_type.id', false );
+        $modifier->join( 'test_type_has_cohort', 'test_type_has_cohort.cohort_id', 'participant.cohort_id' );
+
+        $join_mod = lib::create( 'database\modifier' );
+        $join_mod->where( 'next_test_entry.transcription_id', '=', 'test_entry.transcription_id', false );
+        $join_mod->where( 'next_test_entry.test_type_id', '=', 'next_test_type.id', false );
+        $modifier->join_modifier( 'test_entry', $join_mod, 'left', 'next_test_entry' );
+        $select->add_column( 'next_test_entry.id', 'next_test_entry_id', false );
+      }
+    }
 
     if( $select->has_table_column( 'transcription', 'uid' ) )
     {
-      $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
       $select->add_table_column( 'transcription', 'participant.uid', 'transcription_uid', false );
     }
 

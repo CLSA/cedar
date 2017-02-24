@@ -1,15 +1,34 @@
-<div class="form-group first-form-group">
-  <label for="value" class="col-sm-3 control-label">Value</label>
-  <div class="col-sm-9">
-    <select id="value"
-            name="value"
-            ng-model="model.viewModel.record.value"
-            ng-change="patch()"
-            ng-disabled="!isComplete || !editEnabled"
-            class="form-control">
-      <option value="">(empty)</option>
-      <option value="1">Yes</option>
-      <option value="0">No</option>
-    </select>
+<div class="container-fluid loading" ng-if="!isComplete"></div>
+<div ng-if="isComplete">
+  <div ng-class="{ 'first-form-group': $first }"
+       ng-repeat="word in model.viewModel.labelList"
+       class="form-group">
+    <label for="{{ word.name }}" class="col-sm-3 control-label">{{ word.label }}</label>
+    <div class="col-sm-3">
+      <select id="{{ word.name }}"
+              name="{{ word.name }}"
+              ng-model="model.viewModel.record[word.name]"
+              ng-change="patch( word.name )"
+              ng-disabled="!isComplete || !editEnabled"
+              class="form-control">
+        <option value="">(empty)</option>
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <label for="{{ word.name }}_rey_data_variant_id" class="col-sm-1 control-label">variant</label>
+    <div class="col-sm-5" ng-init="emptyItem={'value':'','name':'(empty)'}">
+      <select id="{{ word.name }}_rey_data_variant_id"
+              name="{{ word.name }}_rey_data_variant_id"
+              ng-options="item.value as item.name for item in model.variantList |
+                            cnByObjectProperty:'language_id':model.viewModel.record.language.id |
+                            cnByObjectProperty:'word':word.name |
+                            cnAddItem:emptyItem:true"
+              ng-model="model.viewModel.record[word.name+'_rey_data_variant_id']"
+              ng-change="patch( word.name+'_rey_data_variant_id' )"
+              ng-disabled="!isComplete || !editEnabled"
+              class="form-control">
+      </select>
+    </div>
   </div>
 </div>

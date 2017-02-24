@@ -44,11 +44,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
   } );
 
   module.addInputGroup( '', {
-    test_type_rank: {
-      column: 'test_type.rank',
-      title: 'Rank',
-      type: 'hidden'
-    },
     test_type_name: {
       column: 'test_type.name',
       title: 'Test Type',
@@ -63,7 +58,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       title: 'State',
       type: 'enum',
       constant: true
-    }
+    },
+    prev_test_entry_id: { type: 'hidden' },
+    next_test_entry_id: { type: 'hidden' }
   } );
 
   /* ######################################################################################################## */
@@ -290,35 +287,23 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           $state.go( 'test_entry.notes', { identifier: this.record.getIdentifier() } );
         };
 
-        /*
         this.previous = function() {
-          var rank = this.record.test_type_rank;
-          return 1 == rank ?
+          return null == self.record.prev_test_entry_id ?
             self.parentModel.transitionToParentViewState(
               'transcription', 'uid=' + self.record.transcription_uid
-            ) : self.transitionToTestTypeRank( rank - 1 );
+            ) : self.parentModel.transitionToViewState( {
+              getIdentifier: function() { return self.record.prev_test_entry_id; }
+            } );
         };
 
         this.next = function() {
-          var rank = this.record.test_type_rank;
-          return this.parentModel.metadata.columnList.test_type_id.maxRank == rank ?
+          return null == self.record.next_test_entry_id ?
             self.parentModel.transitionToParentViewState(
               'transcription', 'uid=' + self.record.transcription_uid
-            ) : self.transitionToTestTypeRank( rank + 1 );
+            ) : self.parentModel.transitionToViewState( {
+              getIdentifier: function() { return self.record.next_test_entry_id; }
+            } );
         };
-
-        this.transitionToTestTypeRank = function( rank ) {
-          return CnHttpFactory.instance( {
-            path: 'test_entry/uid=' + self.record.transcription_uid + ';test_type_rank=' + rank
-          } ).get().then( function( response ) {
-            var record = response.data;
-            record.getIdentifier = function() {
-              return self.parentModel.getIdentifierFromRecord( response.data );
-            };
-            return self.parentModel.transitionToViewState( record );
-          } );
-        };
-        */
 
         this.close = function() {
           if( 'typist' == CnSession.role.name ) {

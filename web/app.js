@@ -58,15 +58,9 @@ cenozo.factory( 'CnBaseDataViewFactory', [
           object.isLoading = true;
 
           // start by confirming whether or not this is the correct test type for the test entry
-          return CnHttpFactory.instance( {
-            path: object.getTestEntryPath(),
-            data: { select: { column: [ { table: 'test_type', column: 'data_type' } ] } } 
-          } ).get().then( function( response ) { 
-            if( object.getDataType() == response.data.data_type ) {
-              return $q.all( [
-                parentModel.testEntryModel.viewModel.onViewPromise,
-                object.$$onView()
-              ] ).then( function() {
+          return parentModel.testEntryModel.viewModel.onViewPromise.then( function() {
+            if( object.getDataType() == parentModel.testEntryModel.viewModel.record.data_type ) {
+              return object.$$onView().then( function() {
                 delete object.record.getIdentifier; // we don't need the identifier function
 
                 // convert boolean to integer

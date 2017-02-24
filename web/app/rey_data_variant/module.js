@@ -133,8 +133,8 @@ define( function() {
               CnHttpFactory.instance( {
                 path: 'language',
                 data: {
-                  select: { column: [ 'id', 'name' ] }, 
-                  modifier: { order: { name: false } }
+                  select: { column: [ 'id', 'name' ] },
+                  modifier: { where: { column: 'active', operator: '=', value: true }, order: { name: false } }
                 }
               } ).query().then( function success( response ) {
                 self.metadata.columnList.language_id.enumList = [];
