@@ -61,7 +61,8 @@ class module extends \cenozo\service\site_restricted_participant_module
     if( 'typist' == $db_role->name )
     {
       $modifier->where( 'transcription.user_id', '=', $db_user->id );
-      $modifier->where( 'transcription.assigned_count', '>', 0 );
+      // don't show in typist list, but allow direct access
+      if( is_null( $this->get_resource() ) ) $modifier->where( 'transcription.assigned_count', '>', 0 );
     }
 
     if( $select->has_column( 'user_list' ) )
