@@ -284,9 +284,7 @@ define( function() {
                 }
               } ).post().then( function ( response ) {
                 // immediately view the new transcription
-                return self.transitionToViewState( {
-                  getIdentifier: function() { return self.getIdentifierFromRecord( { id: response.data } ); }
-                } );
+                return self.transitionToViewState( { getIdentifier: function() { return response.data; } } );
               } )
             : this.$$transitionToAddState(); // everyone else gets the default behaviour
         };

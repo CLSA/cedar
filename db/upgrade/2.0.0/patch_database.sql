@@ -26,6 +26,7 @@ SOURCE mat_data.sql
 SOURCE premat_data.sql
 SOURCE rey_data_variant.sql
 SOURCE rey_data.sql
+SOURCE rey_data_has_word.sql
 SOURCE user_has_cohort.sql
 SOURCE user_has_language.sql
 

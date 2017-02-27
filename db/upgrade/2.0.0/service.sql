@@ -192,4 +192,8 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'transcription', 'GET', 0, 0 ),
 ( 'transcription', 'GET', 1, 0 ),
 ( 'transcription', 'PATCH', 1, 1 ),
-( 'transcription', 'POST', 0, 0 );
+( 'transcription', 'POST', 0, 0 ),
+( 'word', 'DELETE', 1, 1 ),
+( 'word', 'GET', 0, 0 ),
+( 'word', 'GET', 1, 0 ),
+( 'word', 'PATCH', 1, 1 );

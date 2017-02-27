@@ -25,7 +25,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       },
       user_list: {
         title: 'User List',
-        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        isIncluded: function( $state, model ) { return !model.isTypist; },
         help: 'Which users have worked with the test-entry, ordered by first access date'
       },
       language_list: {
@@ -169,11 +169,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         this.soundFileList = [];
         
         // add the test entry's data models
-        this.AftDataModel = CnAftDataModelFactory.instance( parentModel );
-        this.FasDataModel = CnFasDataModelFactory.instance( parentModel );
-        this.MatDataModel = CnMatDataModelFactory.instance( parentModel );
-        this.PrematDataModel = CnPrematDataModelFactory.instance( parentModel );
-        this.ReyDataModel = CnReyDataModelFactory.instance( parentModel );
+        this.aftDataModel = CnAftDataModelFactory.instance( parentModel );
+        this.fasDataModel = CnFasDataModelFactory.instance( parentModel );
+        this.matDataModel = CnMatDataModelFactory.instance( parentModel );
+        this.prematDataModel = CnPrematDataModelFactory.instance( parentModel );
+        this.reyDataModel = CnReyDataModelFactory.instance( parentModel );
         this.isWorking = false;
         this.noteCount = 0;
 
@@ -186,7 +186,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           } );
 
           this.onViewPromise = this.$$onView().then( function() {
-            if( 'typist' == CnSession.role.name ) {
+            if( self.parentModel.isTypist ) {
               // turn off edit privilege if entry is not assigned
               self.parentModel.getEditEnabled = function() {
                 return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
@@ -206,22 +206,18 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               self.soundFileList = response.data;
             } );
           } );
-          return this.onViewPromise;
+          return self.onViewPromise;
         };
 
         this.submit = function() {
-          this.isWorking = true;
+          self.isWorking = true;
           return CnHttpFactory.instance( {
-            path: this.parentModel.getServiceResourcePath(),
+            path: self.parentModel.getServiceResourcePath(),
             data: { state: 'submitted' }
           } ).patch().then( function() {
             self.record.state = 'submitted';
             self.isWorking = false;
-            if( 'typist' == CnSession.role.name ) {
-              return self.parentModel.transitionToParentViewState(
-                'transcription', 'uid=' + self.record.transcription_uid
-              );
-            }
+            if( self.parentModel.isTypist ) return self.next();
           } );
         };
 
@@ -233,11 +229,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           } ).patch().then( function() {
             self.record.state = 'deferred';
             self.isWorking = false;
-            if( 'typist' == CnSession.role.name ) {
-              return self.parentModel.transitionToParentViewState(
-                'transcription', 'uid=' + self.record.transcription_uid
-              );
-            }
+            if( self.parentModel.isTypist ) return self.next();
           } );
         }
 
@@ -257,7 +249,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               CnModalTextFactory.instance( {
                 title: 'Deferral Message',
                 message: 'Please provide the reason for deferral:',
-                minLength: 'typist' == CnSession.role.name ? 10 : 0
+                minLength: self.parentModel.isTypist ? 10 : 0
               } ).show().then( function( response ) {
                 if( response ) {
                   return $q.all( [
@@ -273,9 +265,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         };
 
         this.returnToTypist = function() {
-          this.isWorking = true;
+          self.isWorking = true;
           return CnHttpFactory.instance( {
-            path: this.parentModel.getServiceResourcePath(),
+            path: self.parentModel.getServiceResourcePath(),
             data: { state: 'assigned' }
           } ).patch().then( function() {
             self.record.state = 'assigned';
@@ -284,7 +276,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         };
 
         this.viewNotes = function() {
-          $state.go( 'test_entry.notes', { identifier: this.record.getIdentifier() } );
+          $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } );
         };
 
         this.previous = function() {
@@ -306,13 +298,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         };
 
         this.close = function() {
-          if( 'typist' == CnSession.role.name ) {
-            this.isWorking = true;
+          if( self.parentModel.isTypist ) {
+            self.isWorking = true;
             return CnHttpFactory.instance( {
-              path: this.parentModel.getServiceResourcePath() + '?close=1',
+              path: self.parentModel.getServiceResourcePath() + '?close=1',
               onError: function( response ) {
                 // ignore 403 errors since records may automatically be unassigned
-                if( 403 != response.status ) {
+                if( 403 == response.status ) {
                   console.info( 'The "403 (Forbidden)" error found abive is normal and can be ignored.' );
                   return CnModalMessageFactory.httpError( response );
                 }
@@ -324,7 +316,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         };
 
         this.viewTranscription = function() {
-          return $state.go( 'transcription.view', { identifier: 'uid=' + this.record.transcription_uid } );
+          return $state.go( 'transcription.view', { identifier: 'uid=' + self.record.transcription_uid } );
         };
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
@@ -343,7 +335,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         this.listModel = CnTestEntryListFactory.instance( this );
         this.viewModel = CnTestEntryViewFactory.instance( this, root );
 
-        this.isTypist = function() { return 'typist' == CnSession.role.name; };
+        this.isTypist = true;
+        CnSession.promise.then( function() { self.isTypist = 'typist' == CnSession.role.name; } );
 
         this.transitionToParentViewState = function( subject, identifier ) {
           // check if the user still has access to the transcription before proceeding

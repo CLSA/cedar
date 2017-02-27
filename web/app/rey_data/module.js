@@ -38,8 +38,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnReyDataView', [
-    'CnReyDataModelFactory',
-    function( CnReyDataModelFactory ) {
+    'CnReyDataModelFactory', '$timeout',
+    function( CnReyDataModelFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -47,35 +47,54 @@ define( function() {
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnReyDataModelFactory.root;
           $scope.isComplete = false;
+          $scope.isWorking = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
-          $scope.patch = function( property ) {
-            if( $scope.model.getEditEnabled() ) {
-              var data = {};
-              data[property] = 'language_id' == property
-                             ? $scope.model.viewModel.record.language.id
-                             : $scope.model.viewModel.record[property];
-              $scope.model.viewModel.onPatch( data ).then( function() {
-                if( 'language_id' == property ) {
-                  $scope.model.viewModel.record.language.name = $scope.model.languageList.findByProperty(
-                    'value', $scope.model.viewModel.record.language.id
-                  ).name;
-                  $scope.model.viewModel.updateLabelList();
-                } else {
-                  // All words may only have a boolean value or a variant value, so if we're setting the word
-                  // or a variant to anything other than null make sure to empty the other value (the same is
-                  // automatically done on the server)
-                  if( '' != data[property] ) {
-                    var match = property.match( /_rey_data_variant_id/ );
-                    var otherProperty = match
-                                      ? property.substring( 0, match.index )
-                                      : property + '_rey_data_variant_id';
-                    $scope.model.viewModel.record[otherProperty] = '';
+          angular.extend( $scope, {
+            newWordCache: '',
+            submitNewWord: function() {
+              if( 0 < $scope.newWord.length ) {
+                $scope.isWorking = true;
+                $scope.model.viewModel.submitIntrusion( $scope.newWord )
+                  .then( function() { $scope.newWord = ''; } )
+                  .finally( function() {
+                    $scope.isWorking = false;
+                    $timeout( function() { document.getElementByIde( 'newWord' ).focus(); }, 20 );
+                  } );
+              }
+            },
+            deleteWord: function( word ) {
+              $scope.isWorking = false;
+              $scope.model.viewModel.deleteIntrusion( word ).finally( function() { $scope.isWorking = false; } );
+            },
+            patch: function( property ) {
+              if( $scope.model.getEditEnabled() ) {
+                var data = {};
+                data[property] = 'language_id' == property
+                               ? $scope.model.viewModel.language.id
+                               : $scope.model.viewModel.record[property];
+                $scope.model.viewModel.onPatch( data ).then( function() {
+                  if( 'language_id' == property ) {
+                    $scope.model.viewModel.language.name = $scope.model.languageList.findByProperty(
+                      'value', $scope.model.viewModel.language.id
+                    ).name;
+                    $scope.model.viewModel.updateLabelList();
+                  } else {
+                    // All words may only have a boolean value or a variant value, so if we're setting the word
+                    // or a variant to anything other than null make sure to empty the other value (the same is
+                    // automatically done on the server)
+                    if( '' != data[property] ) {
+                      var match = property.match( /_rey_data_variant_id/ );
+                      var otherProperty = match
+                                        ? property.substring( 0, match.index )
+                                        : property + '_rey_data_variant_id';
+                      $scope.model.viewModel.record[otherProperty] = '';
+                    }
                   }
-                }
-              } );
+                } );
+              }
             }
-          };
+          } );
         }
       }
     }
@@ -83,65 +102,95 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory',
-    function( CnBaseDataViewFactory, CnHttpFactory ) {
+    'CnBaseDataViewFactory', 'CnHttpFactory', '$q',
+    function( CnBaseDataViewFactory, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
-
+        this.intrusionList = [];
         var baseOnView = this.onView;
-        this.onView = function() {
-          return baseOnView().then( function() {
-            // we also need the test entry's language (of which there can only be one)
-            return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceCollectionPath().replace( 'rey_data', 'language' ),
-              data: { select: { column: [ 'id', 'name' ] } }
-            } ).query().then( function( response ) {
-              self.record.language = response.data[0];
-              self.updateLabelList();
-            } );
-          } );
-        };
 
-        this.updateLabelList = function() {
-          if( angular.isDefined( self.record.language ) && 'French' == self.record.language.name ) {
-            self.labelList = [
-              { name: 'drum', label: 'Tambour', },
-              { name: 'curtain', label: 'Rideau', },
-              { name: 'bell', label: 'Cloche', },
-              { name: 'coffee', label: 'Café', },
-              { name: 'school', label: 'École', },
-              { name: 'parent', label: 'Parent', },
-              { name: 'moon', label: 'Lune', },
-              { name: 'garden', label: 'Jardin', },
-              { name: 'hat', label: 'Chapeau', },
-              { name: 'farmer', label: 'Fermier', },
-              { name: 'nose', label: 'Nez', },
-              { name: 'turkey', label: 'Dinde', },
-              { name: 'colour', label: 'Couleur', },
-              { name: 'house', label: 'Maison', },
-              { name: 'river', label: 'Rivière' }
-            ];
-          } else {
-            self.labelList = [
-              { name: 'drum', label: 'Drum', },
-              { name: 'curtain', label: 'Curtain', },
-              { name: 'bell', label: 'Bell', },
-              { name: 'coffee', label: 'Coffee', },
-              { name: 'school', label: 'School', },
-              { name: 'parent', label: 'Parent', },
-              { name: 'moon', label: 'Moon', },
-              { name: 'garden', label: 'Garden', },
-              { name: 'hat', label: 'Hat', },
-              { name: 'farmer', label: 'Farmer', },
-              { name: 'nose', label: 'Nose', },
-              { name: 'turkey', label: 'Turkey', },
-              { name: 'colour', label: 'Colour', },
-              { name: 'house', label: 'House', },
-              { name: 'river', label: 'River' }
-            ];
+        angular.extend( this, {
+          submitIntrusion: function( word ) {
+            return CnHttpFactory.instance( {
+              path: this.parentModel.getServiceResourcePath() + '/word',
+              data: { value: word }
+            } ).post().then( function( response ) {
+              self.intrusionList.push( { id: response.data, word: word } );
+            } );
+          },
+          deleteIntrusion: function( wordRecord ) {
+            return CnHttpFactory.instance( {
+              path: this.parentModel.getServiceResourcePath() + '/word/' + wordRecord.id
+            } ).delete().then( function() {
+              var index = self.intrusionList.findIndexByProperty( 'id', wordRecord.id );
+              if( null != index ) self.intrusionList.splice( index, 1 );
+            } );
+          },
+          onView: function() {
+            return $q.all( [
+              baseOnView(),
+
+              // get the test entry's language (of which there can only be one)
+              CnHttpFactory.instance( {
+                path: self.parentModel.getServiceCollectionPath().replace( 'rey_data', 'language' ),
+                data: { select: { column: [ 'id', 'name' ] } }
+              } ).query().then( function( response ) {
+                self.language = response.data[0];
+                self.updateLabelList();
+              } ),
+
+              // get the rey-data intrusions
+              CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath() + '/word',
+                data: { select: { column: [ 'id', 'word' ] } }
+              } ).query().then( function( response ) {
+                self.intrusionList = response.data;
+              } )
+            ] ).then( function() {
+              console.log( self.record );
+            } );
+          },
+          updateLabelList: function() {
+            if( angular.isDefined( self.language ) && 'French' == self.language.name ) {
+              self.labelList = [
+                { name: 'drum', label: 'Tambour', },
+                { name: 'curtain', label: 'Rideau', },
+                { name: 'bell', label: 'Cloche', },
+                { name: 'coffee', label: 'Café', },
+                { name: 'school', label: 'École', },
+                { name: 'parent', label: 'Parent', },
+                { name: 'moon', label: 'Lune', },
+                { name: 'garden', label: 'Jardin', },
+                { name: 'hat', label: 'Chapeau', },
+                { name: 'farmer', label: 'Fermier', },
+                { name: 'nose', label: 'Nez', },
+                { name: 'turkey', label: 'Dinde', },
+                { name: 'colour', label: 'Couleur', },
+                { name: 'house', label: 'Maison', },
+                { name: 'river', label: 'Rivière' }
+              ];
+            } else {
+              self.labelList = [
+                { name: 'drum', label: 'Drum', },
+                { name: 'curtain', label: 'Curtain', },
+                { name: 'bell', label: 'Bell', },
+                { name: 'coffee', label: 'Coffee', },
+                { name: 'school', label: 'School', },
+                { name: 'parent', label: 'Parent', },
+                { name: 'moon', label: 'Moon', },
+                { name: 'garden', label: 'Garden', },
+                { name: 'hat', label: 'Hat', },
+                { name: 'farmer', label: 'Farmer', },
+                { name: 'nose', label: 'Nose', },
+                { name: 'turkey', label: 'Turkey', },
+                { name: 'colour', label: 'Colour', },
+                { name: 'house', label: 'House', },
+                { name: 'river', label: 'River' }
+              ];
+            }
           }
-        };
+        } );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }

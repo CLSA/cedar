@@ -5,25 +5,9 @@ define( function() {
   cenozoApp.initDataModule( module, 'MAT' );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnSubmitWord', [
-    function() {
-      return {
-        restrict: 'A',
-        require: 'ngModel',
-        controller: function( $scope ) { $scope.directive = 'cnSubmitWord'; },
-        link: function( scope, element, attrs ) {
-          element.bind( 'keydown', function( event ) {
-            scope.$evalAsync( function() { if( 13 == event.which ) scope.$eval( attrs.cnSubmitWord ); } );
-          } );
-        }
-      }
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.directive( 'cnMatDataView', [
-    'CnMatDataModelFactory', 'CnHttpFactory', '$timeout',
-    function( CnMatDataModelFactory, CnHttpFactory, $timeout ) {
+    'CnMatDataModelFactory', '$timeout',
+    function( CnMatDataModelFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -47,7 +31,7 @@ define( function() {
               if( 0 < $scope.newWord.length ) {
                 $scope.isWorking = true;
                 $scope.model.viewModel.submitWord( $scope.newWord )
-                  .then( function() { $scope.newWord = ''; } )
+                  .then( function() { $scope.newWord = ''; $scope.newWordCache = ''; } )
                   .finally( function() {
                     $scope.isWorking = false;
                     $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );

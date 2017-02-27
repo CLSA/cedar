@@ -13,12 +13,7 @@ cenozo.controller( 'HeaderCtrl', [
 /* ######################################################################################################## */
 cenozoApp.initDataModule = function( module, name ) {
   angular.extend( module, {
-    identifier: {},/*
-      parent: {
-        subject: 'test_entry',
-        column: 'test_entry_id'
-      }
-    },*/
+    identifier: {},
     name: {
       singular: name + ' Data',
       plural: name + ' Data',
@@ -27,6 +22,21 @@ cenozoApp.initDataModule = function( module, name ) {
     }
   } );
 };
+
+/* ######################################################################################################## */
+cenozo.directive( 'cnSubmitWord', [
+  function() {
+    return {
+      restrict: 'A',
+      require: 'ngModel',
+      link: function( scope, element, attrs ) {
+        element.bind( 'keydown', function( event ) {
+          scope.$evalAsync( function() { if( 13 == event.which ) scope.$eval( attrs.cnSubmitWord ); } );
+        } );
+      }
+    }
+  }
+] );
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [

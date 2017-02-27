@@ -29,19 +29,19 @@
            ng-class="{'in':!initCollapsed}"
            ng-switch="model.viewModel.record.data_type">
         <cn-aft-data-view ng-switch-when="aft"
-                          model="model.viewModel.AftDataModel"
+                          model="model.viewModel.aftDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-aft-data-view>
         <cn-fas-data-view ng-switch-when="fas"
-                          model="model.viewModel.FasDataModel"
+                          model="model.viewModel.fasDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-fas-data-view>
         <cn-mat-data-view ng-switch-when="mat"
-                          model="model.viewModel.MatDataModel"
+                          model="model.viewModel.matDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-mat-data-view>
         <cn-premat-data-view ng-switch-when="premat"
-                          model="model.viewModel.PrematDataModel"
+                          model="model.viewModel.prematDataModel"
                           edit-enabled="model.getEditEnabled()"></cn-premat-data-view>
         <cn-rey-data-view ng-switch-when="rey"
-                           model="model.viewModel.ReyDataModel"
+                           model="model.viewModel.reyDataModel"
                            edit-enabled="model.getEditEnabled()"></cn-rey-data-view>
         <hr />
         <div class="container-fluid vertical-spacer">
@@ -58,64 +58,43 @@
       </div>
       <div class="form-footer text-right rounded-bottom bg-info">
 
-        <div class="btn-group pull-left" ng-if="model.isTypist()">
-          <button class="btn btn-default"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                  ng-click="model.viewModel.defer()">
-            Defer
-          </button>
-          <button class="btn btn-default" ng-click="model.viewModel.viewNotes()">
-            Notes
-          </button>
-          <button class="btn btn-default"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                  ng-click="model.viewModel.submit()">
-            Submit
-          </button>
-        </div>
-
-        <div ng-if="!model.isTypist()">
-          <div class="btn-group pull-left" ng-if="'assigned' == model.viewModel.record.state">
-            <button class="btn btn-default"
+        <div class="btn-group pull-left">
+          <div class="dropdown">
+            <button class="btn btn-warning dropdown-toggle"
+                    name="action"
                     ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                    ng-click="model.viewModel.defer()">
-              Defer
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aira-expanded="false">
+              State: {{ model.viewModel.record.state|cnUCWords }} <span class="caret"></span>
             </button>
-            <button class="btn btn-default"
-                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                    ng-click="model.viewModel.submit()">
-              Force Submit
-            </button>
-          </div>
-          <div class="btn-group pull-left" ng-if="'deferred' == model.viewModel.record.state">
-            <button class="btn btn-default"
-                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                    ng-click="model.viewModel.returnToTypist()">
-              Return to Typist
-            </button>
-            <button class="btn btn-default"
-                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                    ng-click="model.viewModel.submit()">
-              Force Submit
-            </button>
-          </div>
-          <div class="btn-group pull-left" ng-if="'submitted' == model.viewModel.record.state">
-            <button class="btn btn-default"
-                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
-                    ng-click="model.viewModel.returnToTypist()">
-              Return to Typist
-            </button>
+            <ul class="dropdown-menu">
+              <li ng-if="'assigned' != model.viewModel.record.state && !model.isTypist">
+                <a ng-click="model.viewModel.returnToTypist()">
+                  {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Return to Typist
+                </a>
+              </li>
+              <li ng-if="'deferred' != model.viewModel.record.state &&
+                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                <a ng-click="model.viewModel.defer()">
+                  {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Defer
+                </a>
+              </li>
+              <li ng-if="'submitted' != model.viewModel.record.state &&
+                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                <a ng-click="model.viewModel.submit()">
+                  {{ model.isTypist ? 'Submit' : 'Force Submit' }}
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
         <div class="btn-group pull-left horizontal-spacer">
-          <button class="btn btn-info" ng-click="model.viewModel.previous()">
-            <i class="glyphicon glyphicon-triangle-left"></i>
-            Prev
-          </button>
-          <button class="btn btn-info" ng-click="model.viewModel.next()">
-            Next
-            <i class="glyphicon glyphicon-triangle-right"></i>
+          <button class="btn btn-danger pull-left"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="model.viewModel.reset()">
+            Reset
           </button>
         </div>
 
@@ -126,10 +105,18 @@
         </div>
 
         <div class="btn-group">
+          <button class="btn btn-primary" ng-click="model.viewModel.previous()">
+            <i class="glyphicon glyphicon-triangle-left"></i>
+            Prev
+          </button>
           <button class="btn btn-primary"
                   ng-disabled="!isComplete"
                   ng-click="model.viewModel.viewTranscription()">
             View Transcription
+          </button>
+          <button class="btn btn-primary" ng-click="model.viewModel.next()">
+            Next
+            <i class="glyphicon glyphicon-triangle-right"></i>
           </button>
         </div>
       </div>
