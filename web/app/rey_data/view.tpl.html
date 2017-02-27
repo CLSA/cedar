@@ -1,5 +1,19 @@
 <div class="container-fluid loading" ng-if="!isComplete"></div>
 <div ng-if="isComplete">
+  <div class="form-group first-form-group">
+    <label for="language_id" class="col-sm-3 control-label">Language</label>
+    <div class="col-sm-9">
+      <select id="language_id"
+              name="language_id"
+              ng-options="item.value as item.name for item in model.languageList"
+              ng-model="model.viewModel.record.language.id"
+              ng-change="patch( 'language_id' )"
+              ng-disabled="!isComplete || !editEnabled"
+              class="form-control">
+      </select>
+    </div>
+  </div>
+  <hr/>
   <div ng-class="{ 'first-form-group': $first }"
        ng-repeat="word in model.viewModel.labelList"
        class="form-group">

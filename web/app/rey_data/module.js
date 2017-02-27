@@ -52,17 +52,26 @@ define( function() {
           $scope.patch = function( property ) {
             if( $scope.model.getEditEnabled() ) {
               var data = {};
-              data[property] = $scope.model.viewModel.record[property];
+              data[property] = 'language_id' == property
+                             ? $scope.model.viewModel.record.language.id
+                             : $scope.model.viewModel.record[property];
               $scope.model.viewModel.onPatch( data ).then( function() {
-                // All words may only have a boolean value or a variant value, so if we're setting the word
-                // or a variant to anything other than null make sure to empty the other value (the same is
-                // automatically done on the server)
-                if( '' != data[property] ) {
-                  var match = property.match( /_rey_data_variant_id/ );
-                  var otherProperty = match
-                                    ? property.substring( 0, match.index )
-                                    : property + '_rey_data_variant_id';
-                  $scope.model.viewModel.record[otherProperty] = '';
+                if( 'language_id' == property ) {
+                  $scope.model.viewModel.record.language.name = $scope.model.languageList.findByProperty(
+                    'value', $scope.model.viewModel.record.language.id
+                  ).name;
+                  $scope.model.viewModel.updateLabelList();
+                } else {
+                  // All words may only have a boolean value or a variant value, so if we're setting the word
+                  // or a variant to anything other than null make sure to empty the other value (the same is
+                  // automatically done on the server)
+                  if( '' != data[property] ) {
+                    var match = property.match( /_rey_data_variant_id/ );
+                    var otherProperty = match
+                                      ? property.substring( 0, match.index )
+                                      : property + '_rey_data_variant_id';
+                    $scope.model.viewModel.record[otherProperty] = '';
+                  }
                 }
               } );
             }
@@ -85,9 +94,11 @@ define( function() {
           return baseOnView().then( function() {
             // we also need the test entry's language (of which there can only be one)
             return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceCollectionPath().replace( 'rey_data', 'language' )
+              path: self.parentModel.getServiceCollectionPath().replace( 'rey_data', 'language' ),
+              data: { select: { column: [ 'id', 'name' ] } }
             } ).query().then( function( response ) {
               self.record.language = response.data[0];
+              self.updateLabelList();
             } );
           } );
         };
@@ -131,8 +142,6 @@ define( function() {
             ];
           }
         };
-
-        this.afterView( this.updateLabelList );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -148,6 +157,7 @@ define( function() {
         this.viewModel = CnReyDataViewFactory.instance( this, root );
         this.testEntryModel = testEntryModel;
         this.variantList = [];
+        this.languageList = [];
 
         // extend getMetadata
         this.getMetadata = function() {
@@ -165,6 +175,18 @@ define( function() {
                   language_id: item.language_id,
                   name: item.variant
                 } );
+              } );
+            } ),
+
+            CnHttpFactory.instance( {
+              path: 'language',
+              data: {
+                select: { column: [ 'id', 'name' ] },
+                modifier: { where: { column: 'active', operator: '=', value: true } }
+              }
+            } ).query().then( function success( response ) {
+              response.data.forEach( function( item ) {
+                self.languageList.push( { value: item.id, name: item.name } );
               } );
             } )
 
