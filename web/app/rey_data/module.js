@@ -147,9 +147,7 @@ define( function() {
               } ).query().then( function( response ) {
                 self.intrusionList = response.data;
               } )
-            ] ).then( function() {
-              console.log( self.record );
-            } );
+            ] );
           },
           updateLabelList: function() {
             if( angular.isDefined( self.language ) && 'French' == self.language.name ) {
