@@ -26,6 +26,7 @@
     <div name="form" class="form-horizontal" novalidate>
       <div id="View"
            class="form-body collapse"
+           ng-if="isComplete"
            ng-class="{'in':!initCollapsed}"
            ng-switch="model.viewModel.record.data_type">
         <cn-aft-data-view ng-switch-when="aft"
