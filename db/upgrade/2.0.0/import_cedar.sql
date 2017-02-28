@@ -160,6 +160,27 @@ CREATE PROCEDURE patch_access()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
+    SELECT "Importing dictionaries from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO dictionary ",
+      "SELECT * FROM ", @v1_cedar, ".dictionary ",
+      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO word ",
+      "SELECT v1_word.* FROM ", @v1_cedar, ".word AS v1_word "
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    UPDATE dictionary SET name = "REY_Misspelled" WHERE name = "REY_Mispelled";
+
   END //
 DELIMITER ;
 
