@@ -7,7 +7,7 @@
  */
 
 namespace cedar\service\sound_file;
-use cenozo\lib, cenozo\log;
+use cenozo\lib, cenozo\log, cedar\util;
 
 /**
  * Extends parent class

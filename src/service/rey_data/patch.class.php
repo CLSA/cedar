@@ -7,7 +7,7 @@
  */
 
 namespace cedar\service\rey_data;
-use cenozo\lib, cenozo\log;
+use cenozo\lib, cenozo\log, cedar\util;
 
 /**
  * Special service for handling the patch meta-resource
