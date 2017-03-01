@@ -17,6 +17,17 @@ class module extends \cenozo\service\module
   /**
    * Extend parent method
    */
+  public function validate()
+  {
+    // don't allow restricted dictionaries to be deleted or edited
+    if( in_array( $this->get_method(), array( 'DELETE', 'PATCH' ) ) &&
+        $this->is_leaf_module() &&
+        $this->get_resource()->reserved ) $this->get_status()->set_code( 403 );
+  }
+
+  /**
+   * Extend parent method
+   */
   public function prepare_read( $select, $modifier )
   {
     parent::prepare_read( $select, $modifier );

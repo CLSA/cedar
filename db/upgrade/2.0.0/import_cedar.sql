@@ -163,8 +163,8 @@ CREATE PROCEDURE patch_access()
     SELECT "Importing dictionaries from v1" AS "";
 
     SET @sql = CONCAT(
-      "INSERT IGNORE INTO dictionary ",
-      "SELECT * FROM ", @v1_cedar, ".dictionary ",
+      "INSERT IGNORE INTO dictionary( id, update_timestamp, create_timestamp, name, reserved, description ) ",
+      "SELECT id, update_timestamp, create_timestamp, name, 1, description FROM ", @v1_cedar, ".dictionary ",
       "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled'" );
     PREPARE statement FROM @sql;
     EXECUTE statement;

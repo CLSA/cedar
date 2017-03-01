@@ -12,6 +12,7 @@ define( function() {
     },
     columnList: {
       name: { title: 'Name' },
+      reserved: { title: 'Reserved', type: 'boolean' },
       word_count: { title: 'Words' }
     },
     defaultOrder: {
@@ -24,6 +25,11 @@ define( function() {
     name: {
       title: 'Name',
       type: 'string'
+    },
+    reserved: {
+      title: 'Reserved',
+      type: 'boolean',
+      constant: true
     },
     description: {
       title: 'Description',
@@ -113,6 +119,24 @@ define( function() {
         this.addModel = CnDictionaryAddFactory.instance( this );
         this.listModel = CnDictionaryListFactory.instance( this );
         this.viewModel = CnDictionaryViewFactory.instance( this, root );
+
+        // don't allow reserved dictionaries to be deleted or edited
+        angular.extend( this, {
+          getDeleteEnabled: function() {
+            return (
+              'list' == self.getActionFromState() ||
+              angular.isUndefined( self.viewModel.record.reserved ) ||
+              !self.viewModel.record.reserved
+            ) && self.$$getDeleteEnabled();
+          },
+          getEditEnabled: function() {
+            return (
+              'list' == self.getActionFromState() ||
+              angular.isUndefined( self.viewModel.record.reserved ) ||
+              !self.viewModel.record.reserved
+            ) && self.$$getEditEnabled()
+          }
+        } );
       };
 
       return {
