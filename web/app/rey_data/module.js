@@ -38,8 +38,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnReyDataView', [
-    'CnReyDataModelFactory', '$timeout',
-    function( CnReyDataModelFactory, $timeout ) {
+    'CnReyDataModelFactory', 'CnHttpFactory', '$timeout',
+    function( CnReyDataModelFactory, CnHttpFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -48,19 +48,21 @@ define( function() {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnReyDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
+          $scope.typeaheadIsLoading = false;
+          $scope.typeaheadIsSet = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
-            newWordCache: '',
             submitNewWord: function() {
-              if( 0 < $scope.newWord.length ) {
+              // string if it's a new word, integer if it's an existing intrusion
+              if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) {
                 $scope.isWorking = true;
-                $scope.model.viewModel.submitIntrusion( $scope.newWord )
-                  .then( function() { $scope.newWord = ''; } )
-                  .finally( function() {
-                    $scope.isWorking = false;
-                    $timeout( function() { document.getElementByIde( 'newWord' ).focus(); }, 20 );
-                  } );
+                var word = $scope.newWord;
+                $scope.newWord = '';
+                $scope.model.viewModel.submitIntrusion( word ).finally( function() {
+                  $scope.isWorking = false;
+                  $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
+                } );
               }
             },
             deleteWord: function( word ) {
@@ -93,6 +95,24 @@ define( function() {
                   }
                 } );
               }
+            },
+            getTypeaheadValues: function( viewValue ) {
+              $scope.typeaheadIsLoading = true;
+              return CnHttpFactory.instance( {
+                path: 'dictionary/name=REY_Intrusion/word',
+                data: {
+                  select: { column: [ 'id', 'word' ] },
+                  modifier: {
+                    where: [
+                      { column: 'language_id', operator: '=', value: $scope.model.viewModel.language.id },
+                      { column: 'word', operator: 'LIKE', value: viewValue + '%' }
+                    ]
+                  }
+                }
+              } ).query().then( function( response ) {
+                $scope.typeaheadIsLoading = false;
+                return response.data;
+              } );
             }
           } );
         }
@@ -102,8 +122,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', '$q',
+    function( CnBaseDataViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalConfirmFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -112,12 +132,99 @@ define( function() {
 
         angular.extend( this, {
           submitIntrusion: function( word ) {
-            return CnHttpFactory.instance( {
-              path: this.parentModel.getServiceResourcePath() + '/word',
-              data: { value: word }
-            } ).post().then( function( response ) {
-              self.intrusionList.push( { id: response.data, word: word } );
-            } );
+            // remove case from the word
+            if( angular.isString( word ) ) {
+              word = word.toLowerCase();
+
+              // check if the word is one of the REY words
+              var label = self.labelList.findByProperty( 'label', word.ucWords() );
+              if( label ) {
+                return CnModalConfirmFactory.instance( {
+                  title: 'Primary Word',
+                  message: 'You have selected a primary word which is already listed above.\n' +
+                           'Do you want "' + word.ucWords() + '" to be set to Yes?'
+                } ).show().then( function( response ) {
+                  if( response ) {
+                    var data = {};
+                    data[label.name] = 1;
+                    self.onPatch( data ).then( function() {
+                      self.record[label.name] = 1;
+                      self.record[label.name + '_rey_data_variant_id'] = '';
+                    } );
+                  }
+                } );
+              } else {
+                // check if the word is one of the REY variants
+                var variant = self.parentModel.variantList.filter( function( obj ) {
+                  return obj.language_id == self.language.id;
+                } ).findByProperty( 'name', word );
+                if( variant ) {
+                  return CnModalConfirmFactory.instance( {
+                    title: 'Variant Word',
+                    message: 'You have selected a variant of the word "' + variant.word + '".\n' +
+                             'Do you want "' + variant.word + '" to be set to the variant "' + word + '"?'
+                  } ).show().then( function( response ) {
+                    if( response ) {
+                      var data = {};
+                      data[variant.word + '_rey_data_variant_id'] = variant.value;
+                      self.onPatch( data ).then( function() {
+                        self.record[variant.word + '_rey_data_variant_id'] = variant.value;
+                        self.record[variant.word] = '';
+                      } );
+                    }
+                  } );
+                }
+              }
+            }
+
+            // private method used below
+            function sendIntrusion( input ) {
+              // save the object data if the input is a word
+              var word = angular.isObject( input ) ? input.word : input;
+
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath() + '/word',
+                data: word,
+                onError: function( response ) {
+                  if( 406 == response.status ) {
+                    // the word is misspelled
+                    return CnModalMessageFactory.instance( {
+                      title: 'Misspelled Word',
+                      message: 'You have selected a misspelled word. This word cannot be used.'
+                    } ).show();
+                  } else CnModalMessageFactory.httpError( response );
+                }
+              } ).post().then( function( response ) {
+                self.intrusionList.push(
+                  angular.isObject( input ) ?
+                    { id: input.id, word: input.word } :
+                    { id: response.data, word: word }
+                );
+              } );
+            }
+
+            // If we get this far then we've either got a word that wasn't caught by the above
+            // tests or is a word id (from the typeahead).
+            if( angular.isString( word ) ) {
+              // it's a new word, so double-check with the user before proceeding
+              return CnModalConfirmFactory.instance( {
+                title: 'New Intrusion',
+                message: 'The word you have provided, "' + word + '", is not found in the existing list ' +
+                         'of intrusions. Please double-check that the spelling is correct before proceeding. ' +
+                         'Do not submit the word unless you are sure it is spelled correctly.\n\n' +
+                         'Do you wish to submit "' + word + '" as a new intrusion?'
+              } ).show().then( function( response ) {
+                if( response ) return sendIntrusion( word );
+              } );
+            } else if( self.intrusionList.findByProperty( 'id', word.id ) ) {
+              return CnModalMessageFactory.instance( {
+                title: 'Intrusion Already Exists',
+                message: 'The intrusion you have submitted has already been added to this REY test and does ' +
+                         'need to be added multiple times.'
+              } ).show();
+            } else {
+              return sendIntrusion( word ); // it's not a word so send it immediately
+            }
           },
           deleteIntrusion: function( wordRecord ) {
             return CnHttpFactory.instance( {

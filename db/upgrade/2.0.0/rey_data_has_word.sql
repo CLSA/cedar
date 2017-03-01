@@ -20,3 +20,16 @@ CREATE TABLE IF NOT EXISTS rey_data_has_word (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS rey_data_has_word_AFTER_DELETE $$
+CREATE DEFINER = CURRENT_USER TRIGGER rey_data_has_word_AFTER_DELETE AFTER DELETE ON rey_data_has_word FOR EACH ROW
+BEGIN
+  SET @test = ( SELECT COUNT(*) FROM rey_data_has_word WHERE word_id = OLD.word_id );
+  IF @test = 0 THEN
+    DELETE FROM word WHERE id = OLD.word_id;
+  END IF;
+END;$$
+
+DELIMITER ;

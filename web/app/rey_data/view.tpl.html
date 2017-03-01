@@ -50,9 +50,9 @@
 <div ng-if="0 == model.viewModel.record.length" class="text-info">
   No words have been entered.
 </div>
-<div class="row" ng-repeat="doNotUse in model.viewModel.intrusionList track by $index" ng-if="$index % 6 == 0">
-  <div class="col-sm-2 input-box"
-       ng-repeat="i in [$index, $index+1, $index+2, $index+3, $index+4, $index+5]"
+<div class="row" ng-repeat="doNotUse in model.viewModel.intrusionList track by $index" ng-if="$index % 4 == 0">
+  <div class="col-sm-3 input-box"
+       ng-repeat="i in [$index, $index+1, $index+2, $index+3]"
        ng-if="null != model.viewModel.intrusionList[i]">
     <div class="col-xs-10 col-slim-right">
       <input class="form-control" type="text" ng-model="model.viewModel.intrusionList[i].word" disabled></input>
@@ -60,7 +60,7 @@
     <div class="col-xs-2 col-slim-left">
       <button class="btn btn-danger"
               ng-disabled="isWorking"
-              ng-click="deleteIntrusion( model.viewModel.intrusionList[i] )">
+              ng-click="deleteWord( model.viewModel.intrusionList[i] )">
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
@@ -72,8 +72,13 @@
     <input class="form-control"
            id="newWord"
            name="newWord"
-           type="text"
            ng-model="newWord"
+           typeahead="item as item.word for item in getTypeaheadValues( $viewValue )"
+           typeahead-editable="true"
+           typeahead-min-length="2"
+           ng-class="{ 'loading-small': typeaheadIsLoading }"
+           type="text"
+           autocomplete="off"
            cn-submit-word="submitNewWord()"
            ng-disabled="!isComplete || isWorking"
            autofocus></input>

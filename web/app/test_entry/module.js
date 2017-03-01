@@ -124,10 +124,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             if( $scope.isComplete ) {
               $scope.isComplete = false;
               var type = $scope.model.viewModel.record.data_type.toLowerCase() + 'DataModel';
-              var dataModel = type.charAt( 0 ).toUpperCase() + type.substring( 1 );
 
               // update the data record
-              $scope.model.viewModel[dataModel].viewModel.onView();
+              $scope.model.viewModel[type].viewModel.onView();
 
               // update the test entry record
               $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
