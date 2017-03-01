@@ -134,7 +134,8 @@ define( function() {
           submitIntrusion: function( word ) {
             // remove case from the word
             if( angular.isString( word ) ) {
-              word = word.toLowerCase();
+              // remove double quotes if they are found at the start/end
+              word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
               // check if the word is one of the REY words
               var label = self.labelList.findByProperty( 'label', word.ucWords() );
