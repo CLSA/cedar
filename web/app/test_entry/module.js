@@ -108,8 +108,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTestEntryView', [
-    'CnTestEntryModelFactory',
-    function( CnTestEntryModelFactory ) {
+    'CnTestEntryModelFactory', 'CnModalConfirmFactory',
+    function( CnTestEntryModelFactory, CnModalConfirmFactory ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -130,6 +130,17 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
               // update the test entry record
               $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
+            }
+          };
+
+          $scope.reset = function() {
+            if( $scope.isComplete ) {
+              CnModalConfirmFactory.instance( {
+                title: 'Reset Entry?',
+                message: 'Are you sure you wish to reset the entry?'
+              } ).show().then( function( response ) {
+                if( response ) $scope.model.viewModel.reset().then( function() { $scope.refresh(); } );
+              } );
             }
           };
         },
@@ -164,62 +175,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
-        this.onViewPromise = null;
-        this.soundFileList = [];
-        
-        // add the test entry's data models
-        this.aftDataModel = CnAftDataModelFactory.instance( parentModel );
-        this.fasDataModel = CnFasDataModelFactory.instance( parentModel );
-        this.matDataModel = CnMatDataModelFactory.instance( parentModel );
-        this.prematDataModel = CnPrematDataModelFactory.instance( parentModel );
-        this.reyDataModel = CnReyDataModelFactory.instance( parentModel );
-        this.isWorking = false;
-        this.noteCount = 0;
-
-        this.onView = function() {
-          // get the number of notes
-          CnHttpFactory.instance( {
-            path: self.parentModel.getServiceResourcePath() + '/test_entry_note'
-          } ).count().then( function( response ) {
-            self.noteCount = response.headers( 'Total' );
-          } );
-
-          this.onViewPromise = this.$$onView().then( function() {
-            if( self.parentModel.isTypist ) {
-              // turn off edit privilege if entry is not assigned
-              self.parentModel.getEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
-              };
-              self.languageModel.getChooseEnabled = function() {
-                return self.languageModel.$$getChooseEnabled() &&
-                       self.parentModel.$$getEditEnabled() &&
-                       'assigned' == self.record.state;
-              };
-            }
-
-            // get the sound file list for this test-entry
-            return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath() + '/sound_file',
-              data: { select: { column: [ 'name', 'url' ] } }
-            } ).query().then( function( response ) {
-              self.soundFileList = response.data;
-            } );
-          } );
-          return self.onViewPromise;
-        };
-
-        this.submit = function() {
-          self.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: self.parentModel.getServiceResourcePath(),
-            data: { state: 'submitted' }
-          } ).patch().then( function() {
-            self.record.state = 'submitted';
-            self.isWorking = false;
-            if( self.parentModel.isTypist ) return self.next();
-          } );
-        };
-
         function defer() {
           self.isWorking = true;
           return CnHttpFactory.instance( {
@@ -232,91 +187,146 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           } );
         }
 
-        this.defer = function() {
-          // force a new message if the last one wasn't left by the current user
-          return CnHttpFactory.instance( {
-            path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
-            data: {
-              select: { column: [ 'user_id' ] },
-              modifier: { order: { datetime: true }, limit: 1 }
-            }
-          } ).query().then( function( response ) {
-            // don't defer until the last note left was left by the current user
-            return !angular.isArray( response.data ) ||
-                   0 == response.data.length ||
-                   response.data[0].user_id != CnSession.user.id ?
-              CnModalTextFactory.instance( {
-                title: 'Deferral Message',
-                message: 'Please provide the reason for deferral:',
-                minLength: self.parentModel.isTypist ? 10 : 0
-              } ).show().then( function( response ) {
-                if( response ) {
-                  return $q.all( [
-                    CnHttpFactory.instance( {
-                      path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
-                      data: { user_id: CnSession.user.id, datetime: moment().format(), note: response }
-                    } ).post(),
-                    defer()
-                  ] );
-                }
-              } ) : defer();
-          } );
-        };
+        angular.extend( this, {
+          onViewPromise: null,
+          soundFileList: [],
+          
+          // add the test entry's data models
+          aftDataModel: CnAftDataModelFactory.instance( parentModel ),
+          fasDataModel: CnFasDataModelFactory.instance( parentModel ),
+          matDataModel: CnMatDataModelFactory.instance( parentModel ),
+          prematDataModel: CnPrematDataModelFactory.instance( parentModel ),
+          reyDataModel: CnReyDataModelFactory.instance( parentModel ),
+          isWorking: false,
+          noteCount: 0,
 
-        this.returnToTypist = function() {
-          self.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: self.parentModel.getServiceResourcePath(),
-            data: { state: 'assigned' }
-          } ).patch().then( function() {
-            self.record.state = 'assigned';
-            self.isWorking = false;
-          } );
-        };
-
-        this.viewNotes = function() {
-          $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } );
-        };
-
-        this.previous = function() {
-          return null == self.record.prev_test_entry_id ?
-            self.parentModel.transitionToParentViewState(
-              'transcription', 'uid=' + self.record.transcription_uid
-            ) : self.parentModel.transitionToViewState( {
-              getIdentifier: function() { return self.record.prev_test_entry_id; }
+          onView: function() {
+            // get the number of notes
+            CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/test_entry_note'
+            } ).count().then( function( response ) {
+              self.noteCount = response.headers( 'Total' );
             } );
-        };
 
-        this.next = function() {
-          return null == self.record.next_test_entry_id ?
-            self.parentModel.transitionToParentViewState(
-              'transcription', 'uid=' + self.record.transcription_uid
-            ) : self.parentModel.transitionToViewState( {
-              getIdentifier: function() { return self.record.next_test_entry_id; }
+            this.onViewPromise = this.$$onView().then( function() {
+              if( self.parentModel.isTypist ) {
+                // turn off edit privilege if entry is not assigned
+                self.parentModel.getEditEnabled = function() {
+                  return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
+                };
+                self.languageModel.getChooseEnabled = function() {
+                  return self.languageModel.$$getChooseEnabled() &&
+                         self.parentModel.$$getEditEnabled() &&
+                         'assigned' == self.record.state;
+                };
+              }
+
+              // get the sound file list for this test-entry
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath() + '/sound_file',
+                data: { select: { column: [ 'name', 'url' ] } }
+              } ).query().then( function( response ) {
+                self.soundFileList = response.data;
+              } );
             } );
-        };
-
-        this.close = function() {
-          if( self.parentModel.isTypist ) {
+            return self.onViewPromise;
+          },
+          submit: function() {
             self.isWorking = true;
             return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath() + '?close=1',
-              onError: function( response ) {
-                // ignore 403 errors since records may automatically be unassigned
-                if( 403 == response.status ) {
-                  console.info( 'The "403 (Forbidden)" error found abive is normal and can be ignored.' );
-                  return CnModalMessageFactory.httpError( response );
-                }
-              }
+              path: self.parentModel.getServiceResourcePath(),
+              data: { state: 'submitted' }
             } ).patch().then( function() {
+              self.record.state = 'submitted';
+              self.isWorking = false;
+              if( self.parentModel.isTypist ) return self.next();
+            } );
+          },
+          defer: function() {
+            // force a new message if the last one wasn't left by the current user
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+              data: {
+                select: { column: [ 'user_id' ] },
+                modifier: { order: { datetime: true }, limit: 1 }
+              }
+            } ).query().then( function( response ) {
+              // don't defer until the last note left was left by the current user
+              return !angular.isArray( response.data ) ||
+                     0 == response.data.length ||
+                     response.data[0].user_id != CnSession.user.id ?
+                CnModalTextFactory.instance( {
+                  title: 'Deferral Message',
+                  message: 'Please provide the reason for deferral:',
+                  minLength: self.parentModel.isTypist ? 10 : 0
+                } ).show().then( function( response ) {
+                  if( response ) {
+                    return $q.all( [
+                      CnHttpFactory.instance( {
+                        path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+                        data: { user_id: CnSession.user.id, datetime: moment().format(), note: response }
+                      } ).post(),
+                      defer()
+                    ] );
+                  }
+                } ) : defer();
+            } );
+          },
+          returnToTypist: function() {
+            self.isWorking = true;
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath(),
+              data: { state: 'assigned' }
+            } ).patch().then( function() {
+              self.record.state = 'assigned';
               self.isWorking = false;
             } );
+          },
+          viewNotes: function() {
+            $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } );
+          },
+          previous: function() {
+            return null == self.record.prev_test_entry_id ?
+              self.parentModel.transitionToParentViewState(
+                'transcription', 'uid=' + self.record.transcription_uid
+              ) : self.parentModel.transitionToViewState( {
+                getIdentifier: function() { return self.record.prev_test_entry_id; }
+              } );
+          },
+          next: function() {
+            return null == self.record.next_test_entry_id ?
+              self.parentModel.transitionToParentViewState(
+                'transcription', 'uid=' + self.record.transcription_uid
+              ) : self.parentModel.transitionToViewState( {
+                getIdentifier: function() { return self.record.next_test_entry_id; }
+              } );
+          },
+          reset: function() {
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '?reset=1',
+            } ).patch();
+          },
+          close: function() {
+            if( self.parentModel.isTypist ) {
+              self.isWorking = true;
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath() + '?close=1',
+                onError: function( response ) {
+                  // ignore 403 errors since records may automatically be unassigned
+                  if( 403 == response.status ) {
+                    console.info( 'The "403 (Forbidden)" error found abive is normal and can be ignored.' );
+                    return CnModalMessageFactory.httpError( response );
+                  }
+                }
+              } ).patch().then( function() {
+                self.isWorking = false;
+              } );
+            }
+          },
+          viewTranscription: function() {
+            return $state.go( 'transcription.view', { identifier: 'uid=' + self.record.transcription_uid } );
           }
-        };
-
-        this.viewTranscription = function() {
-          return $state.go( 'transcription.view', { identifier: 'uid=' + self.record.transcription_uid } );
-        };
+        } );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }

@@ -19,6 +19,8 @@ class premat_data extends base_data
    */
   public static function initialize( $db_test_entry )
   {
+    parent::initialize( $db_test_entry );
+
     // create a premat_data record for the test entry
     $db_premat_data = new static();
     $db_premat_data->test_entry_id = $db_test_entry->id;

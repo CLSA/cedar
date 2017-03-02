@@ -23,5 +23,8 @@ class patch extends \cenozo\service\patch
 
     // make a note that the test entry has been opened (this will only happen for typists)
     if( $this->get_argument( 'close', false ) ) $this->get_leaf_record()->close_activity();
+
+    // make a note that the test entry has been opened (this will only happen for typists)
+    if( $this->get_argument( 'reset', false ) ) $this->get_leaf_record()->reset();
   }
 }

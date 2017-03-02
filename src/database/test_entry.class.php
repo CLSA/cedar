@@ -21,13 +21,19 @@ class test_entry extends \cenozo\database\record
   {
     $new_record = is_null( $this->id );
     parent::save();
+    if( $new_record ) $this->reset();
+  }
 
-    if( $new_record )
-    {
-      // initialize the test entry's data
-      $data_class_name = lib::get_class_name( sprintf( 'database\%s', $this->get_data_table_name() ) );
-      $data_class_name::initialize( $this );
-    }
+  /**
+   * Resets the test-entry by initializing the data associated with it (deleting any existing data)
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access public
+   */
+  public function reset()
+  {
+    // initialize the test entry's data
+    $data_class_name = lib::get_class_name( sprintf( 'database\%s', $this->get_data_table_name() ) );
+    $data_class_name::initialize( $this );
   }
 
   /**

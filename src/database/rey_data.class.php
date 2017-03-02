@@ -48,6 +48,8 @@ class rey_data extends base_data
    */
   public static function initialize( $db_test_entry )
   {
+    parent::initialize( $db_test_entry );
+
     // create a rey_data record for the test entry
     $db_rey_data = new static();
     $db_rey_data->test_entry_id = $db_test_entry->id;
