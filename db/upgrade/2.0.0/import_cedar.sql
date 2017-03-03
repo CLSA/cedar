@@ -1,6 +1,6 @@
-DROP PROCEDURE IF EXISTS patch_access;
+DROP PROCEDURE IF EXISTS import_cedar;
 DELIMITER //
-CREATE PROCEDURE patch_access()
+CREATE PROCEDURE import_cedar()
   BEGIN
 
     -- determine the @cenozo, @v1_cenozo database names and the @application name
@@ -164,8 +164,9 @@ CREATE PROCEDURE patch_access()
 
     SET @sql = CONCAT(
       "INSERT IGNORE INTO dictionary( id, update_timestamp, create_timestamp, name, reserved, description ) ",
-      "SELECT id, update_timestamp, create_timestamp, name, 1, description FROM ", @v1_cedar, ".dictionary ",
-      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled'" );
+      "SELECT id, update_timestamp, create_timestamp, name, 1, description ",
+      "FROM ", @v1_cedar, ".dictionary AS v1_dictionary ",
+      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled' )" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
@@ -174,7 +175,7 @@ CREATE PROCEDURE patch_access()
       "INSERT IGNORE INTO word ",
       "SELECT v1_word.* FROM ", @v1_cedar, ".word AS v1_word "
       "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled'" );
+      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled' )" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
@@ -184,5 +185,5 @@ CREATE PROCEDURE patch_access()
   END //
 DELIMITER ;
 
-CALL patch_access();
-DROP PROCEDURE IF EXISTS patch_access;
+CALL import_cedar();
+DROP PROCEDURE IF EXISTS import_cedar;

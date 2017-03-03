@@ -7,8 +7,7 @@ CREATE TABLE IF NOT EXISTS test_entry (
   transcription_id INT UNSIGNED NOT NULL,
   test_type_id INT UNSIGNED NOT NULL,
   audio_status ENUM('salvable', 'unusable', 'unavailable') NULL DEFAULT NULL,
-  participant_status ENUM('suspected prompt', 'prompted', 'prompt middle', 'prompt end', 'refused') NULL DEFAULT NUL
-  L,
+  participant_status ENUM('suspected prompt', 'prompted', 'prompt middle', 'prompt end', 'refused') NULL DEFAULT NULL,
   state ENUM('assigned', 'deferred', 'submitted') NOT NULL DEFAULT 'assigned',
   PRIMARY KEY (id),
   INDEX fk_transcription_id (transcription_id ASC),
