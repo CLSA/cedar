@@ -166,11 +166,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
     'CnBaseViewFactory',
     'CnAftDataModelFactory', 'CnFasDataModelFactory', 'CnMatDataModelFactory',
     'CnPrematDataModelFactory', 'CnReyDataModelFactory',
-    'CnSession', 'CnHttpFactory', 'CnModalTextFactory', '$state', '$q',
+    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalTextFactory', '$state', '$q',
     function( CnBaseViewFactory,
               CnAftDataModelFactory, CnFasDataModelFactory, CnMatDataModelFactory,
               CnPrematDataModelFactory, CnReyDataModelFactory,
-              CnSession, CnHttpFactory, CnModalTextFactory, $state, $q ) {
+              CnSession, CnHttpFactory, CnModalMessageFactory, CnModalTextFactory, $state, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
@@ -343,7 +343,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 onError: function( response ) {
                   // ignore 403 errors since records may automatically be unassigned
                   if( 403 == response.status ) {
-                    console.info( 'The "403 (Forbidden)" error found abive is normal and can be ignored.' );
+                    console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
                     return CnModalMessageFactory.httpError( response );
                   }
                 }

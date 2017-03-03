@@ -61,10 +61,9 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestEntryActivityModelFactory', [
-    'CnBaseModelFactory', 'CnTestEntryActivityListFactory', 'CnHttpFactory', 'CnModalMessageFactory',
-    function( CnBaseModelFactory, CnTestEntryActivityListFactory, CnHttpFactory, CnModalMessageFactory ) {
+    'CnBaseModelFactory', 'CnTestEntryActivityListFactory',
+    function( CnBaseModelFactory, CnTestEntryActivityListFactory ) {
       var object = function( root ) {
-        var self = this;
         CnBaseModelFactory.construct( this, module );
         this.listModel = CnTestEntryActivityListFactory.instance( this );
       };

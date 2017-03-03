@@ -86,8 +86,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordAddFactory', [
-    'CnBaseAddFactory', 'CnModalMessageFactory',
-    function( CnBaseAddFactory, CnModalMessageFactory ) {
+    'CnBaseAddFactory',
+    function( CnBaseAddFactory ) {
       var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
