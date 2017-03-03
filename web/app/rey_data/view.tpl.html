@@ -1,6 +1,6 @@
 <div class="container-fluid loading" ng-if="!isComplete"></div>
 <div ng-if="isComplete">
-  <div class="form-group first-form-group">
+  <div class="form-group" style="padding-bottom: 0px;">
     <label for="language_id" class="col-sm-3 control-label">Language</label>
     <div class="col-sm-9">
       <select id="language_id"
@@ -14,9 +14,7 @@
     </div>
   </div>
   <hr/>
-  <div ng-class="{ 'first-form-group': $first }"
-       ng-repeat="word in model.viewModel.labelList"
-       class="form-group">
+  <div ng-repeat="word in model.viewModel.labelList" class="form-group" style="padding-bottom: 2px;">
     <label for="{{ word.name }}" class="col-sm-3 control-label">{{ word.label }}</label>
     <div class="col-sm-3">
       <select id="{{ word.name }}"
@@ -50,23 +48,25 @@
 <div ng-if="0 == model.viewModel.record.length" class="text-info">
   No words have been entered.
 </div>
-<div class="row" ng-repeat="doNotUse in model.viewModel.intrusionList track by $index" ng-if="$index % 4 == 0">
-  <div class="col-sm-3 input-box"
-       ng-repeat="i in [$index, $index+1, $index+2, $index+3]"
-       ng-if="null != model.viewModel.intrusionList[i]">
-    <div class="col-xs-10 col-slim-right">
-      <input class="form-control" type="text" ng-model="model.viewModel.intrusionList[i].word" disabled></input>
-    </div>
-    <div class="col-xs-2 col-slim-left">
-      <button class="btn btn-danger"
-              ng-disabled="isWorking"
-              ng-click="deleteWord( model.viewModel.intrusionList[i] )">
-        <i class="glyphicon glyphicon-remove"></i>
-      </button>
+<div class="form-group" ng-if="0 < model.viewModel.intrusionList.length">
+  <div ng-repeat="doNotUse in model.viewModel.intrusionList track by $index" ng-if="$index % 4 == 0">
+    <div class="col-sm-3 input-box"
+         ng-repeat="i in [$index, $index+1, $index+2, $index+3]"
+         ng-if="null != model.viewModel.intrusionList[i]">
+      <div class="col-xs-10 col-slim-right">
+        <input class="form-control" type="text" ng-model="model.viewModel.intrusionList[i].word" disabled></input>
+      </div>
+      <div class="col-xs-2 col-slim-left">
+        <button class="btn btn-danger"
+                ng-disabled="isWorking"
+                ng-click="deleteWord( model.viewModel.intrusionList[i] )">
+          <i class="glyphicon glyphicon-remove"></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>
-<div class="form-group first-form-group">
+<div class="form-group" style="padding-bottom: 0px;">
   <label for="newWord" class="col-sm-3 control-label">Enter intrusion</label>
   <div class="col-sm-9">
     <input class="form-control"

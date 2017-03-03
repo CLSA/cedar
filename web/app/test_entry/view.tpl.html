@@ -24,6 +24,66 @@
       </h4>
     </div>
     <div name="form" class="form-horizontal" novalidate>
+      <div class="form-footer text-right bg-info">
+        <div class="btn-group pull-left">
+          <div class="dropdown">
+            <button class="btn btn-warning dropdown-toggle"
+                    name="action"
+                    ng-disabled="!model.getStatusEditEnabled() || model.isWorking || !isComplete"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aira-expanded="false">
+              State: {{ model.viewModel.record.state|cnUCWords }} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li ng-if="'assigned' != model.viewModel.record.state && !model.isTypist">
+                <a ng-click="model.viewModel.returnToTypist()">
+                  {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Return to Typist
+                </a>
+              </li>
+              <li ng-if="'deferred' != model.viewModel.record.state &&
+                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                <a ng-click="model.viewModel.defer()">
+                  {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Defer
+                </a>
+              </li>
+              <li ng-if="'submitted' != model.viewModel.record.state &&
+                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                <a ng-click="model.viewModel.submit()">
+                  {{ model.isTypist ? 'Submit' : 'Force Submit' }}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="btn-group pull-left horizontal-spacer">
+          <button class="btn btn-danger pull-left"
+                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-click="reset()">
+            Reset
+          </button>
+        </div>
+        <div class="btn-group pull-left horizontal-spacer">
+          <button class="btn btn-default" ng-click="model.viewModel.viewNotes()">
+            Notes ({{ model.viewModel.noteCount }})
+          </button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" ng-click="model.viewModel.previous()">
+            <i class="glyphicon glyphicon-triangle-left"></i>
+            Prev
+          </button>
+          <button class="btn btn-primary"
+                  ng-disabled="!isComplete"
+                  ng-click="model.viewModel.viewTranscription()">
+            View Transcription
+          </button>
+          <button class="btn btn-primary" ng-click="model.viewModel.next()">
+            Next
+            <i class="glyphicon glyphicon-triangle-right"></i>
+          </button>
+        </div>
+      </div>
       <div class="container-fluid vertical-spacer loading" ng-if="!isComplete"></div>
       <div id="View"
            class="form-body collapse"
@@ -88,7 +148,6 @@
         </div>
       </div>
       <div class="form-footer text-right rounded-bottom bg-info">
-
         <div class="btn-group pull-left">
           <div class="dropdown">
             <button class="btn btn-warning dropdown-toggle"
@@ -120,7 +179,6 @@
             </ul>
           </div>
         </div>
-
         <div class="btn-group pull-left horizontal-spacer">
           <button class="btn btn-danger pull-left"
                   ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
@@ -128,13 +186,11 @@
             Reset
           </button>
         </div>
-
         <div class="btn-group pull-left horizontal-spacer">
           <button class="btn btn-default" ng-click="model.viewModel.viewNotes()">
             Notes ({{ model.viewModel.noteCount }})
           </button>
         </div>
-
         <div class="btn-group">
           <button class="btn btn-primary" ng-click="model.viewModel.previous()">
             <i class="glyphicon glyphicon-triangle-left"></i>
