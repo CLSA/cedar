@@ -47,13 +47,42 @@
                            edit-enabled="model.getEditEnabled()"></cn-rey-data-view>
         <hr />
         <div class="container-fluid vertical-spacer">
+          <div class="row">
+            <label for="audio_status" class="col-sm-2">Audio Status</label>
+            <div class="col-sm-4">
+              <select
+                id="audio_status"
+                class="form-control"
+                ng-model="model.viewModel.record.audio_status"
+                ng-options="item.value as item.name for item in audioStatusList"
+                ng-change="model.viewModel.patchStatus( 'audio' )"
+                ng-disabled="!model.getStatusEditEnabled()">
+              </select>
+            </div>
+            <label for="participant_status" class="col-sm-2">Participant Status</label>
+            <div class="col-sm-4">
+              <select
+                id="participant_status"
+                class="form-control"
+                ng-model="model.viewModel.record.participant_status"
+                ng-options="item.value as item.name for item in participantStatusList"
+                ng-change="model.viewModel.patchStatus( 'participant' )"
+                ng-disabled="!model.getStatusEditEnabled()">
+              </select>
+            </div>
+          </div>
+        </div>
+        <hr />
+        <div class="container-fluid vertical-spacer">
           <span ng-if="0 == model.viewModel.soundFileList.length" class="text-info">
             There are no sound files available for this test.
           </span>
           <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
-            <label for="" class="col-sm-3 control-label">{{ soundFile.name }}</label>
+            <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
             <div class="col-sm-9">
-              <audio class="full-width" controls><source src="{{ soundFile.url }}" type="audio/wav" /></audio>
+              <audio id="{{ soundFile.id }}" class="full-width" controls>
+                <source src="{{ soundFile.url }}" type="audio/wav" />
+              </audio>
             </div>
           </div>
         </div>
@@ -64,7 +93,7 @@
           <div class="dropdown">
             <button class="btn btn-warning dropdown-toggle"
                     name="action"
-                    ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                    ng-disabled="!model.getStatusEditEnabled() || model.isWorking || !isComplete"
                     data-toggle="dropdown"
                     aria-haspopup="true"
                     aira-expanded="false">

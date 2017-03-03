@@ -44,21 +44,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
   } );
 
   module.addInputGroup( '', {
-    test_type_name: {
-      column: 'test_type.name',
-      title: 'Test Type',
-      constant: true
-    },
-    data_type: {
-      column: 'test_type.data_type',
-      title: 'Data Type',
-      constant: true
-    },
-    state: {
-      title: 'State',
-      type: 'enum',
-      constant: true
-    },
+    test_type_name: { column: 'test_type.name', type: 'hidden' },
+    data_type: { column: 'test_type.data_type', type: 'hidden' },
+    audio_status: { type: 'enum' },
+    participant_status: { type: 'enum' },
+    state: { type: 'enum' },
     prev_test_entry_id: { type: 'hidden' },
     next_test_entry_id: { type: 'hidden' }
   } );
@@ -120,33 +110,43 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           $scope.isComplete = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
-          $scope.refresh = function() {
-            if( $scope.isComplete ) {
-              $scope.isComplete = false;
-              var type = $scope.model.viewModel.record.data_type.toLowerCase() + 'DataModel';
+          angular.extend( $scope, {
+            refresh: function() {
+              if( $scope.isComplete ) {
+                $scope.isComplete = false;
+                var type = $scope.model.viewModel.record.data_type.toLowerCase() + 'DataModel';
 
-              // update the data record
-              $scope.model.viewModel[type].viewModel.onView();
+                // update the data record
+                $scope.model.viewModel[type].viewModel.onView();
 
-              // update the test entry record
-              $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
+                // update the test entry record
+                $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true } );
+              }
+            },
+            reset: function() {
+              if( $scope.isComplete ) {
+                CnModalConfirmFactory.instance( {
+                  title: 'Reset Entry?',
+                  message: 'Are you sure you wish to reset the entry?'
+                } ).show().then( function( response ) {
+                  if( response ) $scope.model.viewModel.reset().then( function() { $scope.refresh(); } );
+                } );
+              }
             }
-          };
-
-          $scope.reset = function() {
-            if( $scope.isComplete ) {
-              CnModalConfirmFactory.instance( {
-                title: 'Reset Entry?',
-                message: 'Are you sure you wish to reset the entry?'
-              } ).show().then( function( response ) {
-                if( response ) $scope.model.viewModel.reset().then( function() { $scope.refresh(); } );
-              } );
-            }
-          };
+          } );
         },
         link: function( scope, element ) {
           // close the test entry activity
           scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close(); } );
+
+          scope.model.metadata.getPromise().then( function() {
+            var audioStatus = scope.model.metadata.columnList.audio_status;
+            scope.audioStatusList = angular.copy( audioStatus.enumList );
+            if( !audioStatus.required ) scope.audioStatusList.unshift( { value: '', name: '(empty)' } );
+            var participantStatus = scope.model.metadata.columnList.participant_status;
+            scope.participantStatusList = angular.copy( participantStatus.enumList );
+            if( !participantStatus.required ) scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
+          } );
         }
       };
     }
@@ -190,7 +190,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         angular.extend( this, {
           onViewPromise: null,
           soundFileList: [],
-          
+
           // add the test entry's data models
           aftDataModel: CnAftDataModelFactory.instance( parentModel ),
           fasDataModel: CnFasDataModelFactory.instance( parentModel ),
@@ -209,27 +209,56 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             } );
 
             this.onViewPromise = this.$$onView().then( function() {
-              if( self.parentModel.isTypist ) {
-                // turn off edit privilege if entry is not assigned
-                self.parentModel.getEditEnabled = function() {
-                  return self.parentModel.$$getEditEnabled() && 'assigned' == self.record.state;
-                };
-                self.languageModel.getChooseEnabled = function() {
-                  return self.languageModel.$$getChooseEnabled() &&
-                         self.parentModel.$$getEditEnabled() &&
-                         'assigned' == self.record.state;
-                };
-              }
+              self.parentModel.getStatusEditEnabled = function() {
+                return self.parentModel.$$getEditEnabled() &&
+                       ( !self.parentModel.isTypist || 'assigned' == self.record.state );
+              };
+
+              self.parentModel.getEditEnabled = function() {
+                return self.parentModel.$$getEditEnabled() && (
+                         !self.parentModel.isTypist || (
+                           'assigned' == self.record.state &&
+                           'unusable' != self.record.audio_status &&
+                           'unavailable' != self.record.audio_status &&
+                           'refused' != self.record.participant_status
+                         )
+                       );
+              };
+
+              self.languageModel.getChooseEnabled = function() {
+                return self.languageModel.$$getChooseEnabled() &&
+                       self.parentModel.$$getEditEnabled() && (
+                         !self.parentModel.isTypest || (
+                           'assigned' == self.record.state &&
+                           'unusable' != self.record.audio_status &&
+                           'unavailable' != self.record.audio_status &&
+                           'refused' != self.record.participant_status
+                         )
+                       );
+              };
 
               // get the sound file list for this test-entry
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/sound_file',
-                data: { select: { column: [ 'name', 'url' ] } }
+                data: { select: { column: [ 'id', 'name', 'url' ] } }
               } ).query().then( function( response ) {
                 self.soundFileList = response.data;
               } );
             } );
             return self.onViewPromise;
+          },
+          patchStatus: function( type ) {
+            // Patching status is special since it can be done under some circumstances where the test-entry
+            // is not editable
+            if( self.parentModel.getStatusEditEnabled() ) {
+              var property = type + '_status';
+              var data = {};
+              data[property] = '' == self.record[property] ? null : self.record[property];
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath(),
+                data: data
+              } ).patch();
+            }
           },
           submit: function() {
             self.isWorking = true;
