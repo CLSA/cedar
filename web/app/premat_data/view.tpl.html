@@ -1,7 +1,10 @@
 <div class="container-fluid loading" ng-if="!isComplete"></div>
 <div ng-if="isComplete">
   <div class="form-group first-form-group">
-    <label for="counting" class="col-sm-3 control-label">Counting</label>
+    <label for="counting"
+           tooltip="Was the participant able to count from 1 to 20, from 1, 2, 3, 4 and so on?"
+           tooltip-placement="right"
+           class="col-sm-3 control-label">Counting</label>
     <div class="col-sm-9">
       <select id="counting"
               name="counting"
@@ -16,7 +19,10 @@
     </div>
   </div>
   <div class="form-group">
-    <label for="alphabet" class="col-sm-3 control-label">Alphabet</label>
+    <label for="alphabet"
+           tooltip="Was the participant able to recite the alphabet, from A, B, C, D and so on?"
+           tooltip-placement="right"
+           class="col-sm-3 control-label">Alphabet</label>
     <div class="col-sm-9">
       <select id="alphabet"
               name="alphabet"

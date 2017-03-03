@@ -168,6 +168,7 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'mat_data', 'DELETE', 1, 1 ),
 ( 'mat_data', 'GET', 0, 0 ),
 ( 'mat_data', 'GET', 1, 0 ),
+( 'mat_data', 'PATCH', 1, 1 ),
 ( 'mat_data', 'POST', 0, 1 ),
 ( 'premat_data', 'GET', 0, 0 ),
 ( 'premat_data', 'GET', 1, 0 ),

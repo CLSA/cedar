@@ -23,15 +23,21 @@
     <div class="col-sm-2 input-box"
          ng-repeat="i in [$index, $index+1, $index+2, $index+3, $index+4, $index+5]"
          ng-if="null != model.viewModel.record[i]">
-      <div class="col-xs-10 col-slim-right">
-        <input class="form-control" type="text" ng-model="model.viewModel.record[i].word" disabled></input>
-      </div>
-      <div class="col-xs-2 col-slim-left">
-        <button class="btn btn-danger"
-                ng-disabled="isWorking"
-                ng-click="deleteWord( model.viewModel.record[i].rank )">
-          <i class="glyphicon glyphicon-remove"></i>
-        </button>
+      <div>
+        <div class="col-xs-9 col-slim">
+          <input class="form-control"
+                 type="text"
+                 ng-model="model.viewModel.record[i].word"
+                 ng-change="changeWord(i)"
+                 ng-disabled="!isComplete || isWorking"></input>
+        </div>
+        <div class="col-xs-2 col-slim">
+          <button class="btn btn-danger"
+                  ng-disabled="isWorking"
+                  ng-click="deleteWord(i)">
+            <i class="glyphicon glyphicon-remove"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>

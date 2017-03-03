@@ -38,9 +38,13 @@ define( function() {
                   } );
               }
             },
-            deleteWord: function( rank ) {
+            changeWord: function( index ) {
               $scope.isWorking = true;
-              $scope.model.viewModel.deleteWord( rank ).finally( function() { $scope.isWorking = false; } );
+              $scope.model.viewModel.changeWord( index ).finally( function() { $scope.isWorking = false; } );
+            },
+            deleteWord: function( index ) {
+              $scope.isWorking = true;
+              $scope.model.viewModel.deleteWord( index ).finally( function() { $scope.isWorking = false; } );
             }
           } );
         }   
@@ -61,24 +65,26 @@ define( function() {
             return CnHttpFactory.instance( {
               path: this.parentModel.getServiceResourcePath(),
               data: { value: word }
-            } ).post().then( function() {
-              self.record.push( { word: word } );
+            } ).post().then( function( response ) {
+              self.record.push( { id: response.data, word: word } );
             } );
           },
-          deleteWord: function( rank ) {
-            var deletedWord = null;
-            var wordList = angular.copy( this.record );
-            wordList.forEach( function( word, index, array ) {
-              if( rank == word.rank ) deletedWord = array.splice( index, 1 )[0];
-              else if( rank < word.rank ) word.rank--;
-            } );
-
-            return null != deletedWord ?
-              CnHttpFactory.instance( {
-                path: this.parentModel.getServiceResourcePath() + '/' + deletedWord.id
+          deleteWord: function( index ) {
+            if( angular.isDefined( this.record[index] ) ) {
+              return CnHttpFactory.instance( {
+                path: this.parentModel.getServiceResourcePath() + '/' + this.record[index].id
               } ).delete().then( function() {
-                self.record = wordList;
-              } ) : $q.all();
+                self.record.splice( index, 1 );
+              } );
+            } else return $q.all();
+          },
+          changeWord: function( index ) {
+            if( angular.isDefined( this.record[index] ) ) {
+              return CnHttpFactory.instance( {
+                path: this.parentModel.getServiceResourcePath() + '/' + this.record[index].id,
+                data: { value: this.record[index].word }
+              } ).patch()
+            } else return $q.all();
           }
         } );
       }
@@ -103,7 +109,7 @@ define( function() {
               order: { rank: false },
               limit: 10000 // do not limit the number of records returned
             } );
-            data.select = { column: [ 'rank', { column: 'value', alias: 'word' } ] };
+            data.select = { column: [ 'id', { column: 'value', alias: 'word' } ] };
           }
           return data;
         };
