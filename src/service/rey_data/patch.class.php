@@ -38,7 +38,7 @@ class patch extends \cenozo\service\patch
   {
     parent::execute();
 
-    // process the preferred site, if it exists
+    // process the language, if it exists
     if( $this->update_language ) $this->set_language();
   }
 
@@ -48,17 +48,18 @@ class patch extends \cenozo\service\patch
   protected function set_language()
   {
     $this->get_leaf_record()->get_test_entry()->replace_language( $this->language_id );
+    $this->get_leaf_record()->get_test_entry()->reset();
   }
 
   /**
-   * Whether to update the rey_data's preferred site
+   * Whether to update the rey_data's language
    * @var boolean
    * @access protected
    */
   protected $update_language = false;
 
   /**
-   * What to change the rey_data's preferred site to
+   * What to change the rey_data's language to
    * @var int
    * @access protected
    */

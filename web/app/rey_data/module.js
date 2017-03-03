@@ -77,10 +77,7 @@ define( function() {
                                : $scope.model.viewModel.record[property];
                 $scope.model.viewModel.onPatch( data ).then( function() {
                   if( 'language_id' == property ) {
-                    $scope.model.viewModel.language.name = $scope.model.languageList.findByProperty(
-                      'value', $scope.model.viewModel.language.id
-                    ).name;
-                    $scope.model.viewModel.updateLabelList();
+                    $scope.model.viewModel.onView();
                   } else {
                     // All words may only have a boolean value or a variant value, so if we're setting the word
                     // or a variant to anything other than null make sure to empty the other value (the same is
