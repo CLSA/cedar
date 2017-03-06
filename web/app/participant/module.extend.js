@@ -10,6 +10,29 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
     type: 'hidden'
   } );
 
+  // remove unneeded columns
+  delete module.columnList.source;
+  delete module.columnList.state;
+  delete module.columnList.global_note;
+
+  // add transcription details to the column list
+  angular.extend( module.columnList, {
+    state: {
+      column: 'transcription.state',
+      title: 'State'
+    },
+    start_datetime: {
+      column: 'transcription.start_datetime',
+      title: 'Start',
+      type: 'datetime'
+    },
+    end_datetime: {
+      column: 'transcription.end_datetime',
+      title: 'End',
+      type: 'datetime'
+    }
+  } )
+
   module.addExtraOperation( 'list', {
     title: 'Update Sound Files',
     isIncluded: function( $state, model ) { return model.listModel.canUpdateSoundFiles(); },
