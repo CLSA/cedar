@@ -11,6 +11,7 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
   } );
 
   // remove unneeded columns
+  delete module.columnList.active;
   delete module.columnList.source;
   delete module.columnList.state;
   delete module.columnList.global_note;
