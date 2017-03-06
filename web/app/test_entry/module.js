@@ -175,16 +175,55 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
-        function defer() {
-          self.isWorking = true;
-          return CnHttpFactory.instance( {
-            path: self.parentModel.getServiceResourcePath(),
-            data: { state: 'deferred' }
-          } ).patch().then( function() {
-            self.record.state = 'deferred';
-            self.isWorking = false;
-            if( self.parentModel.isTypist ) return self.next();
-          } );
+        // Sets the state of a test entry
+        // forceNote can be one of:
+        //   true: will make sure that the last note left for this test entry was left but the current user
+        //   'typist': if the current user is a typist then will make sure the last note was left the the user
+        //   undefined or false: notes are not required
+        function setTestEntryState( state, forceNote ) {
+          function setState() {
+            self.isWorking = true;
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath(),
+              data: { state: state }
+            } ).patch().then( function() {
+              self.record.state = state;
+              self.isWorking = false;
+              if( 'assigned' != state && self.parentModel.isTypist ) return self.next();
+            } );
+          }
+
+          var checkNote = false;
+          if( forceNote ) checkNote = 'typist' == forceNote ? self.parentModel.isTypist : true;
+
+          if( checkNote ) {
+            // force a new message if the last one wasn't left by the current user
+            return CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+              data: {
+                select: { column: [ 'user_id' ] },
+                modifier: { order: { datetime: true }, limit: 1 }
+              }
+            } ).query().then( function( response ) {
+              // don't proceed until the last note left was left by the current user
+              return !angular.isArray( response.data ) ||
+                     0 == response.data.length ||
+                     response.data[0].user_id != CnSession.user.id ?
+                CnModalTextFactory.instance( {
+                  title: 'Test Entry Note',
+                  message: 'Please provide the reason you are changing the test entry\'s state:',
+                  minLength: 10
+                } ).show().then( function( response ) {
+                  if( response ) {
+                    self.noteCount++;
+                    return CnHttpFactory.instance( {
+                        path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
+                        data: { user_id: CnSession.user.id, datetime: moment().format(), note: response }
+                    } ).post().then( function() { setState() } );
+                  }
+                } ) : setState();
+            } );
+          } else setState();
         }
 
         angular.extend( this, {
@@ -260,60 +299,10 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               } ).patch();
             }
           },
-          submit: function() {
-            self.isWorking = true;
-            return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath(),
-              data: { state: 'submitted' }
-            } ).patch().then( function() {
-              self.record.state = 'submitted';
-              self.isWorking = false;
-              if( self.parentModel.isTypist ) return self.next();
-            } );
-          },
-          defer: function() {
-            // force a new message if the last one wasn't left by the current user
-            return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
-              data: {
-                select: { column: [ 'user_id' ] },
-                modifier: { order: { datetime: true }, limit: 1 }
-              }
-            } ).query().then( function( response ) {
-              // don't defer until the last note left was left by the current user
-              return !angular.isArray( response.data ) ||
-                     0 == response.data.length ||
-                     response.data[0].user_id != CnSession.user.id ?
-                CnModalTextFactory.instance( {
-                  title: 'Deferral Message',
-                  message: 'Please provide the reason for deferral:',
-                  minLength: self.parentModel.isTypist ? 10 : 0
-                } ).show().then( function( response ) {
-                  if( response ) {
-                    return $q.all( [
-                      CnHttpFactory.instance( {
-                        path: self.parentModel.getServiceResourcePath() + '/test_entry_note',
-                        data: { user_id: CnSession.user.id, datetime: moment().format(), note: response }
-                      } ).post(),
-                      defer()
-                    ] );
-                  }
-                } ) : defer();
-            } );
-          },
-          returnToTypist: function() {
-            self.isWorking = true;
-            return CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath(),
-              data: { state: 'assigned' }
-            } ).patch().then( function() {
-              self.record.state = 'assigned';
-              self.isWorking = false;
-            } );
-          },
-          viewNotes: function() {
-            $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } );
-          },
+          submit: function() { return setTestEntryState( 'submitted' ); },
+          defer: function() { return setTestEntryState( 'deferred', 'typist' ); },
+          returnToTypist: function() { return setTestEntryState( 'assigned', true ); },
+          viewNotes: function() { $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } ); },
           previous: function() {
             return null == self.record.prev_test_entry_id ?
               self.parentModel.transitionToParentViewState(
