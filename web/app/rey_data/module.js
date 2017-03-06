@@ -75,9 +75,11 @@ define( function() {
                 data[property] = 'language_id' == property
                                ? $scope.model.viewModel.language.id
                                : $scope.model.viewModel.record[property];
+
+                if( 'language_id' == property ) $scope.isComplete = false;
                 $scope.model.viewModel.onPatch( data ).then( function() {
                   if( 'language_id' == property ) {
-                    $scope.model.viewModel.onView();
+                    $scope.model.viewModel.onView().then( function() { $scope.isComplete = true; } );
                   } else {
                     // All words may only have a boolean value or a variant value, so if we're setting the word
                     // or a variant to anything other than null make sure to empty the other value (the same is

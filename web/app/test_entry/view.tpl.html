@@ -29,7 +29,7 @@
           <div class="dropdown">
             <button class="btn btn-warning dropdown-toggle"
                     name="action"
-                    ng-disabled="!model.getStatusEditEnabled() || model.isWorking || !isComplete"
+                    ng-disabled="!model.getStatusEditEnabled() || model.viewModel.isWorking || !isComplete"
                     data-toggle="dropdown"
                     aria-haspopup="true"
                     aira-expanded="false">
@@ -58,7 +58,7 @@
         </div>
         <div class="btn-group pull-left horizontal-spacer">
           <button class="btn btn-danger pull-left"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-disabled="model.viewModel.isWorking || !isComplete || !model.getEditEnabled()"
                   ng-click="reset()">
             Reset
           </button>
@@ -69,7 +69,7 @@
           </button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-primary" ng-click="model.viewModel.previous()">
+          <button class="btn btn-primary" ng-click="model.viewModel.transition( 'previous' )">
             <i class="glyphicon glyphicon-triangle-left"></i>
             Prev
           </button>
@@ -78,7 +78,7 @@
                   ng-click="model.viewModel.viewTranscription()">
             View Transcription
           </button>
-          <button class="btn btn-primary" ng-click="model.viewModel.next()">
+          <button class="btn btn-primary" ng-click="model.viewModel.transition( 'next' )">
             Next
             <i class="glyphicon glyphicon-triangle-right"></i>
           </button>
@@ -90,21 +90,26 @@
            ng-if="isComplete"
            ng-class="{'in':!initCollapsed}"
            ng-switch="model.viewModel.record.data_type">
-        <cn-aft-data-view ng-switch-when="aft"
-                          model="model.viewModel.aftDataModel"
-                          edit-enabled="model.getEditEnabled()"></cn-aft-data-view>
-        <cn-fas-data-view ng-switch-when="fas"
-                          model="model.viewModel.fasDataModel"
-                          edit-enabled="model.getEditEnabled()"></cn-fas-data-view>
-        <cn-mat-data-view ng-switch-when="mat"
-                          model="model.viewModel.matDataModel"
-                          edit-enabled="model.getEditEnabled()"></cn-mat-data-view>
-        <cn-premat-data-view ng-switch-when="premat"
-                          model="model.viewModel.prematDataModel"
-                          edit-enabled="model.getEditEnabled()"></cn-premat-data-view>
-        <cn-rey-data-view ng-switch-when="rey"
-                           model="model.viewModel.reyDataModel"
-                           edit-enabled="model.getEditEnabled()"></cn-rey-data-view>
+        <cn-aft-data-view
+          ng-switch-when="aft"
+          model="model.viewModel.aftDataModel"
+          edit-enabled="model.getEditEnabled()"></cn-aft-data-view>
+        <cn-fas-data-view
+          ng-switch-when="fas"
+          model="model.viewModel.fasDataModel"
+          edit-enabled="model.getEditEnabled()"></cn-fas-data-view>
+        <cn-mat-data-view
+          ng-switch-when="mat"
+          model="model.viewModel.matDataModel"
+          edit-enabled="model.getEditEnabled()"></cn-mat-data-view>
+        <cn-premat-data-view
+          ng-switch-when="premat"
+          model="model.viewModel.prematDataModel"
+          edit-enabled="model.getEditEnabled()"></cn-premat-data-view>
+        <cn-rey-data-view
+          ng-switch-when="rey"
+          model="model.viewModel.reyDataModel"
+          edit-enabled="model.getEditEnabled()"></cn-rey-data-view>
         <hr />
         <div class="container-fluid vertical-spacer">
           <div class="row">
@@ -116,7 +121,7 @@
                 ng-model="model.viewModel.record.audio_status"
                 ng-options="item.value as item.name for item in audioStatusList"
                 ng-change="model.viewModel.patchStatus( 'audio' )"
-                ng-disabled="!model.getStatusEditEnabled()">
+                ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
             </div>
             <label for="participant_status" class="col-sm-2">Participant Status</label>
@@ -127,7 +132,7 @@
                 ng-model="model.viewModel.record.participant_status"
                 ng-options="item.value as item.name for item in participantStatusList"
                 ng-change="model.viewModel.patchStatus( 'participant' )"
-                ng-disabled="!model.getStatusEditEnabled()">
+                ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
             </div>
           </div>
@@ -152,7 +157,7 @@
           <div class="dropdown">
             <button class="btn btn-warning dropdown-toggle"
                     name="action"
-                    ng-disabled="!model.getStatusEditEnabled() || model.isWorking || !isComplete"
+                    ng-disabled="!model.getStatusEditEnabled() || model.viewModel.isWorking || !isComplete"
                     data-toggle="dropdown"
                     aria-haspopup="true"
                     aira-expanded="false">
@@ -181,7 +186,7 @@
         </div>
         <div class="btn-group pull-left horizontal-spacer">
           <button class="btn btn-danger pull-left"
-                  ng-disabled="!model.getEditEnabled() || model.isWorking || !isComplete"
+                  ng-disabled="model.viewModel.isWorking || !isComplete || !model.getEditEnabled()"
                   ng-click="reset()">
             Reset
           </button>
@@ -192,7 +197,7 @@
           </button>
         </div>
         <div class="btn-group">
-          <button class="btn btn-primary" ng-click="model.viewModel.previous()">
+          <button class="btn btn-primary" ng-click="model.viewModel.transition( 'previous' )">
             <i class="glyphicon glyphicon-triangle-left"></i>
             Prev
           </button>
@@ -201,7 +206,7 @@
                   ng-click="model.viewModel.viewTranscription()">
             View Transcription
           </button>
-          <button class="btn btn-primary" ng-click="model.viewModel.next()">
+          <button class="btn btn-primary" ng-click="model.viewModel.transition( 'next' )">
             Next
             <i class="glyphicon glyphicon-triangle-right"></i>
           </button>

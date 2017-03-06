@@ -114,9 +114,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             refresh: function() {
               if( $scope.isComplete ) {
                 $scope.isComplete = false;
-                var type = $scope.model.viewModel.record.data_type.toLowerCase() + 'DataModel';
-
                 // update the data record
+                var type = $scope.model.viewModel.record.data_type + 'DataModel';
                 $scope.model.viewModel[type].viewModel.onView();
 
                 // update the test entry record
@@ -189,7 +188,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             } ).patch().then( function() {
               self.record.state = state;
               self.isWorking = false;
-              if( 'assigned' != state && self.parentModel.isTypist ) return self.next();
+              if( 'assigned' != state && self.parentModel.isTypist ) return self.transition( 'next' );
             } );
           }
 
@@ -253,6 +252,15 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                        ( !self.parentModel.isTypist || 'assigned' == self.record.state );
               };
 
+              self.parentModel.getSubStatusEditEnabled = function( base ) {
+                return self.parentModel.$$getEditEnabled() &&
+                       'assigned' == self.record.state &&
+                       self.record.data_type && (
+                         self[self.record.data_type + 'DataModel'].getEditEnabled() ||
+                         self[self.record.data_type + 'DataModel'].getAddEnabled()
+                       );
+              };
+
               self.parentModel.getEditEnabled = function() {
                 return self.parentModel.$$getEditEnabled() && (
                          !self.parentModel.isTypist || (
@@ -261,6 +269,10 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                            'unavailable' != self.record.audio_status &&
                            'refused' != self.record.participant_status
                          )
+                       ) &&
+                       self.record.data_type && (
+                         self[self.record.data_type + 'DataModel'].getEditEnabled() ||
+                         self[self.record.data_type + 'DataModel'].getAddEnabled()
                        );
               };
 
@@ -303,21 +315,27 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           defer: function() { return setTestEntryState( 'deferred', 'typist' ); },
           returnToTypist: function() { return setTestEntryState( 'assigned', true ); },
           viewNotes: function() { $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } ); },
-          previous: function() {
-            return null == self.record.prev_test_entry_id ?
-              self.parentModel.transitionToParentViewState(
-                'transcription', 'uid=' + self.record.transcription_uid
-              ) : self.parentModel.transitionToViewState( {
-                getIdentifier: function() { return self.record.prev_test_entry_id; }
-              } );
-          },
-          next: function() {
-            return null == self.record.next_test_entry_id ?
-              self.parentModel.transitionToParentViewState(
-                'transcription', 'uid=' + self.record.transcription_uid
-              ) : self.parentModel.transitionToViewState( {
-                getIdentifier: function() { return self.record.next_test_entry_id; }
-              } );
+          transition: function( direction ) {
+            var columnName = 'previous' == direction ? 'prev_test_entry_id' : 'next_test_entry_id';
+            return CnHttpFactory.instance( {
+              path: 'transcription/uid=' + self.record.transcription_uid,
+              data: { select: { column: 'id' } },
+              onError: function( response ) {
+                // 403 means the user no longer has access to the transcription, so go back to the list instead
+                if( 403 == response.status ) {
+                  console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
+                  return self.parentModel.transitionToParentListState( 'transcription' );
+                } else return CnModalMessageFactory.httpError( response );
+              }
+            } ).get().then( function() {
+              // we still have access to the transcription so go to the next test-entry or parent transcription
+              return null == self.record[columnName] ?
+                self.parentModel.transitionToParentViewState(
+                  'transcription', 'uid=' + self.record.transcription_uid
+                ) : self.parentModel.transitionToViewState( {
+                  getIdentifier: function() { return self.record[columnName]; }
+                } );
+            } );
           },
           reset: function() {
             return CnHttpFactory.instance( {
@@ -333,8 +351,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                   // ignore 403 errors since records may automatically be unassigned
                   if( 403 == response.status ) {
                     console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
-                    return CnModalMessageFactory.httpError( response );
-                  }
+                  } else return CnModalMessageFactory.httpError( response );
                 }
               } ).patch().then( function() {
                 self.isWorking = false;
@@ -372,9 +389,10 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             data: { select: { column: [ 'id' ] } },
             onError: function( response ) {
               // redirect to the transcription list if we get a 404
-              return 403 == response.status ?
-                self.transitionToParentListState( subject ) :
-                CnModalMessageFactory.httpError( response );
+              if( 403 == response.status ) {
+                console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
+                return self.transitionToParentListState( subject );
+              } else return CnModalMessageFactory.httpError( response );
             }
           } ).get().then( function() {
             return self.$$transitionToParentViewState( subject, identifier );

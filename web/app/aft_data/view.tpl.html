@@ -1,12 +1,15 @@
-<div class="form-group first-form-group">
+<div class="form-group first-form-group" ng-show="editEnabled">
   <label for="value" class="col-sm-3 control-label">Enter Word</label>
   <div class="col-sm-9">
-    <input class="form-control" type="text" ng-model="newWord"></input>
+    <input class="form-control"
+           type="text"
+           ng-model="newWord"
+           ng-disabled="!editEnabled"></input>
   </div>
 </div>
-<hr/>
-<div class="container-fluid loading" ng-if="!isComplete"></div>
-<div class="container-fluid" ng-if="isComplete">
+<hr ng-show="editEnabled" />
+<div class="container-fluid loading" ng-if="!isComplete" ng-class="{ 'first-form-group': !editEnabled }"></div>
+<div class="container-fluid" ng-if="isComplete" ng-class="{ 'first-form-group': !editEnabled }">
   <div ng-if="0 == model.viewModel.record.length" class="text-info">
     No words have been entered.
   </div>
@@ -14,14 +17,15 @@
     <div class="col-sm-3 input-box"
          ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3]"
          ng-if="null != model.viewModel.record[i]">
-      <div class="col-xs-10 col-slim-right">
+      <div class="col-slim-right" ng-class="editEnabled ? 'col-xs-10' : 'col-xs-12'">
         <input class="form-control" type="text" ng-model="model.viewModel.record[i].word" disabled></input>
       </div>
-      <div class="col-xs-2 col-slim-left">
+      <div class="col-xs-2 col-slim-left" ng-show="editEnabled">
         <button class="btn btn-danger"
                 tooltip="Delete Word"
                 tooltip-placement="left"
-                ng-click="deleteWord( model.viewModel.record[i].rank )">
+                ng-click="deleteWord( model.viewModel.record[i].rank )"
+                ng-disabled="!editEnabled">
           <i class="glyphicon glyphicon-remove"></i>
         </button>
       </div>

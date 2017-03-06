@@ -1,4 +1,4 @@
-<div class="form-group first-form-group">
+<div class="form-group first-form-group" ng-show="editEnabled">
   <label for="newWord" class="col-sm-3 control-label">Enter Number or Letter</label>
   <div class="col-sm-3">
     <input class="form-control"
@@ -13,9 +13,9 @@
   </div>
   <div class="col-sm-6 form-text">(only numbers or a single letter is accepted)</div>
 </div>
-<hr/>
-<div class="container-fluid loading" ng-if="!isComplete"></div>
-<div class="container-fluid" ng-if="isComplete">
+<hr ng-show="editEnabled" />
+<div class="container-fluid loading" ng-if="!isComplete" ng-class="{ 'first-form-group': !editEnabled }"></div>
+<div class="container-fluid" ng-if="isComplete" ng-class="{ 'first-form-group': !editEnabled }">
   <div ng-if="0 == model.viewModel.record.length" class="text-info">
     No words have been entered.
   </div>
@@ -24,14 +24,14 @@
          ng-repeat="i in [$index, $index+1, $index+2, $index+3, $index+4, $index+5]"
          ng-if="null != model.viewModel.record[i]">
       <div>
-        <div class="col-xs-9 col-slim">
+        <div class="col-slim" ng-class="editEnabled ? 'col-xs-9' : 'col-xs-12'">
           <input class="form-control"
                  type="text"
                  ng-model="model.viewModel.record[i].word"
                  ng-change="changeWord(i)"
-                 ng-disabled="!isComplete || isWorking"></input>
+                 ng-disabled="!isComplete || isWorking || !editEnabled"></input>
         </div>
-        <div class="col-xs-2 col-slim">
+        <div class="col-xs-2 col-slim" ng-show="editEnabled">
           <button class="btn btn-danger"
                   ng-disabled="isWorking"
                   ng-click="deleteWord(i)">

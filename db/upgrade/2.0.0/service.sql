@@ -154,7 +154,7 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'aft_data', 'POST', 0, 1 ),
 ( 'dictionary', 'DELETE', 1, 1 ),
 ( 'dictionary', 'GET', 0, 1 ),
-( 'dictionary', 'GET', 1, 1 ),
+( 'dictionary', 'GET', 1, 0 ),
 ( 'dictionary', 'PATCH', 1, 1 ),
 ( 'dictionary', 'POST', 0, 1 ),
 ( 'fas_data', 'DELETE', 1, 1 ),

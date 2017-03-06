@@ -45,7 +45,8 @@ CREATE PROCEDURE patch_role_has_service()
       "SELECT role.id, service.id ",
       "FROM ", @cenozo, ".role, service ",
       "WHERE role.name = 'administrator' ",
-      "AND service.restricted = 1" );
+      "AND service.restricted = 1 ",
+      "AND service.subject NOT LIKE '%_data'" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
@@ -57,7 +58,10 @@ CREATE PROCEDURE patch_role_has_service()
       "FROM ", @cenozo, ".role, service ",
       "WHERE role.name IN( 'typist' ) ",
       "AND service.restricted = 1 ",
-      "AND service.subject IN ( 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data', 'participant' )" );
+      "AND ( ",
+        "service.subject LIKE '%_data' ",
+        "OR service.subject = 'participant' ",
+      ")" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
@@ -87,6 +91,7 @@ CREATE PROCEDURE patch_role_has_service()
           "'address', 'alternate', 'application', 'availability_type', 'collection', 'consent', 'consent_type', ",
           "'event', 'event_type', 'export', 'export_file', 'export_column', 'export_restriction', 'language', ",
           "'report_schedule', 'state', 'test_type', 'filename_format' ) ",
+        "OR subject LIKE '%_data' ",
         "OR ( subject = 'report_restriction' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'report_type' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'setting' AND method = 'GET' ) ",
