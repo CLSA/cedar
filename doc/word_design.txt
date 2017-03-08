@@ -1,0 +1,93 @@
+REY TEST
+==================================================================================================
+string add_word_to_rey( word ) {
+  if( word is keyword ) return "keyword"
+  else if( word is variant ) return "variant"
+  else if( word exists ) {
+    return word.misspelled ? "misspelled" : "intrusion"
+  }
+
+  create word( word=word, misspelled=null, aft-valid=null, fas-valid=null )
+  return "variant"
+}
+
+
+FAS TEST
+==================================================================================================
+string add_word_to_fas( word ) {
+  if( word exists ) {
+    if( word.misspelled ) {
+      return "misspelled"
+    } else {
+      if( null == word.fas-valid ) return "variant"
+      else if( word.fas-valid && (word starts with appropriate letter) ) return "primary"
+      return "intrusion"
+    }
+  }
+
+  create word( word=word, misspelled=null, aft-valid=null, fas-valid=null )
+  return "variant"
+}
+
+
+AFT TEST
+==================================================================================================
+string add_word_to_aft( word ) {
+  if( word exists ) {
+    if( word.misspelled ) {
+      return "misspelled"
+    } else {
+      if( null == word.aft-valid ) return "variant"
+      else if( word.aft-valid ) return "primary"
+      return "intrusion"
+    }
+  }
+
+  create word( word=word, misspelled=null, aft-valid=null, fas-valid=null )
+  return "variant"
+}
+
+
+CORRECTION ALGORITHMS
+==================================================================================================
+set_word_misspelled_value( word, misspelled, correct_word ) {
+  if( misspelled ) {
+    if( correct_word exists ) {
+      change all tests linked to word to correct_word instead
+    } else {
+      create word(
+        word=correct_word,
+        misspelled=false,
+        aft-valid=null
+        fas-valid=null
+      )
+      change all tests linked to word to new word instead
+    }
+  }
+
+  word.misspelled = misspelled
+  if( misspelled ) {
+    word.aft-valid = false
+    word.aft-valid = false
+  }
+}
+
+set_word_aft_valid_value( word, valid ) {
+  word.aft-valid = valid
+  if( valid ) word.misspelled = false
+}
+
+set_word_fas_valid_value( word, valid ) {
+  word.fas-valid = valid
+  if( valid ) word.misspelled = false
+}
+
+
+SCHEMA
+==================================================================================================
+word
+  word varchar not null
+  language_id (foreign key)
+  missplelled boolean null (cannot be set if aft-valid or fas-valid is not null)
+  aft-valid boolean null (cannot be set if misspelled is not null)
+  fas-valid boolean null (cannot be set if misspelled is not null)
