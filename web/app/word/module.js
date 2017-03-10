@@ -3,12 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'word', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
-    identifier: {
-      parent: {
-        subject: 'dictionary',
-        column: 'dictionary.name'
-      }
-    },
+    identifier: { column: 'uid' },
     name: {
       singular: 'word',
       plural: 'words',

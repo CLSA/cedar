@@ -21,9 +21,6 @@ class ui extends \cenozo\ui\ui
   {
     parent::build_module_list();
 
-    $module = $this->get_module( 'dictionary' );
-    if( !is_null( $module ) ) $module->add_child( 'word' );
-
     $module = $this->get_module( 'participant' );
     if( !is_null( $module ) ) $module->add_child( 'transcription', 'address' );
 
@@ -75,7 +72,6 @@ class ui extends \cenozo\ui\ui
     }
 
     // add application-specific states to the base list
-    $this->add_listitem( 'Dictionaries', 'dictionary' );
     $this->add_listitem( 'Transcriptions', 'transcription' );
 
     // remove list items that aren't necessary

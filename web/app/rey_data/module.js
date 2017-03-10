@@ -49,7 +49,6 @@ define( function() {
           $scope.isComplete = false;
           $scope.isWorking = false;
           $scope.typeaheadIsLoading = false;
-          $scope.typeaheadIsSet = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
@@ -98,12 +97,13 @@ define( function() {
             getTypeaheadValues: function( viewValue ) {
               $scope.typeaheadIsLoading = true;
               return CnHttpFactory.instance( {
-                path: 'dictionary/name=REY_Intrusion/word',
+                path: 'word',
                 data: {
                   select: { column: [ 'id', 'word' ] },
                   modifier: {
                     where: [
                       { column: 'language_id', operator: '=', value: $scope.model.viewModel.language.id },
+                      { column: 'misspelled', operator: '=', value: false },
                       { column: 'word', operator: 'LIKE', value: viewValue + '%' }
                     ]
                   }
@@ -223,7 +223,7 @@ define( function() {
                          'need to be added multiple times.'
               } ).show();
             } else {
-              return sendIntrusion( word ); // it's not a word so send it immediately
+              return sendIntrusion( word ); // it's not a new word so send it immediately
             }
           },
           deleteIntrusion: function( wordRecord ) {

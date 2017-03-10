@@ -1,7 +1,20 @@
 <div class="form-group first-form-group">
   <label for="value" class="col-sm-3 control-label">Enter Word</label>
   <div class="col-sm-9">
-    <input class="form-control" type="text" ng-model="newWord"></input>
+    <input class="form-control"
+           id="newWord"
+           name="newWord"
+           ng-model="newWord"
+           typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
+                      for item in getTypeaheadValues( $viewValue )"
+           typeahead-editable="true"
+           typeahead-min-length="2"
+           ng-class="{ 'loading-small': typeaheadIsLoading }"
+           type="text"
+           autocomplete="off"
+           cn-submit-word="submitNewWord()"
+           ng-disabled="!isComplete || isWorking || !editEnabled"
+           autofocus></input>
   </div>
 </div>
 <hr/>
@@ -10,21 +23,23 @@
   <div ng-if="0 == model.viewModel.record.length" class="text-info">
     No words have been entered.
   </div>
-  <div class="row" ng-repeat="doNotUse in model.viewModel.record track by $index" ng-if="$index % 4 == 0">
-    <div class="col-sm-3 input-box"
+  <div class="row"
+       style="margin-bottom: 4px;"
+       ng-repeat="doNotUse in model.viewModel.record track by $index" ng-if="$index % 4 == 0">
+    <div class="col-sm-3"
          ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3]"
          ng-if="null != model.viewModel.record[i]">
-      <div class="col-xs-10 col-slim-right">
-        <input class="form-control" type="text" ng-model="model.viewModel.record[i].word" disabled></input>
-      </div>
-      <div class="col-xs-2 col-slim-left">
-        <button class="btn btn-danger"
-                tooltip="Delete Word"
-                tooltip-placement="left"
-                ng-click="deleteWord( model.viewModel.record[i].rank )">
-          <i class="glyphicon glyphicon-remove"></i>
-        </button>
-      </div>
+      <button class="btn full-width"
+              ng-class="{
+                'btn-warning': 'variant' == model.viewModel.record[i].word_type,
+                'btn-danger': 'intrusion' == model.viewModel.record[i].word_type,
+                'btn-default': 'primary' == model.viewModel.record[i].word_type
+              }"
+              tooltip="Click to remove word"
+              ng-click="deleteWord( model.viewModel.record[i] )">
+        <span class="rounded language-code bg-info">{{ model.viewModel.record[i].code }}</span>
+        {{ model.viewModel.record[i].word }}
+      </button>
     </div>
   </div>
 </div>

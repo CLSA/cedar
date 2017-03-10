@@ -8,7 +8,6 @@ SOURCE role_has_service.sql
 SOURCE setting.sql
 SOURCE writelog.sql
 
-SOURCE dictionary.sql
 SOURCE word.sql
 SOURCE transcription.sql
 SOURCE transcription_has_language.sql
@@ -35,6 +34,9 @@ SOURCE update_participant_sound_file_total.sql
 SOURCE update_transcription_has_language.sql
 
 SOURCE import_cedar.sql
+
+SOURCE table_character_sets.sql
+SOURCE column_character_sets.sql
 
 SOURCE update_version_number.sql
 

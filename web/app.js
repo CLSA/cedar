@@ -78,8 +78,6 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                   for( var property in object.record )
                     if( 'boolean' == typeof( object.record[property] ) )
                       object.record[property] = object.record[property] ? 1 : 0;
-
-                if( angular.isDefined( object.onDataView ) ) return object.onDataView();
               } );
             }
           } );

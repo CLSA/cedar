@@ -225,6 +225,59 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           } else setState();
         }
 
+        this.deferred.promise.then( function() {
+          // get and store a list of all languages used by this test-entry
+          self.languageModel.listModel.afterList( function() {
+            self.languageIdList = self.languageModel.listModel.cache.reduce( function( list, language ) {
+              list.push( language.id );
+              return list;
+            }, [] );
+          } );
+
+          // define whether or not the language list can be choosen from
+          self.languageModel.getChooseEnabled = function() {
+            return self.languageModel.$$getChooseEnabled() &&
+                   self.parentModel.$$getEditEnabled() && (
+                     !self.parentModel.isTypest || (
+                       'assigned' == self.record.state &&
+                       'unusable' != self.record.audio_status &&
+                       'unavailable' != self.record.audio_status &&
+                       'refused' != self.record.participant_status
+                     )
+                   );
+          };
+
+          angular.extend( self.parentModel, {
+            getStatusEditEnabled: function() {
+              return self.parentModel.$$getEditEnabled() &&
+                     ( !self.parentModel.isTypist || 'assigned' == self.record.state );
+            },
+            getSubStatusEditEnabled: function( base ) {
+              return self.parentModel.$$getEditEnabled() &&
+                     'assigned' == self.record.state &&
+                     self.record.data_type && (
+                       self[self.record.data_type + 'DataModel'].getEditEnabled() ||
+                       self[self.record.data_type + 'DataModel'].getAddEnabled()
+                     );
+            },
+            getEditEnabled: function() {
+              return self.parentModel.$$getEditEnabled() && (
+                       !self.parentModel.isTypist || (
+                         'assigned' == self.record.state &&
+                         'unusable' != self.record.audio_status &&
+                         'unavailable' != self.record.audio_status &&
+                         'refused' != self.record.participant_status
+                       )
+                     ) &&
+                     self.record.data_type && (
+                       self[self.record.data_type + 'DataModel'].getEditEnabled() ||
+                       self[self.record.data_type + 'DataModel'].getAddEnabled()
+                     );
+            }
+          } );
+        } );
+
+
         angular.extend( this, {
           onViewPromise: null,
           soundFileList: [],
@@ -247,47 +300,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             } );
 
             this.onViewPromise = this.$$onView().then( function() {
-              self.parentModel.getStatusEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() &&
-                       ( !self.parentModel.isTypist || 'assigned' == self.record.state );
-              };
-
-              self.parentModel.getSubStatusEditEnabled = function( base ) {
-                return self.parentModel.$$getEditEnabled() &&
-                       'assigned' == self.record.state &&
-                       self.record.data_type && (
-                         self[self.record.data_type + 'DataModel'].getEditEnabled() ||
-                         self[self.record.data_type + 'DataModel'].getAddEnabled()
-                       );
-              };
-
-              self.parentModel.getEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() && (
-                         !self.parentModel.isTypist || (
-                           'assigned' == self.record.state &&
-                           'unusable' != self.record.audio_status &&
-                           'unavailable' != self.record.audio_status &&
-                           'refused' != self.record.participant_status
-                         )
-                       ) &&
-                       self.record.data_type && (
-                         self[self.record.data_type + 'DataModel'].getEditEnabled() ||
-                         self[self.record.data_type + 'DataModel'].getAddEnabled()
-                       );
-              };
-
-              self.languageModel.getChooseEnabled = function() {
-                return self.languageModel.$$getChooseEnabled() &&
-                       self.parentModel.$$getEditEnabled() && (
-                         !self.parentModel.isTypest || (
-                           'assigned' == self.record.state &&
-                           'unusable' != self.record.audio_status &&
-                           'unavailable' != self.record.audio_status &&
-                           'refused' != self.record.participant_status
-                         )
-                       );
-              };
-
               // get the sound file list for this test-entry
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/sound_file',

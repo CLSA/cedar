@@ -160,27 +160,93 @@ CREATE PROCEDURE import_cedar()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
-    SELECT "Importing dictionaries from v1" AS "";
+    SELECT "Importing primary words from v1" AS "";
 
     SET @sql = CONCAT(
-      "INSERT IGNORE INTO dictionary( id, update_timestamp, create_timestamp, name, reserved, description ) ",
-      "SELECT id, update_timestamp, create_timestamp, name, 1, description ",
-      "FROM ", @v1_cedar, ".dictionary AS v1_dictionary ",
-      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled' )" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
-
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO word ",
-      "SELECT v1_word.* FROM ", @v1_cedar, ".word AS v1_word "
+      "INSERT INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 1, NULL ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
       "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name IN( 'REY_Intrusion', 'REY_Mispelled' )" );
+      "WHERE v1_dictionary.name = 'Animal_Name_Primary'" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
-    UPDATE dictionary SET name = "REY_Misspelled" WHERE name = "REY_Mispelled";
+    SET @sql = CONCAT(
+      "INSERT INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 1 ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name LIKE '_\_Words\_Primary' ",
+      "ON DUPLICATE KEY UPDATE fas_valid = 1" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Importing misspelled words from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 1, 0, 0 ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name LIKE '%Mispelled'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Importing intrusion words from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 0, NULL ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name = 'Animal_Name_Intrusion' ",
+      "ON DUPLICATE KEY UPDATE aft_valid = 0" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT(
+      "INSERT INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 0 ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name LIKE '_\_Words\_Intrusion' ",
+      "ON DUPLICATE KEY UPDATE fas_valid = IF( fas_valid IS NULL, 0, fas_valid )" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, NULL ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name = 'REY_Intrusion'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    SELECT "Importing variant words from v1" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO word( ",
+        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
+      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL ",
+      "FROM ", @v1_cedar, ".word AS v1_word ",
+      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
+      "WHERE v1_dictionary.name LIKE '%Variant'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
 
   END //
 DELIMITER ;
