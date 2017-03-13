@@ -6,13 +6,13 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnAftDataView', [
-    'CnAftDataModelFactory',
-    function( CnAftDataModelFactory ) {
+    'CnAftDataModelFactory', 'CnHttpFactory',
+    function( CnAftDataModelFactory, CnHttpFactory ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?', editEnabled: '=' },
-        controller: function( $scope ) { 
+        controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnPrematDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
@@ -36,35 +36,95 @@ define( function() {
               $scope.isWorking = false;
               $scope.model.viewModel.deleteIntrusion( word ).finally( function() { $scope.isWorking = false; } );
             },
-            getTypeaheadValues: function( viewValue ) { 
+            getTypeaheadValues: function( viewValue ) {
               $scope.typeaheadIsLoading = true;
               return CnHttpFactory.instance( {
                 path: 'word',
                 data: {
-                  select: { column: [ 'id', 'word' ] },
+                  select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
                   modifier: {
-                    where: [
-                      { column: 'misspelled', operator: '=', value: false },
-                      { column: 'word', operator: 'LIKE', value: viewValue + '%' }
-                    ]   
-                  }   
-                }   
-              } ).query().then( function( response ) { 
+                    where: [ {
+                      column: 'language_id',
+                      operator: 'IN',
+                      value: $scope.model.testEntryModel.viewModel.languageIdList
+                    }, {
+                      column: 'misspelled', operator: '=', value: false
+                    }, {
+                      column: 'word', operator: 'LIKE', value: viewValue + '%'
+                    } ],
+                    order: { word: false }
+                  }
+                }
+              } ).query().then( function( response ) {
                 $scope.typeaheadIsLoading = false;
                 return response.data;
               } );
-            }   
+            }
           } );
-        }   
+        }
       }
     }
   ] );
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnAftDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, $q ) {
-      var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
+    'CnBaseDataViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', '$q',
+    function( CnBaseDataViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalConfirmFactory, $q ) {
+      var object = function( parentModel, root ) {
+        var self = this;
+        CnBaseDataViewFactory.construct( this, parentModel, root );
+
+        angular.extend( this, {
+          submitIntrusion: function( word ) {
+            // private method used below
+            function sendIntrusion( word ) {
+              var data = {};
+              if( angular.isString( word ) ) data.word = word;
+              else data.word_id = word.id;
+
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath(),
+                data: data,
+                onError: function( response ) {
+                  if( 406 == response.status ) {
+                    // the word is misspelled
+                    return CnModalMessageFactory.instance( {
+                      title: 'Misspelled Word',
+                      message: 'You have selected a misspelled word. This word cannot be used.'
+                    } ).show();
+                  } else CnModalMessageFactory.httpError( response );
+                }
+              } ).post().then( function( response ) {
+                self.record.push( response.data );
+              } );
+            }
+
+            if( angular.isString( word ) ) {
+              // remove case and double quotes if they are found at the start/end
+              word = word.replace( /^"|"$/g, '' ).toLowerCase();
+
+              // it's a new word, so double-check with the user before proceeding
+              return CnModalConfirmFactory.instance( {
+                title: 'New Intrusion',
+                message: 'The intrusion you have provided, "' + word + '", is not found in the existing list ' +
+                         'of words. Please double-check that the spelling is correct before proceeding. ' +
+                         'Do not submit the word unless you are sure it is spelled correctly.\n\n' +
+                         'Do you wish to submit the intrusion "' + word + '" as a new word?'
+              } ).show().then( function( response ) {
+                if( response ) return sendIntrusion( word );
+              } );
+            } else return sendIntrusion( word ); // it's not a new word so send it immediately
+          },
+          deleteIntrusion: function( wordRecord ) {
+            return CnHttpFactory.instance( {
+              path: this.parentModel.getServiceResourcePath() + '/' + wordRecord.id
+            } ).delete().then( function() {
+              var index = self.record.findIndexByProperty( 'id', wordRecord.id );
+              if( null != index ) self.record.splice( index, 1 );
+            } );
+          }
+        } );
+      }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
   ] );
@@ -83,10 +143,14 @@ define( function() {
           if( 'view' == type ) {
             if( angular.isUndefined( data.modifier ) ) data.modifier = {};
             angular.extend( data.modifier, {
-              order: { rank: false },
+              order: { 'aft_data.rank': false },
               limit: 10000 // do not limit the number of records returned
             } );
-            data.select = { column: [ 'rank', { table: 'word', column: 'word' } ] };
+            data.select = { column: [
+              { table: 'word', column: 'word' },
+              { table: 'language', column: 'code' },
+              'word_type'
+            ] };
           }
           return data;
         };

@@ -77,10 +77,14 @@ define( function() {
         angular.extend( this, {
           submitIntrusion: function( word ) {
             // private method used below
-            function sendIntrusion( input ) {
+            function sendIntrusion( word ) {
+              var data = {};
+              if( angular.isString( word ) ) data.word = word;
+              else data.word_id = word.id;
+
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath(),
-                data: { word_id: word.id },
+                data: data,
                 onError: function( response ) {
                   if( 406 == response.status ) {
                     // the word is misspelled
@@ -95,16 +99,17 @@ define( function() {
               } );
             }
 
-            // If we get this far then we've either got a word that wasn't caught by the above
-            // tests or is a word id (from the typeahead).
             if( angular.isString( word ) ) {
+              // remove case and double quotes if they are found at the start/end
+              word = word.replace( /^"|"$/g, '' ).toLowerCase();
+
               // it's a new word, so double-check with the user before proceeding
               return CnModalConfirmFactory.instance( {
                 title: 'New Intrusion',
-                message: 'The word you have provided, "' + word + '", is not found in the existing list ' +
-                         'of intrusions. Please double-check that the spelling is correct before proceeding. ' +
+                message: 'The intrusion you have provided, "' + word + '", is not found in the existing list ' +
+                         'of words. Please double-check that the spelling is correct before proceeding. ' +
                          'Do not submit the word unless you are sure it is spelled correctly.\n\n' +
-                         'Do you wish to submit "' + word + '" as a new intrusion?'
+                         'Do you wish to submit the intrusion "' + word + '" as a new word?'
               } ).show().then( function( response ) {
                 if( response ) return sendIntrusion( word );
               } );

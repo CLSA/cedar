@@ -23,7 +23,7 @@ class post extends \cenozo\service\post
 
     // the status will be 400 since the input is a string (word as text)
     $post_object = $this->get_file_as_object();
-    if( is_null( $post_object ) )
+    if( is_null( $post_object ) || is_bool( $post_object ) )
     {
       $input_word = $this->get_file_as_raw();
       if( 400 == $this->status->get_code() && is_string( $input_word ) )
@@ -39,7 +39,7 @@ class post extends \cenozo\service\post
     parent::setup();
 
     $post_object = $this->get_file_as_object();
-    if( is_null( $post_object ) )
+    if( is_null( $post_object ) || is_bool( $post_object ) )
     {
       $word_class_name = lib::get_class_name( 'database\word' );
       $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
@@ -90,9 +90,15 @@ class post extends \cenozo\service\post
     if( !is_null( $this->db_word ) )
     {
       // manually insert the word to the rey_data
-      $this->get_parent_record()->add_word( $this->db_word->id );
+      $db_rey_data = $this->get_parent_record();
+      $db_rey_data->add_word( $this->db_word->id );
       $this->status->set_code( 201 );
-      $this->set_data( $this->db_word->id );
+      $this->set_data( util::json_encode( array (
+        'id' => $this->db_word->id,
+        'word' => $this->db_word->word,
+        'code' => $this->db_word->get_language()->code,
+        'word_type' => $db_rey_data->get_word_type( $this->db_word )
+      ) ) );
     }
     else parent::execute();
   }

@@ -227,25 +227,27 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
         this.deferred.promise.then( function() {
           // get and store a list of all languages used by this test-entry
-          self.languageModel.listModel.afterList( function() {
-            self.languageIdList = self.languageModel.listModel.cache.reduce( function( list, language ) {
-              list.push( language.id );
-              return list;
-            }, [] );
-          } );
+          if( angular.isDefined( self.languageModel ) ) {
+            self.languageModel.listModel.afterList( function() {
+              self.languageIdList = self.languageModel.listModel.cache.reduce( function( list, language ) {
+                list.push( language.id );
+                return list;
+              }, [] );
+            } );
 
-          // define whether or not the language list can be choosen from
-          self.languageModel.getChooseEnabled = function() {
-            return self.languageModel.$$getChooseEnabled() &&
-                   self.parentModel.$$getEditEnabled() && (
-                     !self.parentModel.isTypest || (
-                       'assigned' == self.record.state &&
-                       'unusable' != self.record.audio_status &&
-                       'unavailable' != self.record.audio_status &&
-                       'refused' != self.record.participant_status
-                     )
-                   );
-          };
+            // define whether or not the language list can be choosen from
+            self.languageModel.getChooseEnabled = function() {
+              return self.languageModel.$$getChooseEnabled() &&
+                     self.parentModel.$$getEditEnabled() && (
+                       !self.parentModel.isTypest || (
+                         'assigned' == self.record.state &&
+                         'unusable' != self.record.audio_status &&
+                         'unavailable' != self.record.audio_status &&
+                         'refused' != self.record.participant_status
+                       )
+                     );
+            };
+          }
 
           angular.extend( self.parentModel, {
             getStatusEditEnabled: function() {

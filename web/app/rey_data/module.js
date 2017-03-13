@@ -99,13 +99,14 @@ define( function() {
               return CnHttpFactory.instance( {
                 path: 'word',
                 data: {
-                  select: { column: [ 'id', 'word' ] },
+                  select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
                   modifier: {
                     where: [
                       { column: 'language_id', operator: '=', value: $scope.model.viewModel.language.id },
                       { column: 'misspelled', operator: '=', value: false },
                       { column: 'word', operator: 'LIKE', value: viewValue + '%' }
-                    ]
+                    ],
+                    order: { word: false }
                   }
                 }
               } ).query().then( function( response ) {
@@ -131,9 +132,30 @@ define( function() {
 
         angular.extend( this, {
           submitIntrusion: function( word ) {
-            // remove case from the word
+            // private method used below
+            function sendIntrusion( input ) {
+              // save the object data if the input is a word
+              var word = angular.isObject( input ) ? input.word : input;
+
+              return CnHttpFactory.instance( {
+                path: self.parentModel.getServiceResourcePath() + '/word',
+                data: word,
+                onError: function( response ) {
+                  if( 406 == response.status ) {
+                    // the word is misspelled
+                    return CnModalMessageFactory.instance( {
+                      title: 'Misspelled Word',
+                      message: 'You have selected a misspelled word. This word cannot be used.'
+                    } ).show();
+                  } else CnModalMessageFactory.httpError( response );
+                }
+              } ).post().then( function( response ) {
+                self.intrusionList.push( response.data );
+              } );
+            }
+
             if( angular.isString( word ) ) {
-              // remove double quotes if they are found at the start/end
+              // remove case and double quotes if they are found at the start/end
               word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
               // check if the word is one of the REY words
@@ -175,32 +197,6 @@ define( function() {
                   } );
                 }
               }
-            }
-
-            // private method used below
-            function sendIntrusion( input ) {
-              // save the object data if the input is a word
-              var word = angular.isObject( input ) ? input.word : input;
-
-              return CnHttpFactory.instance( {
-                path: self.parentModel.getServiceResourcePath() + '/word',
-                data: word,
-                onError: function( response ) {
-                  if( 406 == response.status ) {
-                    // the word is misspelled
-                    return CnModalMessageFactory.instance( {
-                      title: 'Misspelled Word',
-                      message: 'You have selected a misspelled word. This word cannot be used.'
-                    } ).show();
-                  } else CnModalMessageFactory.httpError( response );
-                }
-              } ).post().then( function( response ) {
-                self.intrusionList.push(
-                  angular.isObject( input ) ?
-                    { id: input.id, word: input.word } :
-                    { id: response.data, word: word }
-                );
-              } );
             }
 
             // If we get this far then we've either got a word that wasn't caught by the above
@@ -250,7 +246,11 @@ define( function() {
               // get the rey-data intrusions
               CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/word',
-                data: { select: { column: [ 'id', 'word' ] } }
+                data: { select: { column: [
+                  { table: 'word', column: 'word' },
+                  { table: 'language', column: 'code' },
+                  'word_type'
+                ] } }
               } ).query().then( function( response ) {
                 self.intrusionList = response.data;
               } )

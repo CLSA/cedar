@@ -51,34 +51,32 @@
   </div>
   <div ng-if="0 < model.viewModel.intrusionList.length">
     <div ng-repeat="doNotUse in model.viewModel.intrusionList track by $index" ng-if="$index % 4 == 0">
-      <div class="col-sm-3 input-box"
+      <div class="col-sm-3"
            ng-repeat="i in [$index, $index+1, $index+2, $index+3]"
            ng-if="null != model.viewModel.intrusionList[i]">
-        <div class="col-slim-right" ng-class="editEnabled ? 'col-xs-10' : 'col-xs-12'">
-          <input class="form-control"
-                 type="text"
-                 ng-model="model.viewModel.intrusionList[i].word"
-                 disabled></input>
-        </div>
-        <div class="col-xs-2 col-slim-left" ng-show="editEnabled">
-          <button class="btn btn-danger"
-                  ng-disabled="isWorking || !editEnabled"
-                  ng-click="deleteWord( model.viewModel.intrusionList[i] )">
-            <i class="glyphicon glyphicon-remove"></i>
-          </button>
-        </div>
+        <button class="btn full-width"
+                ng-class="{
+                  'btn-warning': 'variant' == model.viewModel.intrusionList[i].word_type,
+                  'btn-danger': 'intrusion' == model.viewModel.intrusionList[i].word_type
+                }"
+                tooltip="Click to remove word"
+                ng-click="deleteWord( model.viewModel.intrusionList[i] )">
+          <span class="rounded language-code bg-info">{{ model.viewModel.intrusionList[i].code }}</span>
+          {{ model.viewModel.intrusionList[i].word }}
+        </button>
       </div>
     </div>
   </div>
 </div>
 <div class="form-group" style="padding-bottom: 0px;" ng-show="editEnabled">
-  <label for="newWord" class="col-sm-3 control-label">Enter intrusion</label>
+  <label for="newWord" class="col-sm-3 control-label">Enter Intrusion</label>
   <div class="col-sm-9">
     <input class="form-control"
            id="newWord"
            name="newWord"
            ng-model="newWord"
-           typeahead="item as item.word for item in getTypeaheadValues( $viewValue )"
+           typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
+                      for item in getTypeaheadValues( $viewValue )"
            typeahead-editable="true"
            typeahead-min-length="2"
            ng-class="{ 'loading-small': typeaheadIsLoading }"

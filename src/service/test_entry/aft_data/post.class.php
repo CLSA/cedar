@@ -6,7 +6,7 @@
  * @filesource
  */
 
-namespace cedar\service\test_entry\fas_data;
+namespace cedar\service\test_entry\aft_data;
 use cenozo\lib, cenozo\log, cedar\util;
 
 /**
