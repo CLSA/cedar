@@ -110,3 +110,52 @@ cenozo.factory( 'CnBaseDataModelFactory', [
     };
   }
 ] );
+
+/* ######################################################################################################## */
+cenozo.service( 'CnModalNewIntrusionFactory', [
+  '$modal', 'CnHttpFactory',
+  function( $modal, CnHttpFactory ) {
+    var object = function( params ) {
+      var self = this;
+      this.title = 'New Intrusion';
+      this.word = null;
+      this.language_id = null;
+      this.languageIdRestrictList = [];
+      this.languageList = [];
+
+      angular.extend( this, params );
+
+      this.show = function() {
+        var where = [ { column: 'active', operator: '=', value: true } ];
+        if( 0 < this.languageIdRestrictList.length )
+          where.push( { column: 'id', operator: 'IN', value: this.languageIdRestrictList } );
+        return CnHttpFactory.instance( {
+          path: 'language',
+          data: {
+            select: { column: [ 'id', 'name' ] },
+            modifier: { where: where, order: { name: false } }
+          }
+        } ).query().then( function( response) {
+          self.languageList = [];
+          response.data.forEach( function( item ) {
+            self.languageList.push( { value: item.id, name: item.name } );
+          } );
+
+          return $modal.open( {
+            backdrop: 'static',
+            keyboard: true,
+            modalFade: true,
+            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-intrusion.tpl.html' ),
+            controller: function( $scope, $modalInstance ) {
+              $scope.model = self;
+              $scope.proceed = function() { $modalInstance.close( $scope.model.language_id ); };
+              $scope.cancel = function() { $modalInstance.close( null ); };
+            }
+          } ).result;
+        } );
+      };
+    };
+
+    return { instance: function( params ) { return new object( angular.isUndefined( params ) ? {} : params ); } };
+  }
+] );

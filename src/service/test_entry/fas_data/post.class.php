@@ -21,22 +21,34 @@ class post extends \cenozo\service\post
   {
     parent::setup();
 
-    // translate word into a new variant and set data record's word_id
     $post_object = $this->get_file_as_object();
     if( property_exists( $post_object, 'word' ) )
     {
-      $word_class_name = lib::get_class_name( 'database\word' );
-      $word = $post_object->word;
-      $db_word = $word_class_name::get_unique_record( array( 'language_id', 'word' ), array( 44, $word ) );
-      if( is_null( $db_word ) )
+      // translate word into a new variant and set data record's word_id
+      if( !property_exists( $post_object, 'language_id' ) )
       {
-        $db_word = lib::create( 'database\word' );
-        $db_word->language_id = 44;
-        $db_word->word = $word;
-        $db_word->save();
+        $this->get_status()->set_code( 400 );
       }
+      else
+      {
+        $word_class_name = lib::get_class_name( 'database\word' );
+        $word = $post_object->word;
+        $language_id = $post_object->language_id;
+        $db_word = $word_class_name::get_unique_record(
+          array( 'language_id', 'word' ),
+          array( $language_id, $word )
+        );
+        if( is_null( $db_word ) )
+        {
+          $db_word = lib::create( 'database\word' );
+          $db_word->language_id = $language_id;
+          $db_word->word = $word;
+          $db_word->save();
+        }
 
-      $this->get_leaf_record()->word_id = $db_word->id;
+        if( $db_word->misspelled ) $this->get_status()->set_code( 406 );
+        else $this->get_leaf_record()->word_id = $db_word->id;
+      }
     }
   }
 

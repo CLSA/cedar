@@ -68,8 +68,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnAftDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalConfirmFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewIntrusionFactory', '$q',
+    function( CnBaseDataViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewIntrusionFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -77,10 +77,8 @@ define( function() {
         angular.extend( this, {
           submitIntrusion: function( word ) {
             // private method used below
-            function sendIntrusion( word ) {
-              var data = {};
-              if( angular.isString( word ) ) data.word = word;
-              else data.word_id = word.id;
+            function sendIntrusion( input ) {
+              var data = angular.isDefined( input.word ) ? input : { word_id: input.id };
 
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath(),
@@ -104,14 +102,12 @@ define( function() {
               word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
               // it's a new word, so double-check with the user before proceeding
-              return CnModalConfirmFactory.instance( {
-                title: 'New Intrusion',
-                message: 'The intrusion you have provided, "' + word + '", is not found in the existing list ' +
-                         'of words. Please double-check that the spelling is correct before proceeding. ' +
-                         'Do not submit the word unless you are sure it is spelled correctly.\n\n' +
-                         'Do you wish to submit the intrusion "' + word + '" as a new word?'
+              return CnModalNewIntrusionFactory.instance( {
+                word: word,
+                language_id: self.parentModel.testEntryModel.viewModel.record.participant_language_id,
+                languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
               } ).show().then( function( response ) {
-                if( response ) return sendIntrusion( word );
+                if( null != response ) return sendIntrusion( { language_id: response, word: word } );
               } );
             } else return sendIntrusion( word ); // it's not a new word so send it immediately
           },

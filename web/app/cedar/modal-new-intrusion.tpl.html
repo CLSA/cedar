@@ -1,0 +1,30 @@
+<form ng-submit="proceed()" class="noselect">
+  <div class="modal-header bg-primary">
+    <h4 class="modal-title">{{ model.title }}</h4>
+  </div>
+  <div class="modal-body allow-select">
+    <div class="container-fluid">
+      The intrusion you have provided, "{{ model.word }}", is not found in the existing list
+      of words. Please double-check that the spelling is correct before proceeding.
+      Do not submit the word unless you are sure it is spelled correctly.<br />
+      <br />
+      Do you wish to submit the intrusion {{ model.word }} as a new word?
+    </div>
+    <hr />
+    <div class="container-fluid">
+      <label for="language_id" class="col-sm-3 control-label">Language</label>
+      <div class="col-sm-9">
+        <select id="language_id"
+                name="language_id"
+                ng-options="item.value as item.name for item in model.languageList"
+                ng-model="model.language_id"
+                class="form-control">
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer bg-info">
+    <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+    <button type="submit" class="btn btn-primary">Proceed</button>
+  </div>
+</form>

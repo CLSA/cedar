@@ -49,6 +49,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
     audio_status: { type: 'enum' },
     participant_status: { type: 'enum' },
     state: { type: 'enum' },
+    participant_language_id: { column: 'participant.language_id', type: 'hidden' },
     prev_test_entry_id: { type: 'hidden' },
     next_test_entry_id: { type: 'hidden' }
   } );
@@ -233,6 +234,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 list.push( language.id );
                 return list;
               }, [] );
+              if( 0 > self.languageIdList.indexOf( self.record.participant_language_id ) )
+                self.record.participant_language_id = self.languageIdList[0];
             } );
 
             // define whether or not the language list can be choosen from
@@ -282,6 +285,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
         angular.extend( this, {
           onViewPromise: null,
+          languageIdList: [],
           soundFileList: [],
 
           // add the test entry's data models

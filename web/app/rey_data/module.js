@@ -122,8 +122,12 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalConfirmFactory, $q ) {
+    'CnBaseDataViewFactory',
+    'CnModalMessageFactory', 'CnModalConfirmFactory', 'CnModalNewIntrusionFactory',
+    'CnHttpFactory', '$q',
+    function( CnBaseDataViewFactory,
+              CnModalMessageFactory, CnModalConfirmFactory, CnModalNewIntrusionFactory,
+              CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -134,12 +138,11 @@ define( function() {
           submitIntrusion: function( word ) {
             // private method used below
             function sendIntrusion( input ) {
-              // save the object data if the input is a word
-              var word = angular.isObject( input ) ? input.word : input;
+              var data = { add: angular.isDefined( input.id ) ? input.id : input };
 
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/word',
-                data: word,
+                data: data,
                 onError: function( response ) {
                   if( 406 == response.status ) {
                     // the word is misspelled
@@ -203,14 +206,11 @@ define( function() {
             // tests or is a word id (from the typeahead).
             if( angular.isString( word ) ) {
               // it's a new word, so double-check with the user before proceeding
-              return CnModalConfirmFactory.instance( {
-                title: 'New Intrusion',
-                message: 'The word you have provided, "' + word + '", is not found in the existing list ' +
-                         'of intrusions. Please double-check that the spelling is correct before proceeding. ' +
-                         'Do not submit the word unless you are sure it is spelled correctly.\n\n' +
-                         'Do you wish to submit "' + word + '" as a new intrusion?'
-              } ).show().then( function( response ) {
-                if( response ) return sendIntrusion( word );
+              return CnModalNewIntrusionFactory.instance( {
+                word: word,
+                language_id: self.parentModel.testEntryModel.viewModel.record.participant_language_id
+              } ).show().then( function( response ) { 
+                if( null != response ) return sendIntrusion( { language_id: response, word: word } );
               } );
             } else if( self.intrusionList.findByProperty( 'id', word.id ) ) {
               return CnModalMessageFactory.instance( {
