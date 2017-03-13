@@ -17,51 +17,12 @@ class patch extends \cenozo\service\patch
   /**
    * Override parent method
    */
-  public function get_file_as_array()
-  {
-    // remove language_id from the patch array
-    $patch_array = parent::get_file_as_array();
-    if( array_key_exists( 'language_id', $patch_array ) )
-    {
-      $this->language_id = $patch_array['language_id'];
-      $this->update_language = true;
-      unset( $patch_array['language_id'] );
-    }
-
-    return $patch_array;
-  }
-
-  /**
-   * Override parent method
-   */
   protected function execute()
   {
     parent::execute();
 
-    // process the language, if it exists
-    if( $this->update_language ) $this->set_language();
+    // reset the test when changing its language
+    if( array_key_exists( 'language_id', $this->get_file_as_array() ) )
+      $this->get_leaf_record()->get_test_entry()->reset();
   }
-
-  /**
-   * TODO: document
-   */
-  protected function set_language()
-  {
-    $this->get_leaf_record()->get_test_entry()->replace_language( $this->language_id );
-    $this->get_leaf_record()->get_test_entry()->reset();
-  }
-
-  /**
-   * Whether to update the rey_data's language
-   * @var boolean
-   * @access protected
-   */
-  protected $update_language = false;
-
-  /**
-   * What to change the rey_data's language to
-   * @var int
-   * @access protected
-   */
-  protected $language_id;
 }

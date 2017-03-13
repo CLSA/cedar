@@ -33,7 +33,9 @@ define( function() {
     house: { type: 'boolean' },
     house_rey_data_variant_id: { type: 'enum' },
     river: { type: 'boolean' },
-    river_rey_data_variant_id: { type: 'enum' }
+    river_rey_data_variant_id: { type: 'enum' },
+    language_id: { type: 'enum' },
+    language_code: { column: 'language.code', type: 'hidden' }
   } );
 
   /* ######################################################################################################## */
@@ -52,15 +54,24 @@ define( function() {
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
-            submitNewWord: function() {
+            preventSelectedNewWord: false,
+            submitNewWord: function( selected ) {
               // string if it's a new word, integer if it's an existing intrusion
               if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) {
+                // prevent double-entry from enter key and typeahead selection
+                if( selected ) {
+                  if( $scope.preventSelectedNewWord ) return;
+                } else $scope.preventSelectedNewWord = true;
+
                 $scope.isWorking = true;
                 var word = $scope.newWord;
                 $scope.newWord = '';
                 $scope.model.viewModel.submitIntrusion( word ).finally( function() {
                   $scope.isWorking = false;
-                  $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
+                  $timeout( function() {
+                    if( !selected ) $scope.preventSelectedNewWord = false;
+                    document.getElementById( 'newWord' ).focus();
+                  }, 20 );
                 } );
               }
             },
@@ -71,9 +82,7 @@ define( function() {
             patch: function( property ) {
               if( $scope.model.getEditEnabled() ) {
                 var data = {};
-                data[property] = 'language_id' == property
-                               ? $scope.model.viewModel.language.id
-                               : $scope.model.viewModel.record[property];
+                data[property] = $scope.model.viewModel.record[property];
 
                 if( 'language_id' == property ) $scope.isComplete = false;
                 $scope.model.viewModel.onPatch( data ).then( function() {
@@ -101,11 +110,15 @@ define( function() {
                 data: {
                   select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
                   modifier: {
-                    where: [
-                      { column: 'language_id', operator: '=', value: $scope.model.viewModel.language.id },
-                      { column: 'misspelled', operator: '=', value: false },
-                      { column: 'word', operator: 'LIKE', value: viewValue + '%' }
-                    ],
+                    where: [ {
+                      column: 'language_id',
+                      operator: 'IN',
+                      value: $scope.model.testEntryModel.viewModel.languageIdList
+                    }, {
+                      column: 'IFNULL( misspelled, false )', operator: '=', value: false
+                    }, {
+                      column: 'word', operator: 'LIKE', value: viewValue + '%'
+                    } ],
                     order: { word: false }
                   }
                 }
@@ -157,48 +170,47 @@ define( function() {
               } );
             }
 
-            if( angular.isString( word ) ) {
-              // remove case and double quotes if they are found at the start/end
-              word = word.replace( /^"|"$/g, '' ).toLowerCase();
+            // remove case and double quotes if they are found at the start/end
+            if( angular.isString( word ) ) word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
-              // check if the word is one of the REY words
-              var label = self.labelList.findByProperty( 'label', word.ucWords() );
-              if( label ) {
+            // check if the word is one of the REY words
+            var text = angular.isString( word ) ? word : word.word;
+            var label = self.labelList.findByProperty( 'label', text.ucWords() );
+            if( label ) {
+              return CnModalConfirmFactory.instance( {
+                title: 'Primary Word',
+                message: 'You have selected a primary word which is already listed above.\n' +
+                         'Do you want "' + text.ucWords() + '" to be set to Yes?'
+              } ).show().then( function( response ) {
+                if( response ) {
+                  var data = {};
+                  data[label.name] = 1;
+                  self.onPatch( data ).then( function() {
+                    self.record[label.name] = 1;
+                    self.record[label.name + '_rey_data_variant_id'] = '';
+                  } );
+                }
+              } );
+            } else {
+              // check if the word is one of the REY variants
+              var variant = self.parentModel.variantList.filter( function( obj ) {
+                return obj.language_id == self.record.language_id;
+              } ).findByProperty( 'name', text );
+              if( variant ) {
                 return CnModalConfirmFactory.instance( {
-                  title: 'Primary Word',
-                  message: 'You have selected a primary word which is already listed above.\n' +
-                           'Do you want "' + word.ucWords() + '" to be set to Yes?'
+                  title: 'Variant Word',
+                  message: 'You have selected a variant of the word "' + variant.word + '".\n' +
+                           'Do you want "' + variant.word + '" to be set to the variant "' + text + '"?'
                 } ).show().then( function( response ) {
                   if( response ) {
                     var data = {};
-                    data[label.name] = 1;
+                    data[variant.word + '_rey_data_variant_id'] = variant.value;
                     self.onPatch( data ).then( function() {
-                      self.record[label.name] = 1;
-                      self.record[label.name + '_rey_data_variant_id'] = '';
+                      self.record[variant.word + '_rey_data_variant_id'] = variant.value;
+                      self.record[variant.word] = '';
                     } );
                   }
                 } );
-              } else {
-                // check if the word is one of the REY variants
-                var variant = self.parentModel.variantList.filter( function( obj ) {
-                  return obj.language_id == self.language.id;
-                } ).findByProperty( 'name', word );
-                if( variant ) {
-                  return CnModalConfirmFactory.instance( {
-                    title: 'Variant Word',
-                    message: 'You have selected a variant of the word "' + variant.word + '".\n' +
-                             'Do you want "' + variant.word + '" to be set to the variant "' + word + '"?'
-                  } ).show().then( function( response ) {
-                    if( response ) {
-                      var data = {};
-                      data[variant.word + '_rey_data_variant_id'] = variant.value;
-                      self.onPatch( data ).then( function() {
-                        self.record[variant.word + '_rey_data_variant_id'] = variant.value;
-                        self.record[variant.word] = '';
-                      } );
-                    }
-                  } );
-                }
               }
             }
 
@@ -208,9 +220,18 @@ define( function() {
               // it's a new word, so double-check with the user before proceeding
               return CnModalNewIntrusionFactory.instance( {
                 word: word,
-                language_id: self.parentModel.testEntryModel.viewModel.record.participant_language_id
-              } ).show().then( function( response ) { 
-                if( null != response ) return sendIntrusion( { language_id: response, word: word } );
+                language_id: self.record.language_id
+              } ).show().then( function( response ) {
+                if( null != response ) {
+                  // make sure the intrusion doesn't already exist
+                  return self.intrusionList.some( function( intrusion ) {
+                    return intrusion.language_id == response && intrusion.word == word;
+                  } ) ? CnModalMessageFactory.instance( {
+                    title: 'Intrusion Already Exists',
+                    message: 'The intrusion you have submitted has already been added to this REY test and does ' +
+                             'need to be added multiple times.'
+                  } ).show() : sendIntrusion( { language_id: response, word: word } );
+                }
               } );
             } else if( self.intrusionList.findByProperty( 'id', word.id ) ) {
               return CnModalMessageFactory.instance( {
@@ -232,16 +253,7 @@ define( function() {
           },
           onView: function() {
             return $q.all( [
-              baseOnView(),
-
-              // get the test entry's language (of which there can only be one)
-              CnHttpFactory.instance( {
-                path: self.parentModel.getServiceCollectionPath().replace( 'rey_data', 'language' ),
-                data: { select: { column: [ 'id', 'name' ] } }
-              } ).query().then( function( response ) {
-                self.language = response.data[0];
-                self.updateLabelList();
-              } ),
+              baseOnView().then( self.updateLabelList ),
 
               // get the rey-data intrusions
               CnHttpFactory.instance( {
@@ -249,6 +261,7 @@ define( function() {
                 data: { select: { column: [
                   { table: 'word', column: 'word' },
                   { table: 'language', column: 'code' },
+                  'language_id',
                   'word_type'
                 ] } }
               } ).query().then( function( response ) {
@@ -257,7 +270,7 @@ define( function() {
             ] );
           },
           updateLabelList: function() {
-            if( angular.isDefined( self.language ) && 'French' == self.language.name ) {
+            if( 'fr' == self.record.language_code ) {
               self.labelList = [
                 { name: 'drum', label: 'Tambour', },
                 { name: 'curtain', label: 'Rideau', },

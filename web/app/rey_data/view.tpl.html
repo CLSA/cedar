@@ -6,7 +6,7 @@
       <select id="language_id"
               name="language_id"
               ng-options="item.value as item.name for item in model.languageList"
-              ng-model="model.viewModel.language.id"
+              ng-model="model.viewModel.record.language_id"
               ng-change="patch( 'language_id' )"
               ng-disabled="!isComplete || !editEnabled"
               class="form-control">
@@ -33,7 +33,7 @@
       <select id="{{ word.name }}_rey_data_variant_id"
               name="{{ word.name }}_rey_data_variant_id"
               ng-options="item.value as item.name for item in model.variantList |
-                            cnByObjectProperty:'language_id':model.viewModel.language.id |
+                            cnByObjectProperty:'language_id':model.viewModel.record.language_id |
                             cnByObjectProperty:'word':word.name |
                             cnAddItem:emptyItem:true"
               ng-model="model.viewModel.record[word.name+'_rey_data_variant_id']"
@@ -79,10 +79,11 @@
                       for item in getTypeaheadValues( $viewValue )"
            typeahead-editable="true"
            typeahead-min-length="2"
+           typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadIsLoading }"
            type="text"
            autocomplete="off"
-           cn-submit-word="submitNewWord()"
+           cn-submit-word="submitNewWord( false )"
            ng-disabled="!isComplete || isWorking || !editEnabled"
            autofocus></input>
   </div>

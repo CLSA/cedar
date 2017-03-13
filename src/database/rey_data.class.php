@@ -36,23 +36,21 @@ class rey_data extends base_data
   /**
    * Override parent method
    */
-  public function get_language()
-  {
-    // REY data can only have a single language despite having an N-to-N relationship
-    $language_list = $this->get_test_entry()->get_language_object_list();
-    return current( $language_list );
-  }
-
-  /**
-   * Override parent method
-   */
   public static function initialize( $db_test_entry )
   {
+    // save the language if we already have one
+    $language_id = NULL;
+    $db_rey_data = static::get_unique_record( 'test_entry_id', $db_test_entry->id );
+    if( !is_null( $db_rey_data ) ) $language_id = $db_rey_data->language_id;
+
     parent::initialize( $db_test_entry );
 
     // create a rey_data record for the test entry
     $db_rey_data = new static();
     $db_rey_data->test_entry_id = $db_test_entry->id;
+    $db_rey_data->language_id = is_null( $language_id )
+                              ? $db_test_entry->get_transcription()->get_participant()->language_id
+                              : $language_id;
     $db_rey_data->save();
   }
 

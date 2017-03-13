@@ -45,13 +45,12 @@ class post extends \cenozo\service\post
           $rey_data_variant_class_name = lib::get_class_name( 'database\rey_data_variant' );
 
           $db_rey_data = $this->get_parent_record();
-          $db_language = $db_rey_data->get_language();
           $word = $word_object->word;
           $language_id = $word_object->language_id;
 
           // see if the input is one of the REY words or variants
           $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'language_id', '=', $db_language->id );
+          $modifier->where( 'language_id', '=', $db_rey_data->language_id );
           $modifier->where( 'variant', '=', $word );
           if( $rey_data_class_name::column_exists( $word ) ||
               0 < $rey_data_variant_class_name::count( $modifier ) )
@@ -68,7 +67,14 @@ class post extends \cenozo\service\post
 
             if( !is_null( $this->db_word ) )
             {
+              // make sure the word isn't misspelled
               if( $this->db_word->misspelled ) $this->get_status()->set_code( 406 );
+
+              // make sure the word doesn't already exist
+              $modifier = lib::create( 'database\modifier' );
+              $modifier->where( 'word.id', '=', $this->db_word->id );
+              if( 0 < $this->get_parent_record()->get_word_count( $modifier ) )
+                $this->get_status()->set_code( 409 );
             }
             else
             {
@@ -104,6 +110,7 @@ class post extends \cenozo\service\post
 
     $this->set_data( util::json_encode( array (
       'id' => $this->db_word->id,
+      'language_id' => $this->db_word->language_id,
       'word' => $this->db_word->word,
       'code' => $this->db_word->get_language()->code,
       'word_type' => $db_rey_data->get_word_type( $this->db_word )
