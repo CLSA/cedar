@@ -3,7 +3,7 @@ define( function() {
 
   try { var module = cenozoApp.module( 'word', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
-    identifier: { column: 'uid' },
+    identifier: {},
     name: {
       singular: 'word',
       plural: 'words',
@@ -15,10 +15,22 @@ define( function() {
         column: 'language.name',
         title: 'Language'
       },
-      word: { title: 'Word' }
+      word: { title: 'Word' },
+      misspelled: {
+        title: 'Misspelled',
+        type: 'boolean'
+      },
+      aft_valid: {
+        title: 'AFT Valid',
+        type: 'boolean'
+      },
+      fas_valid: {
+        title: 'FAS Valid',
+        type: 'boolean'
+      }
     },
     defaultOrder: {
-      column: 'language',
+      column: 'word',
       reverse: false
     }
   } );
@@ -31,6 +43,18 @@ define( function() {
     word: {
       title: 'Word',
       type: 'string'
+    },
+    misspelled: {
+      title: 'Misspelled',
+      type: 'boolean'
+    },
+    aft_valid: {
+      title: 'AFT Valid',
+      type: 'boolean'
+    },
+    fas_valid: {
+      title: 'FAS Valid',
+      type: 'boolean'
     }
   } );
 
@@ -109,13 +133,9 @@ define( function() {
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordModelFactory', [
     'CnBaseModelFactory',
-    'CnWordAddFactory',
-    'CnWordListFactory',
-    'CnWordViewFactory',
+    'CnWordAddFactory', 'CnWordListFactory', 'CnWordViewFactory', 'CnHttpFactory',
     function( CnBaseModelFactory,
-              CnWordAddFactory,
-              CnWordListFactory,
-              CnWordViewFactory ) {
+              CnWordAddFactory, CnWordListFactory, CnWordViewFactory, CnHttpFactory ) {
       var object = function( root ) {
         var self = this;
         CnBaseModelFactory.construct( this, module );
@@ -126,24 +146,19 @@ define( function() {
         // extend getMetadata
         this.getMetadata = function() {
           return this.$$getMetadata().then( function() {
-            return $q.all( [
-              CnHttpFactory.instance( {
-                path: 'language',
-                data: {
-                  select: { column: [ 'id', 'name' ] },
-                  modifier: { where: { column: 'active', operator: '=', value: true }, order: { name: false } }
-                }
-              } ).query().then( function success( response ) {
-                self.metadata.columnList.language_id.enumList = [];
-                response.data.forEach( function( item ) {
-                  self.metadata.columnList.language_id.enumList.push( {
-                    value: item.id,
-                    name: item.name
-                  } );
-                } );
-              } )
-            ] )
-          } )
+            return CnHttpFactory.instance( {
+              path: 'language',
+              data: {
+                select: { column: [ 'id', 'name' ] },
+                modifier: { where: { column: 'active', operator: '=', value: true }, order: { name: false } }
+              }
+            } ).query().then( function success( response ) {
+              self.metadata.columnList.language_id.enumList = [];
+              response.data.forEach( function( item ) {
+                self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
+              } );
+            } );
+          } );
         };
       };
 

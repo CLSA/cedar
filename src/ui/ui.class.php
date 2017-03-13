@@ -67,6 +67,7 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Form Types' );
       $this->remove_listitem( 'Quotas' );
       $this->remove_listitem( 'Sources' );
+      $this->add_listitem( 'Dictionary', 'word' );
       $this->add_listitem( 'REY Variant', 'rey_data_variant' );
       $this->add_listitem( 'Test Types', 'test_type' );
     }
