@@ -9,10 +9,11 @@
                       for item in getTypeaheadValues( $viewValue )"
            typeahead-editable="true"
            typeahead-min-length="2"
+           typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadIsLoading }"
            type="text"
            autocomplete="off"
-           cn-submit-word="submitNewWord()"
+           cn-submit-word="submitNewWord( false )"
            ng-disabled="!isComplete || isWorking || !editEnabled"
            autofocus></input>
   </div>

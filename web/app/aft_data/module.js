@@ -20,19 +20,28 @@ define( function() {
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
-            submitNewWord: function() {
+            preventSelectedNewWord: false,
+            submitNewWord: function( selected ) {
               // string if it's a new word, integer if it's an existing intrusion
-              if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) { 
+              if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) {
+                // prevent double-entry from enter key and typeahead selection
+                if( selected ) {
+                  if( $scope.preventSelectedNewWord ) return;
+                } else $scope.preventSelectedNewWord = true;
+
                 $scope.isWorking = true;
                 var word = $scope.newWord;
-                $scope.newWord = ''; 
+                $scope.newWord = '';
                 $scope.model.viewModel.submitIntrusion( word ).finally( function() {
                   $scope.isWorking = false;
-                  $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
+                  $timeout( function() {
+                    if( !selected ) $scope.preventSelectedNewWord = false;
+                    document.getElementById( 'newWord' ).focus();
+                  }, 20 );
                 } );
               }
             },
-            deleteWord: function( word ) { 
+            deleteWord: function( word ) {
               $scope.isWorking = false;
               $scope.model.viewModel.deleteIntrusion( word ).finally( function() { $scope.isWorking = false; } );
             },
@@ -78,7 +87,7 @@ define( function() {
           submitIntrusion: function( word ) {
             // private method used below
             function sendIntrusion( input ) {
-              var data = angular.isDefined( input.word ) ? input : { word_id: input.id };
+              var data = angular.isDefined( input.id ) ? { word_id: input.id } : input;
 
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath(),
