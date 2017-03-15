@@ -130,7 +130,7 @@
                 id="participant_status"
                 class="form-control"
                 ng-model="model.viewModel.record.participant_status"
-                ng-options="item.value as item.name for item in participantStatusList"
+                ng-options="item.value as item.name for item in getParticipantStatusList()"
                 ng-change="model.viewModel.patchStatus( 'participant' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>

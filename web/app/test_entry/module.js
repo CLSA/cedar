@@ -132,6 +132,21 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                   if( response ) $scope.model.viewModel.reset().then( function() { $scope.refresh(); } );
                 } );
               }
+            },
+            getParticipantStatusList: function() {
+              return $scope.participantStatusList.filter( function( status ) {
+                if( '' == status.value || 'refused' == status.value ) return true;
+
+                if( 'rey' == $scope.model.viewModel.record.data_type ) {
+                  return 'prompt middle' == status.value || 'prompt end' == status.value;
+                } else if( 'aft' == $scope.model.viewModel.record.data_type ) {
+                  return 'suspected prompt' == status.value || 'prompted' == status.value;
+                } else if( 'premat' == $scope.model.viewModel.record.data_type ) {
+                  return false;
+                } else {
+                  return 'prompted' == status.value;
+                }
+              } );
             }
           } );
         },
@@ -145,7 +160,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             if( !audioStatus.required ) scope.audioStatusList.unshift( { value: '', name: '(empty)' } );
             var participantStatus = scope.model.metadata.columnList.participant_status;
             scope.participantStatusList = angular.copy( participantStatus.enumList );
-            if( !participantStatus.required ) scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
+            if( !participantStatus.required )
+              scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
           } );
         }
       };
