@@ -1,3 +1,6 @@
+Test-entry design
+=================
+
 order of tests:
   FAS F words
   FAS A words
@@ -47,3 +50,55 @@ MAT
   non-letter-or-numbers are not recorded (ignored)
   duplicate words are to be recorded
   0 to n entries, current max of 53
+
+
+Word-has-word design
+====================
+
+INTERFACE
+
+if null == misspelled || true == misspelled
+  don't show aft/fas valid
+else
+  aft/fas valid shown and can be freely changed
+  if aft_valid
+    show animal word list
+  if fas_valid
+    show homophone word list
+    show sister word list
+fi
+
+DATABASE
+
+word 1-to-N homophone words
+  set in stone
+  language dependent?
+  "master" word may have multiple homophones
+  homophones only ever have one "master" word
+
+word 1-to-N sister words
+  language independent
+  "master" word may have multiple sister words
+  sister words only ever have one "master" word
+
+animal group 1-to-N word
+  language independent
+  word may belong to one "animal group" only
+  animal groups may have multiple words
+
+if misspelled is changed to true
+  set aft/fas valid to false
+  delete all animal word list entries
+  delete all homophone word list entries
+  delete all sister word list entries
+fi
+
+if aft_valid is changed to false
+  delete all animal word list entries
+fi
+
+if fas_valid is changed to false
+  delete all homophone word list entries
+  delete all sister word list entries
+fi
+

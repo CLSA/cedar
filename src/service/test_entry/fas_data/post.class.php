@@ -66,7 +66,7 @@ class post extends \cenozo\service\post
       'id' => $record->id,
       'word' => $db_word->word,
       'code' => $db_word->get_language()->code,
-      'word_type' => $record->get_word_type()
+      'word_type' => is_null( $db_word->fas ) ? 'variant' : $db_word->fas
     ) ) );
   }
 }

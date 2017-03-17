@@ -14,10 +14,10 @@ DROP PROCEDURE IF EXISTS patch_test_type_has_cohort;
 
     SET @sql = CONCAT(
       "CREATE TABLE IF NOT EXISTS test_type_has_cohort ( ",
-        "update_timestamp TIMESTAMP NOT NULL, ",
-        "create_timestamp TIMESTAMP NOT NULL, ",
         "cohort_id INT UNSIGNED NOT NULL, ",
         "test_type_id INT UNSIGNED NOT NULL, ",
+        "update_timestamp TIMESTAMP NOT NULL, ",
+        "create_timestamp TIMESTAMP NOT NULL, ",
         "PRIMARY KEY (cohort_id, test_type_id), ",
         "INDEX fk_test_type_has_cohort_cohort_id (cohort_id ASC), ",
         "INDEX fk_test_type_has_cohort_test_type_id (test_type_id ASC), ",

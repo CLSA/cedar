@@ -20,12 +20,12 @@ define( function() {
         title: 'Misspelled',
         type: 'boolean'
       },
-      aft_valid: {
-        title: 'AFT Valid',
+      aft: {
+        title: 'AFT Type',
         type: 'boolean'
       },
-      fas_valid: {
-        title: 'FAS Valid',
+      fas: {
+        title: 'FAS Type',
         type: 'boolean'
       }
     },
@@ -48,12 +48,12 @@ define( function() {
       title: 'Misspelled',
       type: 'boolean'
     },
-    aft_valid: {
-      title: 'AFT Valid',
+    aft: {
+      title: 'AFT Type',
       type: 'boolean'
     },
-    fas_valid: {
-      title: 'FAS Valid',
+    fas: {
+      title: 'FAS Type',
       type: 'boolean'
     }
   } );

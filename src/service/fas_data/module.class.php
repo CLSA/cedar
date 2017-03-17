@@ -27,20 +27,7 @@ class module extends \cedar\service\base_data_module
     if( $select->has_column( 'word_type' ) )
     {
       $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
-
-      $select->add_column(
-        'IF('."\n".
-          'word.fas_valid IS NULL,'."\n".
-          '"variant",'."\n".
-          'IF('."\n".
-            'word.fas_valid AND SUBSTRING( word, 1, 1 ) = SUBSTRING( test_type.name, 1, 1 ),'."\n".
-            '"primary",'."\n".
-            '"intrusion" '."\n".
-          ')'."\n".
-        ')',
-        'word_type',
-        false
-      );
+      $select->add_column( 'IFNULL( word.fas, "variant" )', 'word_type', false );
     }
   }
 }

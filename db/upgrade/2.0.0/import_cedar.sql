@@ -162,91 +162,128 @@ CREATE PROCEDURE import_cedar()
 
     SELECT "Importing primary words from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 1, NULL ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name = 'Animal_Name_Primary'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 'primary', NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'Animal_Name_Primary';
 
-    SET @sql = CONCAT(
-      "INSERT INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 1 ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name LIKE '_\_Words\_Primary' ",
-      "ON DUPLICATE KEY UPDATE fas_valid = 1" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
-
-    SELECT "Importing misspelled words from v1" AS "";
-
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 1, 0, 0 ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name LIKE '%Mispelled'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 'primary'
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name LIKE '_\_Words\_Primary'
+    ON DUPLICATE KEY UPDATE fas = 'primary';
 
     SELECT "Importing intrusion words from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 0, NULL ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name = 'Animal_Name_Intrusion' ",
-      "ON DUPLICATE KEY UPDATE aft_valid = 0" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, 'intrusion', NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'Animal_Name_Intrusion'
+    ON DUPLICATE KEY UPDATE aft = 'intrusion';
 
-    SET @sql = CONCAT(
-      "INSERT INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 0 ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name LIKE '_\_Words\_Intrusion' ",
-      "ON DUPLICATE KEY UPDATE fas_valid = IF( fas_valid IS NULL, 0, fas_valid )" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 'intrusion'
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'A_Words_Intrusion'
+    AND SUBSTRING( word, 1, 1 ) = 'a'
+    ON DUPLICATE KEY UPDATE fas = 'intrusion';
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, NULL ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name = 'REY_Intrusion'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 'intrusion'
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'F_Words_Intrusion'
+    AND SUBSTRING( word, 1, 1 ) = 'f'
+    ON DUPLICATE KEY UPDATE fas = 'intrusion';
+
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, 'intrusion'
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'S_Words_Intrusion'
+    AND SUBSTRING( word, 1, 1 ) = 's'
+    ON DUPLICATE KEY UPDATE fas = 'intrusion';
+
+    INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'REY_Intrusion';
 
     SELECT "Importing variant words from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO word( ",
-        "update_timestamp, create_timestamp, language_id, word, misspelled, aft_valid, fas_valid ) ",
-      "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL ",
-      "FROM ", @v1_cedar, ".word AS v1_word ",
-      "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
-      "WHERE v1_dictionary.name LIKE '%Variant'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'Animal_Name_Variant';
+
+    INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name LIKE '_\_Words\_Variant';
+
+    INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'REY_Variant';
+
+    SELECT "Importing misspelled words from v1" AS "";
+
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, "invalid", "invalid"
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'Animal_Name_Mispelled'
+    ON DUPLICATE KEY UPDATE misspelled =
+      IF( fas IS NULL, true, misspelled ),
+      aft = "invalid",
+      fas = IFNULL( fas, "invalid" );
+
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, "invalid", "invalid"
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'A_Words_Mispelled'
+    AND SUBSTRING( word, 1, 1 ) = 'a'
+    ON DUPLICATE KEY UPDATE misspelled =
+      IF( aft IS NULL, true, misspelled ),
+      aft = IFNULL( aft, "invalid" ),
+      fas = "invalid";
+
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, "invalid", "invalid"
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'F_Words_Mispelled'
+    AND SUBSTRING( word, 1, 1 ) = 'f'
+    ON DUPLICATE KEY UPDATE misspelled =
+      IF( aft IS NULL, true, misspelled ),
+      aft = IFNULL( aft, "invalid" ),
+      fas = "invalid";
+
+    INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, "invalid", "invalid"
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'S_Words_Mispelled'
+    AND SUBSTRING( word, 1, 1 ) = 's'
+    ON DUPLICATE KEY UPDATE misspelled =
+      IF( aft IS NULL, true, misspelled ),
+      aft = IFNULL( aft, "invalid" ),
+      fas = "invalid";
+
+    INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas )
+    SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, "invalid", "invalid"
+    FROM v1_patrick_cedar_f1.word AS v1_word
+    JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
+    WHERE v1_dictionary.name = 'REY_Mispelled';
 
   END //
 DELIMITER ;

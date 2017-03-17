@@ -1,0 +1,55 @@
+1) importing primary words
+  1.1) import all words in the "Animal_Name_Primary" dictionary and mark them as:
+       misspelled=no; aft=primary; fas=variant
+  1.2) import all words in the "*_Words_Primary" dictionaries and mark them as:
+       misspelled=no; aft=variant; fas=primary
+    1.2a) if the word already exists then set:
+          fas=primary (leaving misspelled and aft as-is)
+
+2) importing intrusion words
+  2.1) import all words in the "Animal_Name_Intrusion" dictionary and mark them as:
+       misspelled=no; aft=intrusion; fas=variant
+    2.1a) if the word already exists then set:
+          aft=intrusion (leaving misspelled and fas as-is)
+  2.2) import all words in the "A_Words_Intrusion" dictionary that start with the letter "a" and mark them as:
+       misspelled=no; aft=variant; fas=intrusion
+    2.2a) if the word already exists then set:
+          fas=intrusion (leaving misspelled and aft as-is)
+  2.3) import all words in the "F_Words_Intrusion" dictionary that start with the letter "f" and mark them as:
+       misspelled=no; aft=variant; fas=intrusion
+    2.3a) if the word already exists then set:
+          fas=intrusion (leaving misspelled and aft as-is)
+  2.4) import all words in the "S_Words_Intrusion" dictionary that start with the letter "s" and mark them as:
+       misspelled=no; aft=variant; fas=intrusion
+    2.4a) if the word already exists then set:
+          fas=intrusion (leaving misspelled and aft as-is)
+  2.5) import all words in the "REY_Intrusion" dictionary, ignoring any words that already exist, and mark them as:
+       misspelled=no; aft=variant; fas=variant
+
+3) importing variants
+  3.1) import all words in the "Animal_Name_Variant" dictionary, ignoring any words that already exist, and mark them as:
+       misspelled=unknown; aft=variant; fas=variant
+  3.2) import all words in the "*_Words_Variant" dictionary, ignoring any words that already exist, and mark them as:
+       misspelled=unknown; aft=variant; fas=variant
+  3.3) import all words in the "REY_Variant" dictionary, ignoring any words that already exist, and mark them as:
+       misspelled=unknown; aft=variant; fas=variant
+
+4) importing misspelled words
+  4.1) import all words in the "Animal_Name_Misspelled" dictionary and mark them as:
+       misspelled=yes; aft=invalid; fas=invalid
+    4.1a) if the word already exists then set:
+          misspelled=yes (if fas=variant); aft=invalid; fas=invalid (if fas=variant)
+  4.2) import all words in the "A_Words_Misspelled" dictionary that start with the letter "a" and mark them as:
+       misspelled=yes; aft=invalid; fas=invalid
+    4.2a) if the word already exists then set:
+          misspelled=yes (if aft=variant); aft=invalid (if aft=variant); fas=invalid
+  4.3) import all words in the "F_Words_Misspelled" dictionary that start with the letter "f" and mark them as:
+       misspelled=yes; aft=invalid; fas=invalid
+    4.3a) if the word already exists then set:
+          misspelled=yes (if aft=variant); aft=invalid (if aft=variant); fas=invalid
+  4.4) import all words in the "S_Words_Misspelled" dictionary that start with the letter "s" and mark them as:
+       misspelled=yes; aft=invalid; fas=invalid
+    4.4a) if the word already exists then set:
+          misspelled=yes (if aft=variant); aft=invalid (if aft=variant); fas=invalid
+  4.5) import all words in the "REY_Misspelled" dictionary, ignoring any words that already exist, and mark them as:
+       misspelled=yes; aft=invalid; fas=invalid

@@ -53,16 +53,4 @@ class rey_data extends base_data
                               : $language_id;
     $db_rey_data->save();
   }
-
-  /**
-   * Returns the type of entry a word is characterized by
-   * @author Patrick Emond <emondpd@mcmaster.ca>
-   * @param database\word $db_word
-   * @return string (primary, variant or intrusion)
-   * @access public
-   */
-  public function get_word_type( $db_word )
-  {
-    return is_null( $db_word->misspelled ) ? 'variant' : 'intrusion';
-  }
 }

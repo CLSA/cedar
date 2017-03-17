@@ -1,10 +1,10 @@
 SELECT "Create new rey_data_has_word table" AS "";
 
 CREATE TABLE IF NOT EXISTS rey_data_has_word (
-  update_timestamp TIMESTAMP NOT NULL,
-  create_timestamp TIMESTAMP NOT NULL,
   rey_data_id INT UNSIGNED NOT NULL,
   word_id INT UNSIGNED NOT NULL,
+  update_timestamp TIMESTAMP NOT NULL,
+  create_timestamp TIMESTAMP NOT NULL,
   PRIMARY KEY (rey_data_id, word_id),
   INDEX fk_word_id (word_id ASC),
   INDEX fk_rey_data_id (rey_data_id ASC),
@@ -36,8 +36,8 @@ BEGIN
   IF @test = 0 THEN
     DELETE FROM word WHERE id = OLD.word_id
     AND misspelled IS NULL
-    AND aft_valid IS NULL
-    AND fas_valid IS NULL;
+    AND aft IS NULL
+    AND fas IS NULL;
   END IF;
 END;$$
 

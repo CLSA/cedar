@@ -18,13 +18,15 @@ DROP PROCEDURE IF EXISTS patch_word;
         "update_timestamp TIMESTAMP NOT NULL, ",
         "create_timestamp TIMESTAMP NOT NULL, ",
         "language_id INT UNSIGNED NOT NULL, ",
-        "word VARCHAR(45) NOT NULL, ",
+        "word VARCHAR(65) CHARACTER SET 'utf8' NOT NULL, ",
+        "sister_word_id INT UNSIGNED NULL DEFAULT NULL, ",
         "misspelled TINYINT(1) NULL DEFAULT NULL, ",
-        "aft_valid TINYINT(1) NULL DEFAULT NULL, ",
-        "fas_valid TINYINT(1) NULL DEFAULT NULL, ",
+        "aft ENUM('invalid','intrusion','primary') NULL DEFAULT NULL, ",
+        "fas ENUM('invalid','intrusion','primary') NULL DEFAULT NULL, ",
         "PRIMARY KEY (id), ",
-        "INDEX fk_word_language_id (language_id ASC), ",
+        "INDEX fk_language_id (language_id ASC), ",
         "UNIQUE INDEX uq_language_id_word (language_id ASC, word ASC), ",
+        "INDEX fk_sister_word_id (sister_word_id ASC), ",
         "CONSTRAINT fk_word_language_id ",
           "FOREIGN KEY (language_id) ",
           "REFERENCES ", @cenozo, ".language (id) ",
@@ -34,6 +36,21 @@ DROP PROCEDURE IF EXISTS patch_word;
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
+
+    SET @test = (
+      SELECT COUNT(*)
+      FROM information_schema.REFERENTIAL_CONSTRAINTS
+      WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = "word"
+      AND CONSTRAINT_NAME = "fk_word_sister_word_id" );
+    IF @test = 0 THEN
+      ALTER TABLE word
+      ADD CONSTRAINT fk_word_sister_word_id
+        FOREIGN KEY (sister_word_id)
+        REFERENCES word (id)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION;
+    END IF;
 
   END //
 DELIMITER ;

@@ -38,8 +38,8 @@ BEGIN
   IF @test = 0 THEN
     DELETE FROM word WHERE id = OLD.word_id
     AND misspelled IS NULL
-    AND aft_valid IS NULL
-    AND fas_valid IS NULL;
+    AND aft IS NULL
+    AND fas IS NULL;
   END IF;
 END;$$
 

@@ -9,6 +9,8 @@ SOURCE setting.sql
 SOURCE writelog.sql
 
 SOURCE word.sql
+SOURCE word_has_word.sql
+SOURCE homophone.sql
 SOURCE transcription.sql
 SOURCE transcription_has_language.sql
 SOURCE test_type.sql

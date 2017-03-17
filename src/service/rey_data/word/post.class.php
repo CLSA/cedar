@@ -113,7 +113,8 @@ class post extends \cenozo\service\post
       'language_id' => $this->db_word->language_id,
       'word' => $this->db_word->word,
       'code' => $this->db_word->get_language()->code,
-      'word_type' => $db_rey_data->get_word_type( $this->db_word )
+      'word_type' => is_null( $this->db_word->misspelled ) ? 'variant' : (
+        $this->db_word->misspelled ? 'misspelled' : 'intrusion' )
     ) ) );
   }
 
