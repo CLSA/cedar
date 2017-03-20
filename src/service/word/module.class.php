@@ -35,7 +35,6 @@ class module extends \cenozo\service\module
 
     if( !is_null( $this->get_resource() ) )
     {
-      log::debug( 'rawr' );
       // include the animal word language/word as supplemental data
       $select->add_column(
         'CONCAT( animal_word.word, " [", animal_language.code, "]" )',
