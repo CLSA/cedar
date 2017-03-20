@@ -18,7 +18,7 @@ DROP PROCEDURE IF EXISTS patch_word;
         "update_timestamp TIMESTAMP NOT NULL, ",
         "create_timestamp TIMESTAMP NOT NULL, ",
         "language_id INT UNSIGNED NOT NULL, ",
-        "word VARCHAR(65) CHARACTER SET 'utf8' NOT NULL, ",
+        "word VARCHAR(65) COLLATE 'utf8_bin' NOT NULL, ",
         "animal_word_id INT UNSIGNED NULL DEFAULT NULL, ",
         "sister_word_id INT UNSIGNED NULL DEFAULT NULL, ",
         "misspelled TINYINT(1) NULL DEFAULT NULL, ",
