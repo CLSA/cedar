@@ -12,4 +12,4 @@ use cenozo\lib, cenozo\log, cedar\util;
 /**
  * word: record
  */
-class word extends \cenozo\database\record { }
+class word extends \cenozo\database\record {}
