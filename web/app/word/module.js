@@ -15,22 +15,36 @@ define( function() {
         column: 'language.name',
         title: 'Language'
       },
-      word: { title: 'Word' },
+      word: {
+        column: 'word.word',
+        title: 'Word'
+      },
+      animal_word: {
+        column: 'animal_word.word',
+        title: 'Parent Animal'
+      },
+      sister_word: {
+        column: 'sister_word.word',
+        title: 'Parent Sister'
+      },
       misspelled: {
+        column: 'word.misspelled',
         title: 'Misspelled',
         type: 'boolean'
       },
       aft: {
+        column: 'word.aft',
         title: 'AFT Type',
         type: 'boolean'
       },
       fas: {
+        column: 'word.fas',
         title: 'FAS Type',
         type: 'boolean'
       }
     },
     defaultOrder: {
-      column: 'word',
+      column: 'word.word',
       reverse: false
     }
   } );
@@ -43,6 +57,24 @@ define( function() {
     word: {
       title: 'Word',
       type: 'string'
+    },
+    animal_word_id: {
+      title: 'Parent Animal Word',
+      type: 'lookup-typeahead',
+      typeahead: {
+        table: 'word',
+        select: 'CONCAT( word.word, " [", language.code, "]" )',
+        where: 'word.word'
+      }
+    },
+    sister_word_id: {
+      title: 'Parent Sister Word',
+      type: 'lookup-typeahead',
+      typeahead: {
+        table: 'word',
+        select: 'CONCAT( word.word, " [", language.code, "]" )',
+        where: 'word.word'
+      }
     },
     misspelled: {
       title: 'Misspelled',
@@ -157,7 +189,7 @@ define( function() {
               response.data.forEach( function( item ) {
                 self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
               } );
-            } );
+            } )
           } );
         };
       };
