@@ -6,8 +6,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnFasDataView', [
-    'CnFasDataModelFactory', 'CnHttpFactory',
-    function( CnFasDataModelFactory, CnHttpFactory ) {
+    'CnFasDataModelFactory', 'CnHttpFactory', 'CnModalConfirmFactory', '$timeout',
+    function( CnFasDataModelFactory, CnHttpFactory, CnModalConfirmFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -19,8 +19,18 @@ define( function() {
           $scope.typeaheadIsLoading = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
+          function postSubmit( selected ) {
+            if( !selected ) $scope.preventSelectedNewWord = false;
+            document.getElementById( 'newWord' ).focus();
+          }
+
           angular.extend( $scope, {
+            cursor: null,
             preventSelectedNewWord: false,
+            toggleCursor: function( rank ) {
+              $scope.cursor = rank == $scope.cursor ? null : rank;
+              postSubmit( false );
+            },
             submitNewWord: function( selected ) {
               // string if it's a new word, integer if it's an existing intrusion
               if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) {
@@ -28,22 +38,41 @@ define( function() {
                 if( selected ) {
                   if( $scope.preventSelectedNewWord ) return;
                 } else $scope.preventSelectedNewWord = true;
-
-                $scope.isWorking = true;
-                var word = $scope.newWord;
-                $scope.newWord = '';
-                $scope.model.viewModel.submitIntrusion( word ).finally( function() {
-                  $scope.isWorking = false;
-                  $timeout( function() {
-                    if( !selected ) $scope.preventSelectedNewWord = false;
-                    document.getElementById( 'newWord' ).focus();
-                  }, 20 );
-                } );
+                $scope.submitWord( $scope.newWord, selected );
               }
             },
-            deleteWord: function( word ) {
-              $scope.isWorking = false;
-              $scope.model.viewModel.deleteIntrusion( word ).finally( function() { $scope.isWorking = false; } );
+            submitWord: function( word, selected ) {
+              if( angular.isUndefined( selected ) ) selected = false;
+              if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
+              $scope.isWorking = true;
+              $scope.newWord = '';
+              $scope.model.viewModel.submitIntrusion( word, $scope.cursor ).finally( function() {
+                $scope.isWorking = false;
+                $timeout( function() { postSubmit( selected ) }, 20 );
+              } );
+            },
+            removeWord: function( word ) {
+              CnModalConfirmFactory.instance( {
+                title: 'Remove ' + ( 'placeholder' == word.word_type ? 'placeholder' : '"' + word.word + '"' ) ,
+                message: 'Are you sure you want to remove ' +
+                         ( 'placeholder' == word.word_type ? 'the placeholder' : '"' + word.word + '"' ) +
+                         ' from the word list?'
+              } ).show().then( function( response ) {
+                if( response ) {
+                  $scope.isWorking = false;
+                  $scope.model.viewModel.deleteIntrusion( word ).finally( function() {
+                    // we may have to change the cursor if it is no longer valid
+                    if( null != $scope.cursor ) {
+                      var len = $scope.model.viewModel.record.length;
+                      if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor )
+                        $scope.cursor = null;
+                    }
+
+                    $scope.isWorking = false;
+                    postSubmit( false );
+                  } );
+                }
+              } );
             },
             getTypeaheadValues: function( viewValue ) {
               $scope.typeaheadIsLoading = true;
@@ -84,10 +113,11 @@ define( function() {
         CnBaseDataViewFactory.construct( this, parentModel, root );
 
         angular.extend( this, {
-          submitIntrusion: function( word ) {
+          submitIntrusion: function( word, rank ) {
             // private method used below
-            function sendIntrusion( input ) {
+            function sendIntrusion( input, rank ) {
               var data = angular.isDefined( input.id ) ? { word_id: input.id } : input;
+              if( null != rank ) data.rank = rank;
 
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath(),
@@ -102,7 +132,19 @@ define( function() {
                   } else CnModalMessageFactory.httpError( response );
                 }
               } ).post().then( function( response ) {
-                self.record.push( response.data );
+                if( null != rank ) {
+                  var index = self.record.findIndexByProperty( 'rank', rank );
+                  if( null != index ) {
+                    self.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                    self.record.splice( index, 0, response.data );
+                  } else {
+                    console.warning(
+                      'Tried inserting word at rank "' + rank + '", which was not found in the list'
+                    );
+                  }
+                } else {
+                  self.record.push( response.data );
+                }
               } );
             }
 
@@ -116,16 +158,21 @@ define( function() {
                 language_id: self.parentModel.testEntryModel.viewModel.record.participant_language_id,
                 languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
               } ).show().then( function( response ) {
-                if( null != response ) return sendIntrusion( { language_id: response, word: word } );
+                if( null != response ) return sendIntrusion( { language_id: response, word: word }, rank );
               } );
-            } else return sendIntrusion( word ); // it's not a new word so send it immediately
+            } else return sendIntrusion( word, rank ); // it's not a new word so send it immediately
           },
           deleteIntrusion: function( wordRecord ) {
             return CnHttpFactory.instance( {
               path: this.parentModel.getServiceResourcePath() + '/' + wordRecord.id
             } ).delete().then( function() {
               var index = self.record.findIndexByProperty( 'id', wordRecord.id );
-              if( null != index ) self.record.splice( index, 1 );
+              if( null != index ) {
+                self.record.splice( index, 1 );
+                self.record.forEach( function( word ) { if( word.rank > wordRecord.rank ) word.rank--; } );
+              } else {
+                console.warning( 'Tried removing word which was not found in the list' );
+              }
             } );
           }
         } );
@@ -152,6 +199,7 @@ define( function() {
               limit: 10000 // do not limit the number of records returned
             } );
             data.select = { column: [
+              'rank',
               { table: 'word', column: 'word' },
               { table: 'language', column: 'code' },
               'word_type'

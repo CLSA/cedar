@@ -15,7 +15,7 @@ REY (1 & 2 identical)
   table: test_entry_ranked_word
   defined set of 15 words which are either yes/no/variant_word_id
   variants from a list of approved words, if not in that list then it's an intrusion instead (and word gets marked as no)
-  may also have 0 to n intrusion_word_id (unordered, but may want it to be ordered)
+  may also have 0 to n intrusion_word_id (unordered)
   alg for scoring: rank doesn't matter
 
   - make variant dict for each word in the test instead of one dictionary for the whole test

@@ -285,6 +285,8 @@ CREATE PROCEDURE import_cedar()
     JOIN v1_patrick_cedar_f1.dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id
     WHERE v1_dictionary.name = 'REY_Mispelled';
 
+    DELETE FROM word WHERE word IN( '-', '--' );
+
   END //
 DELIMITER ;
 

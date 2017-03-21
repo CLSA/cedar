@@ -21,13 +21,14 @@ class module extends \cedar\service\base_data_module
   {
     parent::prepare_read( $select, $modifier );
 
-    $modifier->join( 'word', 'aft_data.word_id', 'word.id' );
-    $modifier->join( 'language', 'word.language_id', 'language.id' );
+    $modifier->left_join( 'word', 'aft_data.word_id', 'word.id' );
+    $modifier->left_join( 'language', 'word.language_id', 'language.id' );
 
     if( $select->has_column( 'word_type' ) )
     {
       $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
-      $select->add_column( 'IFNULL( word.aft, "variant" )', 'word_type', false );
+      $select->add_column(
+        'IF( aft_data.word_id IS NULL, "placeholder", IFNULL( word.aft, "variant" ) )', 'word_type', false );
     }
   }
 }

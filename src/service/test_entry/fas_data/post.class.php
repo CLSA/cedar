@@ -64,9 +64,12 @@ class post extends \cenozo\service\post
     $db_word = $record->get_word();
     $this->set_data( util::json_encode( array (
       'id' => $record->id,
-      'word' => $db_word->word,
-      'code' => $db_word->get_language()->code,
-      'word_type' => is_null( $db_word->fas ) ? 'variant' : $db_word->fas
+      'rank' => $record->rank,
+      'word' => is_null( $db_word ) ? NULL : $db_word->word,
+      'code' => is_null( $db_word ) ? NULL : $db_word->get_language()->code,
+      'word_type' => is_null( $db_word ) ?
+        'placeholder' :
+        ( is_null( $db_word->fas ) ? 'variant' : $db_word->fas )
     ) ) );
   }
 }

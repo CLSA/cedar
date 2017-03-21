@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS fas_data (
   create_timestamp TIMESTAMP NOT NULL,
   test_entry_id INT UNSIGNED NOT NULL,
   rank INT UNSIGNED NOT NULL,
-  word_id INT UNSIGNED NOT NULL,
+  word_id INT UNSIGNED NULL,
   PRIMARY KEY (id),
   INDEX fk_test_entry_id (test_entry_id ASC),
   UNIQUE INDEX uq_test_entry_id_rank (test_entry_id ASC, rank ASC),
