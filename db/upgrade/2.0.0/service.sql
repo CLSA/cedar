@@ -160,6 +160,8 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'filename_format', 'GET', 0, 1 ),
 ( 'filename_format', 'GET', 1, 1 ),
 ( 'filename_format', 'POST', 0, 1 ),
+( 'homophone', 'GET', 0, 1 ),
+( 'homophone', 'GET', 1, 1 ),
 ( 'mat_data', 'DELETE', 1, 1 ),
 ( 'mat_data', 'GET', 0, 0 ),
 ( 'mat_data', 'GET', 1, 0 ),
