@@ -17,6 +17,23 @@ class patch extends \cenozo\service\patch
   /**
    * Extends parent method
    */
+  protected function setup()
+  {
+    try
+    {
+      parent::setup();
+    }
+    catch( \cenozo\exception\runtime $e )
+    {
+      if( RUNTIME__CEDAR_DATABASE_TEST_ENTRY____SET__ERRNO == $e->get_number() )
+        $this->status->set_code( 409 );
+      else throw $e;
+    }
+  }
+
+  /**
+   * Extends parent method
+   */
   protected function finish()
   {
     parent::finish();

@@ -201,12 +201,21 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             self.isWorking = true;
             return CnHttpFactory.instance( {
               path: self.parentModel.getServiceResourcePath(),
-              data: { state: state }
+              data: { state: state },
+              onError: function( response ) {
+                if( 409 == response.status ) {
+                  return CnModalMessageFactory.instance( {
+                    title: 'Cannot Submit',
+                    message: 'aft' == self.record.data_type || 'fas' == self.record.data_type
+                           ? 'The test-entry cannot be submitted if it contains placeholders.'
+                           : 'The test-entry cannot be submitted while there is missing data.'
+                  } ).show();
+                } else CnModalMessageFactory.httpError( response );
+              }
             } ).patch().then( function() {
               self.record.state = state;
-              self.isWorking = false;
               if( 'assigned' != state && self.parentModel.isTypist ) return self.transition( 'next' );
-            } );
+            } ).finally( function() { self.isWorking = false; } );
           }
 
           var checkNote = false;

@@ -25,6 +25,52 @@ class test_entry extends \cenozo\database\record
   }
 
   /**
+   * Override parent method
+   */
+  public function __set( $column_name, $value )
+  {
+    // check that the test entry's data is valid before submitting
+    if( 'state' == $column_name && 'submitted' == $value )
+    {
+      $allowed = true;
+      $data_type = $this->get_test_type()->data_type;
+      if( 'aft' == $data_type )
+      {
+        // make sure there are no placeholders
+        $modifier = lib::create( 'database\modifier' );
+        $modifier->where( 'word_id', '=', NULL );
+        if( 0 < $this->get_aft_data_count( $modifier ) ) $allowed = false;
+      }
+      else if( 'fas' == $data_type )
+      {
+        // make sure there are no placeholders
+        $modifier = lib::create( 'database\modifier' );
+        $modifier->where( 'word_id', '=', NULL );
+        if( 0 < $this->get_fas_data_count( $modifier ) ) $allowed = false;
+      }
+      else if( 'premat' == $data_type )
+      {
+        if( is_null( $this->audio_status ) && is_null( $this->participant_status ) )
+        {
+          $premat_data_class_name = lib::get_class_name( 'database\premat_data' );
+          $db_premat_data = $premat_data_class_name::get_unique_record( 'test_entry_id', $this->id );
+          if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
+        }
+      }
+
+      if( !$allowed )
+      {
+        throw lib::create( 'exception\runtime',
+          'Tried to change test-entry\'s state to submitted while data is not currently in a submittable state.',
+          __METHOD__
+        );
+      }
+    }
+
+    parent::__set( $column_name, $value );
+  }
+
+  /**
    * Resets the test-entry by initializing the data associated with it (deleting any existing data)
    * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
