@@ -9,7 +9,7 @@ define( function() {
     'CnFasDataModelFactory', 'CnHttpFactory', 'CnModalConfirmFactory', '$timeout',
     function( CnFasDataModelFactory, CnHttpFactory, CnModalConfirmFactory, $timeout ) {
       return {
-        templateUrl: cenozoApp.getFileUrl( 'cedar', 'view_rank_data.tpl.html' ),
+        templateUrl: cenozoApp.getFileUrl( 'cedar', 'view-rank-data.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?', editEnabled: '=' },
         controller: function( $scope ) {
