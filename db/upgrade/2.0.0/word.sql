@@ -70,3 +70,24 @@ DELIMITER ;
 -- now call the procedure and remove the procedure
 CALL patch_word();
 DROP PROCEDURE IF EXISTS patch_word;
+
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS word_BEFORE_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER word_BEFORE_UPDATE BEFORE UPDATE ON word FOR EACH ROW
+BEGIN
+  -- set aft and fas tests to invalid if the word is being changed to misspelled
+  IF NEW.misspelled = true AND NEW.misspelled <> OLD.misspelled THEN
+    SET NEW.aft = "invalid";
+    SET NEW.fas = "invalid";
+  END IF;
+
+  -- set misspelled to false if aft or fas is being set to intrusion or primary
+  IF ( NEW.aft IN ( "intrusion", "primary" ) AND NEW.aft <> OLD.aft ) OR
+     ( NEW.fas IN ( "intrusion", "primary" ) AND NEW.fas <> OLD.fas ) THEN
+    SET NEW.misspelled = false;
+  END IF;
+END$$
+
+DELIMITER ;

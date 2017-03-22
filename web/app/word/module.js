@@ -34,13 +34,11 @@ define( function() {
       },
       aft: {
         column: 'word.aft',
-        title: 'AFT Type',
-        type: 'boolean'
+        title: 'AFT Type'
       },
       fas: {
         column: 'word.fas',
-        title: 'FAS Type',
-        type: 'boolean'
+        title: 'FAS Type'
       }
     },
     defaultOrder: {
@@ -85,13 +83,22 @@ define( function() {
     },
     aft: {
       title: 'AFT Type',
-      type: 'boolean'
+      type: 'enum'
     },
     fas: {
       title: 'FAS Type',
-      type: 'boolean'
+      type: 'enum'
     }
   } );
+
+  /*
+  module.addExtraOperation( 'view', {
+    title: 'Misspelled',
+    operation: function( $state, model ) {
+    },
+    isIncluded: function( $state, model ) { return model.getEditEnabled(); }
+  } );
+  */
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnWordAdd', [
@@ -158,9 +165,50 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
-    'CnBaseViewFactory',
-    function( CnBaseViewFactory ) {
-      var object = function( parentModel, root ) { CnBaseViewFactory.construct( this, parentModel, root ); }
+    'CnBaseViewFactory', 'CnModalSelectWordFactory',
+    function( CnBaseViewFactory, CnModalSelectWordFactory ) {
+      var object = function( parentModel, root ) {
+        var self = this;
+        CnBaseViewFactory.construct( this, parentModel, root );
+        this.lastMisspelledValue = null;
+
+        this.onPatch = function( data ) {
+          if( angular.isDefined( data.misspelled ) && true == data.misspelled ) {
+            // get correctly spelled word when marking word as misspelled
+            return CnModalSelectWordFactory.instance( {
+              message: 'Please select the correct spelling for this word.\n\n' +
+                       'If you provide a word then all test-entries using the misspelled word will be ' +
+                       'changed to the selected word. You may leave the replacement word blank if you do ' +
+                       'want test-entries to be affected.'
+            } ).show().then( function( response ) {
+              if( angular.isDefined( response ) && null == response ) {
+                self.record.misspelled = null == self.lastMisspelledValue
+                                       ? self.backupRecord.misspelled
+                                       : self.lastMisspelledValue;
+              } else {
+                if( angular.isDefined( response ) ) data.correct_word = response;
+                return self.$$onPatch( data ).then( function() {
+                  // setting misspelled to true means aft and fas must be invalid
+                  self.record.aft = 'invalid';
+                  self.record.fas = 'invalid';
+                } );
+              }
+            } );
+          }
+
+          // if we get here then we're not setting misspelled to true
+          return self.$$onPatch( data ).then( function() {
+            if( angular.isDefined( data.misspelled ) ) {
+              self.lastMisspelledValue = data.misspelled;
+            } else if(
+              ( angular.isDefined( data.aft ) && ( 'intrusion' == data.aft || 'primary' == data.aft ) ) ||
+              ( angular.isDefined( data.aft ) && ( 'intrusion' == data.aft || 'primary' == data.aft ) ) ) {
+              // setting aft to intrusion or primary means the word cannot be misspelled
+              self.record.misspelled = false;
+            }
+          } );
+        };
+      }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
   ] );

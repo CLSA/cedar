@@ -330,3 +330,61 @@ cenozo.service( 'CnModalNewIntrusionFactory', [
     return { instance: function( params ) { return new object( angular.isUndefined( params ) ? {} : params ); } };
   }
 ] );
+
+/* ######################################################################################################## */
+cenozo.service( 'CnModalSelectWordFactory', [
+  '$modal', 'CnHttpFactory',
+  function( $modal, CnHttpFactory ) {
+    var object = function( params ) {
+      var self = this;
+      this.title = 'Select Word';
+      this.message = 'Please select a word:';
+      this.word = null;
+      this.languageIdRestrictList = [];
+
+      angular.extend( this, params );
+
+      this.show = function() {
+        return $modal.open( {
+          backdrop: 'static',
+          keyboard: true,
+          modalFade: true,
+          templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-word.tpl.html' ),
+          controller: function( $scope, $modalInstance ) {
+            $scope.model = self;
+            $scope.proceed = function() { $modalInstance.close( $scope.word ); };
+            $scope.cancel = function() { $modalInstance.close( null ); };
+            $scope.formatLabel = function( word ) {
+              return angular.isObject( word ) ? word.word + ' [' + word.code + ']' : '';
+            };
+            $scope.getTypeaheadValues = function( viewValue ) {
+              $scope.typeaheadIsLoading = true;
+              var where = [
+                { column: 'misspelled', operator: '=', value: false },
+                { column: 'word', operator: 'LIKE', value: viewValue + '%' }
+              ];
+              if( 0 < $scope.model.languageIdRestrictList.length ) where.push( {
+                column: 'language_id',
+                operator: 'IN',
+                value: $scope.model.languageIdRestrictList.length
+              } );
+
+              return CnHttpFactory.instance( {
+                path: 'word',
+                data: {
+                  select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
+                  modifier: { where: where, order: { word: false } }
+                }
+              } ).query().then( function( response ) {
+                $scope.typeaheadIsLoading = false;
+                return response.data;
+              } );
+            }
+          }
+        } ).result;
+      };
+    };
+
+    return { instance: function( params ) { return new object( angular.isUndefined( params ) ? {} : params ); } };
+  }
+] );

@@ -53,4 +53,49 @@ class rey_data extends base_data
                               : $language_id;
     $db_rey_data->save();
   }
+
+  /**
+   * Replace all uses of an associated word with another
+   * 
+   * This is used when correcting spelling errors
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param database\word $db_old_word
+   * @param database\word $db_new_word
+   * @access public
+   * @static
+   */
+  public static function substitute_word( $db_old_word, $db_new_word )
+  {
+    // find all data that needs to be deleted to prevent duplicates
+    $sql = sprintf(
+      'CREATE TEMPORARY TABLE remove_rey_data_has_word'."\n".
+      'SELECT rey_data_id, %s AS word_id'."\n".
+      'FROM rey_data_has_word'."\n".
+      'WHERE word_id IN ( %s, %s )'."\n".
+      'GROUP BY rey_data_id'."\n".
+      'HAVING COUNT(*) > 1',
+      static::db()->format_string( $db_old_word->id ),
+      static::db()->format_string( $db_old_word->id ),
+      static::db()->format_string( $db_new_word->id )
+    );
+    static::db()->execute( $sql );
+
+    $sql = 'ALTER TABLE remove_rey_data_has_word ADD PRIMARY KEY( rey_data_id, word_id )';
+    static::db()->execute( $sql );
+
+    $sql =
+      'DELETE FROM rey_data_has_word'."\n".
+      'WHERE( rey_data_id, word_id ) IN ('."\n".
+      '  SELECT * FROM remove_rey_data_has_word'."\n".
+      ')';
+    static::db()->execute( $sql );
+
+    // now replace all remaining old words
+    $sql = sprintf(
+      'UPDATE rey_data_has_word SET word_id = %s WHERE word_id = %s',
+      $db_new_word->id,
+      $db_old_word->id
+    );
+    static::db()->execute( $sql );
+  }
 }

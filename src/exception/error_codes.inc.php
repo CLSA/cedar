@@ -37,6 +37,8 @@ define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
 /**
  * "notice" error codes
  */
+define( 'NOTICE__CEDAR_SERVICE_WORD_PATCH__EXECUTE__ERRNO',
+        NOTICE_CEDAR_BASE_ERRNO + 1 );
 
 /**
  * "permission" error codes
