@@ -24,10 +24,6 @@
              autocomplete="off"
              autofocus></input>
     </div>
-    <span ng-if="form.word.$invalid && form.word.$dirty">
-      <span class="help-block" ng-if="form.word.$error.required">Cannot be blank</span>
-      <span class="help-block" ng-if="form.word.$error.editable">Must be chosen from list</span>
-    </span>
   </div>
   <div class="modal-footer bg-info">
     <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>

@@ -1,0 +1,26 @@
+<form ng-submit="proceed()" novalidate name="form" class="noselect">
+  <div class="modal-header bg-primary">
+    <h4 class="modal-title">{{ model.title }}</h4>
+  </div>
+  <!-- this model-body requires a specialized style so that the typeahead displays correctly -->
+  <div class="modal-body" style="overflow: visible; margin-bottom: 1em;">
+    <div class="container-fluid">
+      <span style="white-space: pre-wrap;">{{ model.message }}</span>
+    </div>
+    <hr />
+    <div class="container-fluid">
+      <label for="language_id" class="col-sm-3 control-label">Typist</label>
+      <div class="col-sm-9">
+        <select id="user_id"
+                name="user_id"
+                ng-model="user_id",
+                class="form-control"
+                ng-options="item.value as item.name for item in model.userList"></select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer bg-info">
+    <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+    <button type="submit" class="btn btn-primary" ng-disabled="!user_id">Proceed</button>
+  </div>
+</form>

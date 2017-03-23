@@ -48,12 +48,20 @@ class module extends \cenozo\service\site_restricted_participant_module
     parent::prepare_read( $select, $modifier );
 
     $session = lib::create( 'business\session' );
+    $db_application = $session->get_application();
     $db_role = $session->get_role();
     $db_user = $session->get_user();
 
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+
+    if( $select->has_table_columns( 'site' ) )
+    {
+      $modifier->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
+      $modifier->left_join( 'site', 'participant_site.site_id', 'site.id' );
+      $modifier->where( 'participant_site.application_id', '=', $db_application->id );
+    }
 
     if( $select->has_column( 'prev_test_entry_id' ) || $select->has_column( 'next_test_entry_id' ) )
     {

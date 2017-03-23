@@ -332,6 +332,75 @@ cenozo.service( 'CnModalNewIntrusionFactory', [
 ] );
 
 /* ######################################################################################################## */
+cenozo.service( 'CnModalSelectTypistFactory', [
+  '$modal', 'CnSession', 'CnHttpFactory',
+  function( $modal, CnSession, CnHttpFactory ) {
+    var object = function( params ) {
+      var self = this;
+      this.title = 'Select Typist';
+      this.message = 'Please select a typist:';
+      this.site_id = CnSession.site.id;
+      this.languageIdRestrictList = [];
+      this.userList = [];
+
+      angular.extend( this, params );
+
+      this.show = function() {
+        return CnHttpFactory.instance( {
+          path: 'user',
+          data: {
+            select: { column: [ 'id', 'name', 'first_name', 'last_name' ] },
+            modifier: {
+              join: [ {
+                table: 'access',
+                onleft: 'user.id',
+                onright: 'access.user_id'
+              }, {
+                table: 'role',
+                onleft: 'access.role_id',
+                onright: 'role.id'
+              } ],
+              where: [ {
+                column: 'role.name',
+                operator: '=',
+                value: 'typist'
+              }, {
+                column: 'access.site_id',
+                operator: '=',
+                value: self.site_id
+              } ],
+              order: 'name'
+            }
+          }
+        } ).query().then( function( response ) {
+          self.userList = [ { name: "(Select Typist)", value: undefined } ];
+          response.data.forEach( function( item ) {
+            self.userList.push( {
+              value: item.id,
+              name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
+            } );
+          } );
+        } ).then( function() {
+          return $modal.open( {
+            backdrop: 'static',
+            keyboard: true,
+            modalFade: true,
+            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-typist.tpl.html' ),
+            controller: function( $scope, $modalInstance ) {
+              $scope.model = self;
+              $scope.proceed = function() { $modalInstance.close( $scope.user_id ); };
+              $scope.cancel = function() { $modalInstance.close( null ); };
+            }
+          } ).result;
+        } );
+      };
+    };
+
+    return { instance: function( params ) { return new object( angular.isUndefined( params ) ? {} : params ); } };
+  }
+] );
+
+/* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
   '$modal', 'CnHttpFactory',
   function( $modal, CnHttpFactory ) {

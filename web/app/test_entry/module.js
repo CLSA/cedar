@@ -44,11 +44,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
   } );
 
   module.addInputGroup( '', {
+    user_id: { column: 'transcription.user_id', type: 'hidden' },
     test_type_name: { column: 'test_type.name', type: 'hidden' },
     data_type: { column: 'test_type.data_type', type: 'hidden' },
+    state: { type: 'enum' },
     audio_status: { type: 'enum' },
     participant_status: { type: 'enum' },
-    state: { type: 'enum' },
+    participant_site_id: { column: 'site.id', type: 'hidden' },
     participant_language_id: { column: 'participant.language_id', type: 'hidden' },
     prev_test_entry_id: { type: 'hidden' },
     next_test_entry_id: { type: 'hidden' }
@@ -182,11 +184,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
     'CnBaseViewFactory',
     'CnAftDataModelFactory', 'CnFasDataModelFactory', 'CnMatDataModelFactory',
     'CnPrematDataModelFactory', 'CnReyDataModelFactory',
-    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalTextFactory', '$state', '$q',
+    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalTextFactory', 'CnModalSelectTypistFactory',
+    '$state', '$q',
     function( CnBaseViewFactory,
               CnAftDataModelFactory, CnFasDataModelFactory, CnMatDataModelFactory,
               CnPrematDataModelFactory, CnReyDataModelFactory,
-              CnSession, CnHttpFactory, CnModalMessageFactory, CnModalTextFactory, $state, $q ) {
+              CnSession, CnHttpFactory, CnModalMessageFactory, CnModalTextFactory, CnModalSelectTypistFactory,
+              $state, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
@@ -356,7 +360,23 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           },
           submit: function() { return setTestEntryState( 'submitted' ); },
           defer: function() { return setTestEntryState( 'deferred', 'typist' ); },
-          returnToTypist: function() { return setTestEntryState( 'assigned', true ); },
+          returnToTypist: function() {
+            // when reassigning if the transcription is not assigned then ask for who to assign it to
+            return null == self.record.user_id ?
+              CnModalSelectTypistFactory.instance( {
+                message: 'Please select which typist this transcription should be re-assigned to:',
+                site_id: self.record.participant_site_id
+              } ).show().then( function( response ) {
+                if( null != response ) {
+                  return setTestEntryState( 'assigned', true ).then( function() {
+                    return CnHttpFactory.instance( {
+                      path: 'transcription/uid=' + self.record.transcription_uid,
+                      data: { user_id: response }
+                    } ).patch();
+                  } );
+                }
+              } ) : setTestEntryState( 'assigned', true );
+          },
           viewNotes: function() { $state.go( 'test_entry.notes', { identifier: self.record.getIdentifier() } ); },
           transition: function( direction ) {
             var columnName = 'previous' == direction ? 'prev_test_entry_id' : 'next_test_entry_id';
