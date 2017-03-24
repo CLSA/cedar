@@ -593,6 +593,31 @@ CREATE PROCEDURE import_cedar()
         deferred_count = deferred,
         submitted_count = submitted;
 
+    SELECT "Adding mock entries to test_entry_activity" AS "";
+
+    SET @test = ( SELECT COUNT(*) FROM test_entry_activity );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT INTO test_entry_activity( test_entry_id, user_id, start_datetime, end_datetime ) ",
+        "SELECT test_entry.id, v1_assignment.user_id, ",
+               "CONVERT_TZ( v1_test_entry.update_timestamp, 'Canada/Eastern', 'UTC' ), ",
+               "CONVERT_TZ( v1_test_entry.update_timestamp, 'Canada/Eastern', 'UTC' ) ",
+        "FROM ", @v1_cedar, ".test_entry AS v1_test_entry ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN test_type ON ( v1_test.rank <= 6 AND test_type.rank = v1_test.rank ) OR ( ",
+          "v1_test.rank >= 8 AND test_type.rank >= 7 ",
+          "AND test_type.name LIKE CONCAT( '%', substring( v1_test.name, 1, 3 ), '%' ) ",
+        ") ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+         "AND test_type.id = test_entry.test_type_id" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
     SELECT "Importing AFT data from v1" AS "";
 
     SET @sql = CONCAT(
