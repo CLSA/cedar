@@ -21,12 +21,15 @@ class module extends \cenozo\service\participant\module
   {
     parent::prepare_read( $select, $modifier );
 
-    // restrict by sound file
-    $modifier->join(
-      'participant_sound_file_total',
-      'participant.id',
-      'participant_sound_file_total.participant_id'
-    );
+    // restrict the participant list to those participants who have a sound file
+    if( is_null( $this->get_resource() ) )
+    {
+      $modifier->join(
+        'participant_sound_file_total',
+        'participant.id',
+        'participant_sound_file_total.participant_id'
+      );
+    }
 
     if( $select->has_table_columns( 'transcription' ) )
     {
