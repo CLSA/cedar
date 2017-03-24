@@ -18,10 +18,7 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
 
   // add transcription details to the column list
   angular.extend( module.columnList, {
-    state: {
-      column: 'transcription.state',
-      title: 'State'
-    },
+    state: { title: 'State' },
     start_datetime: {
       column: 'transcription.start_datetime',
       title: 'Start',

@@ -31,14 +31,13 @@ class module extends \cenozo\service\participant\module
       );
     }
 
-    if( $select->has_table_columns( 'transcription' ) )
+    if( $select->has_table_columns( 'transcription' ) || $select->has_column( 'state' ) )
     {
       $modifier->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
 
-      if( $select->has_table_column( 'transcription', 'state' ) )
+      if( $select->has_column( 'state' ) )
       {
-        $select->add_table_column(
-          'transcription',
+        $select->add_column(
           'IF( '.
             'transcription.id IS NULL, '.
             'NULL, '.
