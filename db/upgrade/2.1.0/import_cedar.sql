@@ -372,7 +372,6 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'A_Words_Intrusion' ",
-        "AND SUBSTRING( word, 1, 1 ) = 'a' ",
         "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
@@ -384,7 +383,6 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'F_Words_Intrusion' ",
-        "AND SUBSTRING( word, 1, 1 ) = 'f' ",
         "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
@@ -396,7 +394,6 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'S_Words_Intrusion' ",
-        "AND SUBSTRING( word, 1, 1 ) = 's' ",
         "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
@@ -515,7 +512,24 @@ CREATE PROCEDURE import_cedar()
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
 
+      -- remove the placeholder words
       DELETE FROM word WHERE word IN( '-', '--' );
+
+      -- correct any misspelled words that are also found in non-misspelled dictionaries
+      SET @sql = CONCAT(
+        "UPDATE word ",
+        "JOIN ", @v1_cedar, ".word AS v1_word USING( language_id, word ) ",
+        "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_word.dictionary_id = v1_dictionary.id ",
+        "SET misspelled = 0, ",
+            "aft = IF( v1_dictionary.name LIKE 'Animal%', 'intrusion', NULL ), ",
+            "fas = IF( v1_dictionary.name LIKE '%_Words_%', 'intrusion', NULL ) ",
+        "WHERE misspelled = 1 ",
+        "AND v1_dictionary.name NOT LIKE '%mispelled%' ",
+        "AND v1_dictionary.name NOT IN( 'alpha_numeric', 'confirmation' ) ",
+        "AND CHAR_LENGTH( v1_word.word ) > 1" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
     END IF;
 
     SELECT "Importing assignments from v1" AS "";
@@ -662,7 +676,7 @@ CREATE PROCEDURE import_cedar()
         "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
         "JOIN test_type ON test_entry.test_type_id = test_type.id ",
         "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
-        "JOIN word USING( language_id, word ) ",
+        "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
         "WHERE test_type.data_type = 'aft'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
@@ -686,7 +700,7 @@ CREATE PROCEDURE import_cedar()
         "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
         "JOIN test_type ON test_entry.test_type_id = test_type.id ",
         "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
-        "JOIN word USING( language_id, word ) ",
+        "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
         "WHERE test_type.data_type = 'fas'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
