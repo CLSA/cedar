@@ -327,17 +327,6 @@ CREATE PROCEDURE import_cedar()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
-    SELECT "Updating cedar version number" AS "";
-
-    SET @sql = CONCAT(
-      "UPDATE ", @cenozo, ".application ",
-      "SET version = '2.0.0' ",
-      "WHERE name = '", @application, "'"
-    );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
-
     SET @test = ( SELECT COUNT(*) FROM word );
 
     IF @test = 0 THEN
@@ -531,67 +520,105 @@ CREATE PROCEDURE import_cedar()
 
     SELECT "Importing assignments from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO transcription( ",
-        "update_timestamp, create_timestamp, ",
-        "user_id, participant_id, site_id, start_datetime, end_datetime ) ",
-      "SELECT update_timestamp, create_timestamp, ",
-             "IF( end_datetime IS NULL, user_id, NULL ), participant_id, site_id, start_datetime, end_datetime ",
-      "FROM ", @v1_cedar, ".assignment AS v1_assignment" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM transcription );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO transcription( ",
+          "update_timestamp, create_timestamp, ",
+          "user_id, participant_id, site_id, start_datetime, end_datetime ) ",
+        "SELECT update_timestamp, create_timestamp, ",
+               "IF( end_datetime IS NULL, user_id, NULL ), participant_id, site_id, start_datetime, end_datetime ",
+        "FROM ", @v1_cedar, ".assignment AS v1_assignment" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Adding placedholders into the participant_sound_file_total table" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO participant_sound_file_total( participant_id, total, datetime ) ",
-      "SELECT participant_id, 0, CONVERT_TZ( recording.update_timestamp, 'Canada/Eastern', 'UTC' ) ",
-      "FROM ", @v1_cedar, ".assignment ",
-      "JOIN ", @v1_cedar, ".recording USING( participant_id ) ",
-      "GROUP BY participant_id" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM participant_sound_file_total );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO participant_sound_file_total( participant_id, total, datetime ) ",
+        "SELECT participant_id, 0, CONVERT_TZ( recording.update_timestamp, 'Canada/Eastern', 'UTC' ) ",
+        "FROM ", @v1_cedar, ".assignment ",
+        "JOIN ", @v1_cedar, ".recording USING( participant_id ) ",
+        "GROUP BY participant_id" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Importing test-entries from v1" AS "";
 
-    -- test entries not including MAT-alphabet (data is added from both below)
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO test_entry( ",
-        "update_timestamp, create_timestamp, ",
-        "transcription_id, test_type_id, audio_status, participant_status, state ) ",
-      "SELECT v1_test_entry.update_timestamp, v1_test_entry.create_timestamp, ",
-             "transcription.id, test_type.id, audio_status, participant_status, ",
-             "IF( 'requested' = deferred, 'deferred', IF( 'submitted' = completed, 'submitted', 'assigned' ) ) ",
-      "FROM ", @v1_cedar, ".test_entry AS v1_test_entry ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
-      "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
-      "JOIN test_type ON ( v1_test.rank <= 6 AND test_type.rank = v1_test.rank ) OR ( ",
-        "v1_test.rank >= 8 AND test_type.rank >= 7 ",
-        "AND test_type.name LIKE CONCAT( '%', substring( v1_test.name, 1, 3 ), '%' ) ",
-      ")" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM test_entry );
 
-    SELECT "Updating transcription count columns" AS "";
+    IF @test = 0 THEN
+      -- test entries not including MAT-alphabet (data is added from both below)
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO test_entry( ",
+          "update_timestamp, create_timestamp, ",
+          "transcription_id, test_type_id, audio_status, participant_status, state ) ",
+        "SELECT v1_test_entry.update_timestamp, v1_test_entry.create_timestamp, ",
+               "transcription.id, test_type.id, audio_status, participant_status, ",
+               "IF( 'requested' = deferred, 'deferred', IF( 'submitted' = completed, 'submitted', 'assigned' ) ) ",
+        "FROM ", @v1_cedar, ".test_entry AS v1_test_entry ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN test_type ON ( v1_test.rank <= 6 AND test_type.rank = v1_test.rank ) OR ( ",
+          "v1_test.rank >= 8 AND test_type.rank >= 7 ",
+          "AND test_type.name LIKE CONCAT( '%', substring( v1_test.name, 1, 3 ), '%' ) ",
+        ")" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
 
-    DROP TABLE IF EXISTS test_entry_count;
-    CREATE TEMPORARY TABLE test_entry_count
-    SELECT transcription_id,
-           COUNT( IF( state="assigned", true, NULL ) ) AS assigned,
-           COUNT( if( state="deferred", true, NULL ) ) AS deferred,
-           COUNT( IF( state="submitted", true, NULL ) ) AS submitted
-    FROM test_entry
-    GROUP BY transcription_id;
+      SELECT "Updating transcription count columns" AS "";
 
-    UPDATE transcription
-    JOIN test_entry_count ON transcription.id = test_entry_count.transcription_id
-    SET assigned_count = assigned,
-        deferred_count = deferred,
-        submitted_count = submitted;
+      DROP TABLE IF EXISTS test_entry_count;
+      CREATE TEMPORARY TABLE test_entry_count
+      SELECT transcription_id,
+             COUNT( IF( state="assigned", true, NULL ) ) AS assigned,
+             COUNT( if( state="deferred", true, NULL ) ) AS deferred,
+             COUNT( IF( state="submitted", true, NULL ) ) AS submitted
+      FROM test_entry
+      GROUP BY transcription_id;
+
+      UPDATE transcription
+      JOIN test_entry_count ON transcription.id = test_entry_count.transcription_id
+      SET assigned_count = assigned,
+          deferred_count = deferred,
+          submitted_count = submitted;
+    END IF;
+
+    SELECT "Adding languages to test-entries" AS "";
+
+    SET @test = ( SELECT COUNT(*) FROM test_entry_has_language );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT INTO test_entry_has_language( test_entry_id, language_id, update_timestamp, create_timestamp ) ",
+        "SELECT test_entry.id, v1_test_entry_has_language.language_id, ",
+               "v1_test_entry_has_language.update_timestamp, v1_test_entry_has_language.create_timestamp ",
+        "FROM ", @v1_cedar, ".test_entry_has_language AS v1_test_entry_has_language ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_has_language.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN test_type ON ( v1_test.rank <= 6 AND test_type.rank = v1_test.rank ) OR ( ",
+          "v1_test.rank >= 8 AND test_type.rank >= 7 ",
+          "AND test_type.name LIKE CONCAT( '%', substring( v1_test.name, 1, 3 ), '%' ) ",
+        ") ",
+        "JOIN test_entry ON test_type.id = test_entry.test_type_id ",
+         "AND transcription.id = test_entry.transcription_id" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Adding mock entries to test_entry_activity" AS "";
 
@@ -620,117 +647,137 @@ CREATE PROCEDURE import_cedar()
 
     SELECT "Importing AFT data from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO aft_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
-      "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
-             "test_entry.id, v1_test_entry_classification.rank, word.id ",
-      "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
-      "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
-        "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
-      "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
-      "JOIN test_type ON test_entry.test_type_id = test_type.id ",
-      "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
-      "JOIN word USING( language_id, word ) ",
-      "WHERE test_type.data_type = 'aft'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM aft_data );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO aft_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
+        "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
+               "test_entry.id, v1_test_entry_classification.rank, word.id ",
+        "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
+        "JOIN word USING( language_id, word ) ",
+        "WHERE test_type.data_type = 'aft'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Importing FAS data from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO fas_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
-      "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
-             "test_entry.id, v1_test_entry_classification.rank, word.id ",
-      "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
-      "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
-        "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
-      "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
-      "JOIN test_type ON test_entry.test_type_id = test_type.id ",
-      "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
-      "JOIN word USING( language_id, word ) ",
-      "WHERE test_type.data_type = 'fas'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM fas_data );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO fas_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
+        "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
+               "test_entry.id, v1_test_entry_classification.rank, word.id ",
+        "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
+        "JOIN word USING( language_id, word ) ",
+        "WHERE test_type.data_type = 'fas'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Importing pre-MAT data from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO premat_data( update_timestamp, create_timestamp, test_entry_id, counting ) ",
-      "SELECT v1_test_entry_confirmation.update_timestamp, v1_test_entry_confirmation.create_timestamp, ",
-             "test_entry.id, v1_test_entry_confirmation.confirmation ",
-      "FROM ", @v1_cedar, ".test_entry_confirmation AS v1_test_entry_confirmation ",
-      "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
-        "ON v1_test_entry_confirmation.test_entry_id = v1_test_entry.id ",
-      "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
-      "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
-      "JOIN test_type ON test_entry.test_type_id = test_type.id ",
-      "WHERE test_type.data_type = 'premat' ",
-      "AND v1_test.name = 'MAT (counting)'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM premat_data );
 
-    SET @sql = CONCAT(
-      "INSERT INTO premat_data( update_timestamp, create_timestamp, test_entry_id, alphabet ) ",
-      "SELECT v1_test_entry_confirmation.update_timestamp, v1_test_entry_confirmation.create_timestamp, ",
-             "test_entry.id, v1_test_entry_confirmation.confirmation ",
-      "FROM ", @v1_cedar, ".test_entry_confirmation AS v1_test_entry_confirmation ",
-      "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
-        "ON v1_test_entry_confirmation.test_entry_id = v1_test_entry.id ",
-      "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
-      "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
-      "JOIN test_type ON test_entry.test_type_id = test_type.id ",
-      "WHERE test_type.data_type = 'premat' ",
-      "AND v1_test.name = 'MAT (alphabet)' ",
-      "ON DUPLICATE KEY UPDATE alphabet = v1_test_entry_confirmation.confirmation" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO premat_data( update_timestamp, create_timestamp, test_entry_id, counting ) ",
+        "SELECT v1_test_entry_confirmation.update_timestamp, v1_test_entry_confirmation.create_timestamp, ",
+               "test_entry.id, v1_test_entry_confirmation.confirmation ",
+        "FROM ", @v1_cedar, ".test_entry_confirmation AS v1_test_entry_confirmation ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_confirmation.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "WHERE test_type.data_type = 'premat' ",
+        "AND v1_test.name = 'MAT (counting)'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT INTO premat_data( update_timestamp, create_timestamp, test_entry_id, alphabet ) ",
+        "SELECT v1_test_entry_confirmation.update_timestamp, v1_test_entry_confirmation.create_timestamp, ",
+               "test_entry.id, v1_test_entry_confirmation.confirmation ",
+        "FROM ", @v1_cedar, ".test_entry_confirmation AS v1_test_entry_confirmation ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_confirmation.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "WHERE test_type.data_type = 'premat' ",
+        "AND v1_test.name = 'MAT (alphabet)' ",
+        "ON DUPLICATE KEY UPDATE alphabet = v1_test_entry_confirmation.confirmation" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
 
     SELECT "Importing MAT data from v1" AS "";
 
-    SET @sql = CONCAT(
-      "INSERT IGNORE INTO mat_data( update_timestamp, create_timestamp, test_entry_id, rank, value ) ",
-      "SELECT v1_test_entry_alpha_numeric.update_timestamp, v1_test_entry_alpha_numeric.create_timestamp, ",
-             "test_entry.id, v1_test_entry_alpha_numeric.rank, v1_word.word ",
-      "FROM ", @v1_cedar, ".test_entry_alpha_numeric AS v1_test_entry_alpha_numeric ",
-      "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
-        "ON v1_test_entry_alpha_numeric.test_entry_id = v1_test_entry.id ",
-      "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
-      "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
-      "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
-      "JOIN test_type ON test_entry.test_type_id = test_type.id ",
-      "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_alpha_numeric.word_id = v1_word.id ",
-      "WHERE test_type.data_type = 'mat'" );
-    PREPARE statement FROM @sql;
-    EXECUTE statement;
-    DEALLOCATE PREPARE statement;
+    SET @test = ( SELECT COUNT(*) FROM mat_data );
 
-    CALL import_rey_word( 1, "drum" );
-    CALL import_rey_word( 2, "curtain" );
-    CALL import_rey_word( 3, "bell" );
-    CALL import_rey_word( 4, "coffee" );
-    CALL import_rey_word( 5, "school" );
-    CALL import_rey_word( 6, "parent" );
-    CALL import_rey_word( 7, "moon" );
-    CALL import_rey_word( 8, "garden" );
-    CALL import_rey_word( 9, "hat" );
-    CALL import_rey_word( 10, "farmer" );
-    CALL import_rey_word( 11, "nose" );
-    CALL import_rey_word( 12, "turkey" );
-    CALL import_rey_word( 13, "colour" );
-    CALL import_rey_word( 14, "house" );
-    CALL import_rey_word( 15, "river" );
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO mat_data( update_timestamp, create_timestamp, test_entry_id, rank, value ) ",
+        "SELECT v1_test_entry_alpha_numeric.update_timestamp, v1_test_entry_alpha_numeric.create_timestamp, ",
+               "test_entry.id, v1_test_entry_alpha_numeric.rank, v1_word.word ",
+        "FROM ", @v1_cedar, ".test_entry_alpha_numeric AS v1_test_entry_alpha_numeric ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_alpha_numeric.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_alpha_numeric.word_id = v1_word.id ",
+        "WHERE test_type.data_type = 'mat'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
+    SET @test = ( SELECT COUNT(*) FROM rey_data );
+
+    IF @test = 0 THEN
+      CALL import_rey_word( 1, "drum" );
+      CALL import_rey_word( 2, "curtain" );
+      CALL import_rey_word( 3, "bell" );
+      CALL import_rey_word( 4, "coffee" );
+      CALL import_rey_word( 5, "school" );
+      CALL import_rey_word( 6, "parent" );
+      CALL import_rey_word( 7, "moon" );
+      CALL import_rey_word( 8, "garden" );
+      CALL import_rey_word( 9, "hat" );
+      CALL import_rey_word( 10, "farmer" );
+      CALL import_rey_word( 11, "nose" );
+      CALL import_rey_word( 12, "turkey" );
+      CALL import_rey_word( 13, "colour" );
+      CALL import_rey_word( 14, "house" );
+      CALL import_rey_word( 15, "river" );
+    END IF;
 
   END //
 DELIMITER ;
