@@ -141,18 +141,25 @@
         </div>
         <hr />
         <div class="container-fluid vertical-spacer">
-          <span ng-if="0 == model.viewModel.soundFileList.length" class="text-info">
+          <span ng-show="0 == model.viewModel.soundFileList.length" class="text-info">
             There are no sound files available for this test.
           </span>
-          <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
-            <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
-            <div class="col-sm-9">
-              <audio id="soundFile{{ soundFile.id }}"
-                     class="full-width"
-                     ng-focus="selectSoundFile( soundFile.id )"
-                     controls>
-                <source src="{{ soundFile.url }}" type="audio/wav" />
-              </audio>
+          <div ng-show="0 < model.viewModel.soundFileList.length">
+            <div class="text-info text-center vertical-spacer">
+              <span class="spacer">Play/Pause: Ctrl+Shift+/</span>
+              <span class="spacer">Forward: Ctrl+Shift+&lt;</span>
+              <span class="spacer">Backward: Ctrl+Shift+&gt;</span>
+            </div>
+            <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
+              <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
+              <div class="col-sm-9">
+                <audio id="soundFile{{ soundFile.id }}"
+                       class="full-width"
+                       ng-focus="selectSoundFile( soundFile.id )"
+                       controls>
+                  <source src="{{ soundFile.url }}" type="audio/wav" />
+                </audio>
+              </div>
             </div>
           </div>
         </div>
