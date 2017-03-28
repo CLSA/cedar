@@ -7,7 +7,6 @@
            ng-model="newWord"
            typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
                       for item in getTypeaheadValues( $viewValue )"
-           typeahead-editable="true"
            typeahead-min-length="2"
            typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadIsLoading }"
@@ -53,7 +52,7 @@
         <button class="btn full-width"
                 type="button"
                 ng-class="{
-                  'btn-warning': 'variant' == model.viewModel.record[i].word_type,
+                  'btn-success': 'variant' == model.viewModel.record[i].word_type,
                   'btn-danger': 'intrusion' == model.viewModel.record[i].word_type,
                   'btn-default': 'primary' == model.viewModel.record[i].word_type,
                   'btn-info': 'placeholder' == model.viewModel.record[i].word_type
