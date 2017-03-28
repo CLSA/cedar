@@ -58,6 +58,7 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
       scope.isWorking = true;
       scope.newWord = '';
       scope.model.viewModel.submitIntrusion( word, scope.cursor ).finally( function() {
+        scope.cursor = null; // return the cursor to the end of the list
         scope.isWorking = false;
         $timeout( function() { postSubmit( selected ) }, 20 );
       } );
