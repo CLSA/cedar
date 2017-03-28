@@ -44,7 +44,7 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
     },
     submitNewWord: function( selected ) {
       // string if it's a new word, integer if it's an existing intrusion
-      if( !scope.typeaheadIsLoading && angular.isObject( scope.newWord ) || 0 < scope.newWord.length ) {
+      if( !scope.typeaheadIsLoading && ( angular.isObject( scope.newWord ) || 0 < scope.newWord.length ) ) {
         // prevent double-entry from enter key and typeahead selection
         if( selected ) {
           if( scope.preventSelectedNewWord ) return;
