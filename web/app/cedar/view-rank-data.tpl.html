@@ -7,13 +7,12 @@
            ng-model="newWord"
            typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
                       for item in getTypeaheadValues( $viewValue )"
-           typeahead-min-length="2"
            typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadIsLoading }"
            type="text"
            autocomplete="off"
            cn-submit-word="submitNewWord( false )"
-           ng-disabled="typeaheadIsLoading || !isComplete || isWorking || !editEnabled"
+           ng-disabled="!isComplete || isWorking || !editEnabled"
            autofocus></input>
   </div>
   <div class="col-sm-3">
