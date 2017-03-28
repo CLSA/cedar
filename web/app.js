@@ -37,9 +37,29 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
 
   angular.extend( scope, {
     cursor: null,
+    cursorType: null,
     preventSelectedNewWord: false,
     toggleCursor: function( rank ) {
-      scope.cursor = rank == scope.cursor ? null : rank;
+      if( null == scope.cursorType ) {
+        scope.cursorType = 'insert';
+        scope.cursor = rank;
+      } else if( 'insert' == scope.cursorType ) {
+        if( rank == scope.cursor ) {
+          scope.cursorType = 'replace';
+        } else {
+          scope.cursorType = 'insert';
+          scope.cursor = rank;
+        }
+      } else {
+        if( rank == scope.cursor ) {
+          scope.cursorType = null;
+          scope.cursor = null;
+        } else {
+          scope.cursorType = 'insert';
+          scope.cursor = rank;
+        }
+      }
+
       postSubmit( false );
     },
     submitNewWord: function( selected ) {
@@ -57,8 +77,12 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
       if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
       scope.isWorking = true;
       scope.newWord = '';
-      scope.model.viewModel.submitIntrusion( word, scope.cursor ).finally( function() {
+      scope.model.viewModel.submitIntrusion(
+        word, scope.cursor,
+        'replace' == scope.cursorType
+      ).finally( function() {
         scope.cursor = null; // return the cursor to the end of the list
+        scope.cursorType = null;
         scope.isWorking = false;
         $timeout( function() { postSubmit( selected ) }, 20 );
       } );
@@ -76,8 +100,10 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
             // we may have to change the cursor if it is no longer valid
             if( null != scope.cursor ) {
               var len = scope.model.viewModel.record.length;
-              if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor )
+              if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor ) {
                 scope.cursor = null;
+                scope.cursorType = null;
+              }
             }
 
             scope.isWorking = false;
@@ -163,9 +189,9 @@ cenozo.factory( 'CnBaseDataViewFactory', [
 
         if( 'aft' == parentModel.getDataType() || 'fas' == parentModel.getDataType() ) {
           angular.extend( object, {
-            submitIntrusion: function( word, rank ) {
+            submitIntrusion: function( word, rank, replace ) {
               // private method used below
-              function sendIntrusion( input, rank ) {
+              function sendIntrusion( input, rank, replace ) {
                 var data = angular.isDefined( input.id ) ? { word_id: input.id } : input;
                 if( null != rank ) data.rank = rank;
 
@@ -185,8 +211,17 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                   if( null != rank ) {
                     var index = object.record.findIndexByProperty( 'rank', rank );
                     if( null != index ) {
-                      object.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
-                      object.record.splice( index, 0, response.data );
+                      // remove the word at the found index if we are in replace mode
+                      if( replace ) {
+                        return CnHttpFactory.instance( {
+                          path: object.parentModel.getServiceResourcePath() + '/' + object.record[index].id
+                        } ).delete().then( function() {
+                          object.record.splice( index, 1, response.data );
+                        } );
+                      } else {
+                        object.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                        object.record.splice( index, 0, response.data );
+                      }
                     } else {
                       console.warning(
                         'Tried inserting word at rank "' + rank + '", which was not found in the list'
@@ -208,9 +243,10 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                   language_id: object.parentModel.testEntryModel.viewModel.record.participant_language_id,
                   languageIdRestrictList: object.parentModel.testEntryModel.viewModel.languageIdList
                 } ).show().then( function( response ) {
-                  if( null != response ) return sendIntrusion( { language_id: response, word: word }, rank );
+                  if( null != response )
+                    return sendIntrusion( { language_id: response, word: word }, rank, replace );
                 } );
-              } else return sendIntrusion( word, rank ); // it's not a new word so send it immediately
+              } else return sendIntrusion( word, rank, replace ); // it's not a new word so send it immediately
             },
             deleteIntrusion: function( wordRecord ) {
               return CnHttpFactory.instance( {

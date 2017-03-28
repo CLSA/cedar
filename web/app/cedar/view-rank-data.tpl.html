@@ -40,12 +40,17 @@
         <button class="btn btn-default"
                 ng-class="{ 'active': cursor == model.viewModel.record[i].rank }"
                 type="button"
-                tooltip="{{ cursor == model.viewModel.record[i].rank ? 'Deactivate Insert' : 'Activate Insert' }}"
+                tooltip="{{
+                  cursor != model.viewModel.record[i].rank ? 'Insert Here' :
+                  ( 'insert' == cursorType ? 'Replace Here' : 'Remove Replace' )
+                }}"
                 ng-disabled="isWorking || !editEnabled"
                 ng-click="toggleCursor( model.viewModel.record[i].rank )">
-          <i class="glyphicon"
-             ng-class="cursor == model.viewModel.record[i].rank ?
-               'glyphicon-log-in' : 'glyphicon-unchecked'"></i>
+          <i class="glyphicon" ng-class="{
+            'glyphicon-unchecked': cursor != model.viewModel.record[i].rank,
+            'glyphicon-log-in': cursor == model.viewModel.record[i].rank && 'insert' == cursorType,
+            'glyphicon-new-window': cursor == model.viewModel.record[i].rank && 'replace' == cursorType
+          }"></i>
         </button>
       </div>
       <div ng-class="editEnabled ? 'col-xs-10' : 'col-xs-12'">
