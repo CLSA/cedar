@@ -13,7 +13,7 @@
            type="text"
            autocomplete="off"
            cn-submit-word="submitNewWord( false )"
-           ng-disabled="!isComplete || isWorking || !editEnabled"
+           ng-disabled="typeaheadIsLoading || !isComplete || isWorking || !editEnabled"
            autofocus></input>
   </div>
   <div class="col-sm-3">

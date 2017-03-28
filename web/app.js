@@ -64,6 +64,7 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
     },
     submitNewWord: function( selected ) {
       // string if it's a new word, integer if it's an existing intrusion
+      console.log( scope.typeaheadIsLoading );
       if( !scope.typeaheadIsLoading && ( angular.isObject( scope.newWord ) || 0 < scope.newWord.length ) ) {
         // prevent double-entry from enter key and typeahead selection
         if( selected ) {
@@ -132,7 +133,7 @@ cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, 
           }
         }
       } ).query().then( function( response ) {
-        scope.typeaheadIsLoading = false;
+        $timeout( function() { scope.typeaheadIsLoading = false; }, 100 );
         return response.data;
       } );
     }
@@ -439,8 +440,8 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
-  '$modal', 'CnHttpFactory',
-  function( $modal, CnHttpFactory ) {
+  '$modal', '$timeout', 'CnHttpFactory',
+  function( $modal, $timeout, CnHttpFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Select Word';
@@ -482,7 +483,7 @@ cenozo.service( 'CnModalSelectWordFactory', [
                   modifier: { where: where, order: { word: false } }
                 }
               } ).query().then( function( response ) {
-                $scope.typeaheadIsLoading = false;
+                $timeout( function() { scope.typeaheadIsLoading = false; }, 100 );
                 return response.data;
               } );
             }
