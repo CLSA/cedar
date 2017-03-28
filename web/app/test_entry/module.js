@@ -101,8 +101,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTestEntryView', [
-    'CnTestEntryModelFactory', 'CnModalConfirmFactory',
-    function( CnTestEntryModelFactory, CnModalConfirmFactory ) {
+    'CnTestEntryModelFactory', 'CnModalConfirmFactory', '$timeout',
+    function( CnTestEntryModelFactory, CnModalConfirmFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -135,6 +135,36 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 } );
               }
             },
+            onKeyboardShortcut: function( event ) {
+              if( angular.isObject( event ) && event.ctrlKey && event.shiftKey ) {
+                var action = null;
+                if( 191 == event.keyCode ) action = 'togglePlay'; // Ctrl + /
+                else if( 188 == event.keyCode ) action = 'rewind'; // Ctrl + <
+                else if( 190 == event.keyCode ) action = 'forward'; // Ctrl + >
+
+                if( null != action ) {
+                  var soundFile = $scope.model.viewModel.soundFileList.findByProperty( 'active', true );
+
+                  if( soundFile ) {
+                    var soundEl = soundFile.element;
+                    // now determine what to do
+                    if( 'togglePlay' == action ) {
+                      if( soundEl.paused ) soundEl.play(); else soundEl.pause();
+                    } else if( 'rewind' == action ) {
+                      soundEl.currentTime -= 10;
+                    } else if( 'forward' == action ) {
+                      soundEl.currentTime += 10;
+                    }
+                  }
+                }
+              }
+            },
+            selectSoundFile: function( id ) {
+              // set the sound file matching the id as active and all others as not-active
+              $scope.model.viewModel.soundFileList.forEach( function( soundFile ) {
+                soundFile.active = id == soundFile.id;
+              } );
+            },
             getParticipantStatusList: function() {
               return $scope.participantStatusList.filter( function( status ) {
                 if( '' == status.value || 'refused' == status.value ) return true;
@@ -164,6 +194,15 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             scope.participantStatusList = angular.copy( participantStatus.enumList );
             if( !participantStatus.required )
               scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
+
+            // attach the sound file elements to the view model's list of sound files
+            $timeout( function() {
+              var audioList = element[0].querySelectorAll( 'audio' );
+              audioList.forEach( function( audioEl ) {
+                var id = audioEl.id.replace( 'soundFile', '' );
+                scope.model.viewModel.soundFileList.findByProperty( 'id', id ).element = audioEl;
+              } );
+            }, 100 );
           } );
         }
       };
@@ -341,6 +380,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 data: { select: { column: [ 'id', 'name', 'url' ] } }
               } ).query().then( function( response ) {
                 self.soundFileList = response.data;
+                // add an active property to track which recording the user is working with
+                self.soundFileList.forEach( function( soundFile, index ) { soundFile.active = 0 == index; } );
               } );
             } );
             return self.onViewPromise;

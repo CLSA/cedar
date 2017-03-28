@@ -86,6 +86,8 @@
       </div>
       <div class="container-fluid vertical-spacer loading" ng-if="!isComplete"></div>
       <div id="View"
+           tabindex="0"
+           cn-keyboard-shortcut="onKeyboardShortcut"
            class="form-body collapse"
            ng-if="isComplete"
            ng-class="{'in':!initCollapsed}"
@@ -145,7 +147,10 @@
           <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
             <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
             <div class="col-sm-9">
-              <audio id="{{ soundFile.id }}" class="full-width" controls>
+              <audio id="soundFile{{ soundFile.id }}"
+                     class="full-width"
+                     ng-focus="selectSoundFile( soundFile.id )"
+                     controls>
                 <source src="{{ soundFile.url }}" type="audio/wav" />
               </audio>
             </div>
