@@ -372,7 +372,7 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'A_Words_Intrusion' ",
-        "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
+        "ON DUPLICATE KEY UPDATE fas = IFNULL( fas, 'intrusion' )" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -383,7 +383,7 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'F_Words_Intrusion' ",
-        "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
+        "ON DUPLICATE KEY UPDATE fas = IFNULL( fas, 'intrusion' )" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -394,7 +394,7 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'S_Words_Intrusion' ",
-        "ON DUPLICATE KEY UPDATE fas = 'intrusion'" );
+        "ON DUPLICATE KEY UPDATE fas = IFNULL( fas, 'intrusion' )" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;

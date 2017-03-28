@@ -25,7 +25,7 @@ DROP PROCEDURE IF EXISTS patch_sound_file;
         "INDEX fk_participant_id (participant_id ASC), ",
         "INDEX fk_test_type_id (test_type_id ASC), ",
         "INDEX dk_datetime (datetime ASC), ",
-        "UNIQUE INDEX uq_participant_id_test_type_id_filename (participant_id ASC, test_type_id ASC, filename ASC) ",
+        "UNIQUE INDEX uq_participant_id_test_type_id_filename (participant_id ASC, test_type_id ASC, filename ASC), ",
         "CONSTRAINT fk_sound_file_participant_id ",
           "FOREIGN KEY (participant_id) ",
           "REFERENCES ", @cenozo, ".participant (id) ",
