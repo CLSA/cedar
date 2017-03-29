@@ -24,155 +24,177 @@ cenozoApp.initDataModule = function( module, name ) {
 };
 
 /* ######################################################################################################## */
-cenozoApp.initRankDataViewDirectiveController = function( scope, CnHttpFactory, CnModalConfirmFactory, $timeout ) {
-  scope.isComplete = false;
-  scope.isWorking = false;
-  scope.typeaheadIsLoading = false;
-  scope.model.viewModel.onView().finally( function() { scope.isComplete = true; } );
+cenozo.factory( 'CnWordTypeaheadFactory', [
+  '$timeout', 'CnHttpFactory',
+  function( $timeout, CnHttpFactory ) {
+    var object = function( params ) {
+      this.getLanguageIdRestrictList = function() { return []; };
+      angular.extend( this, params );
 
-  function postSubmit( selected ) {
-    if( !selected ) scope.preventSelectedNewWord = false;
-    document.getElementById( 'newWord' ).focus();
+      angular.extend( this, {
+        lastGUID: null,
+        isLoading: false,
+        valueCache: [],
+        resolveList: function( value ) {
+          this.lastGUID = null;
+          this.isLoading = false;
+          return 3 >= value.length ?
+            this.valueCache :
+            this.valueCache.filter( function( word ) { return null != word.word.match( '^' + value ); } );
+        },
+        getValues: function( value ) {
+          var self = this;
+          var guid = cenozo.generateGUID();
+
+          self.lastGUID = guid;
+          return $timeout( function() {
+            // return an empty list if this isn't the last GUID
+            if( guid != self.lastGUID ) return [];
+
+            self.isLoading = true;
+
+            // see if we have to rebuild the cache
+            var v3 = value.substring( 0, 3 );
+            if( 0 == self.valueCache.length ||
+                3 > value.length || null == self.valueCache[0].word.match( '^' + v3 ) ) {
+              var where = [ {
+                column: 'misspelled', operator: '=', value: false
+              }, {
+                column: 'word',
+                operator: 3 > value.length ? '=' : 'LIKE',
+                value: 3 > value.length ? value : v3 + '%'
+              } ];
+
+              // only restrict by language if there are any in the list
+              var list = self.getLanguageIdRestrictList();
+              if( 0 < list.length ) where.push( { column: 'language_id', operator: 'IN', value: list } );
+
+              return CnHttpFactory.instance( {
+                path: 'word',
+                data: {
+                  select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
+                  modifier: { where: where, order: { word: false }, limit: 10000 }
+                }
+              } ).query().then( function( response ) {
+                self.valueCache = angular.copy( response.data );
+                return self.resolveList( value );
+              } );
+            }
+
+            return self.resolveList( value );
+          }, 200 );
+        }
+      } );
+    };
+
+    return { instance: function( params ) { return new object( angular.isUndefined( params ) ? {} : params ); } };
   }
+] );
 
-  angular.extend( scope, {
-    cursor: null,
-    cursorType: null,
-    preventSelectedNewWord: false,
-    toggleCursor: function( rank ) {
-      if( null == scope.cursorType ) {
-        scope.cursorType = 'insert';
-        scope.cursor = rank;
-      } else if( 'insert' == scope.cursorType ) {
-        if( rank == scope.cursor ) {
-          scope.cursorType = 'replace';
-        } else {
-          scope.cursorType = 'insert';
-          scope.cursor = rank;
-        }
-      } else {
-        if( rank == scope.cursor ) {
-          scope.cursorType = null;
-          scope.cursor = null;
-        } else {
-          scope.cursorType = 'insert';
-          scope.cursor = rank;
-        }
-      }
-
-      postSubmit( false );
-    },
-    submitNewWord: function( selected ) {
-      // string if it's a new word, integer if it's an existing intrusion
-      if( angular.isObject( scope.newWord ) || ( null == scope.lastTypeaheadGUID && 0 < scope.newWord.length ) ) {
-        // prevent double-entry from enter key and typeahead selection
-        if( selected ) {
-          if( scope.preventSelectedNewWord ) {
-            return;
-          }
-        } else scope.preventSelectedNewWord = true;
-        scope.submitWord( scope.newWord, selected );
-      }
-    },
-    submitWord: function( word, selected ) {
-      if( angular.isUndefined( selected ) ) selected = false;
-      if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
-      scope.isWorking = true;
-      scope.newWord = '';
-      scope.model.viewModel.submitIntrusion(
-        word, scope.cursor,
-        'replace' == scope.cursorType
-      ).finally( function() {
-        scope.cursor = null; // return the cursor to the end of the list
-        scope.cursorType = null;
+/* ######################################################################################################## */
+cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
+  'CnHttpFactory', 'CnModalConfirmFactory', 'CnWordTypeaheadFactory', '$timeout',
+  function( CnHttpFactory, CnModalConfirmFactory, CnWordTypeaheadFactory, $timeout ) {
+    return {
+      construct: function( scope ) {
+        scope.isComplete = false;
         scope.isWorking = false;
-        $timeout( function() { postSubmit( selected ) }, 20 );
-      } );
-    },
-    removeWord: function( word ) {
-      CnModalConfirmFactory.instance( {
-        title: 'Remove ' + ( 'placeholder' == word.word_type ? 'placeholder' : '"' + word.word + '"' ) ,
-        message: 'Are you sure you want to remove ' +
-                 ( 'placeholder' == word.word_type ? 'the placeholder' : '"' + word.word + '"' ) +
-                 ' from the word list?'
-      } ).show().then( function( response ) {
-        if( response ) {
-          scope.isWorking = false;
-          scope.model.viewModel.deleteIntrusion( word ).finally( function() {
-            // we may have to change the cursor if it is no longer valid
-            if( null != scope.cursor ) {
-              var len = scope.model.viewModel.record.length;
-              if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor ) {
-                scope.cursor = null;
+        scope.model.viewModel.onView().finally( function() { scope.isComplete = true; } );
+
+        function postSubmit( selected ) {
+          if( !selected ) scope.preventSelectedNewWord = false;
+          document.getElementById( 'newWord' ).focus();
+        }
+
+        angular.extend( scope, {
+          typeaheadModel: CnWordTypeaheadFactory.instance( {
+            getLanguageIdRestrictList: function() { return scope.model.testEntryModel.viewModel.languageIdList; }
+          } ),
+          cursor: null,
+          cursorType: null,
+          preventSelectedNewWord: false,
+          toggleCursor: function( rank ) {
+            if( null == scope.cursorType ) {
+              scope.cursorType = 'insert';
+              scope.cursor = rank;
+            } else if( 'insert' == scope.cursorType ) {
+              if( rank == scope.cursor ) {
+                scope.cursorType = 'replace';
+              } else {
+                scope.cursorType = 'insert';
+                scope.cursor = rank;
+              }
+            } else {
+              if( rank == scope.cursor ) {
                 scope.cursorType = null;
+                scope.cursor = null;
+              } else {
+                scope.cursorType = 'insert';
+                scope.cursor = rank;
               }
             }
 
-            scope.isWorking = false;
             postSubmit( false );
-          } );
-        }
-      } );
-    },
-    lastTypeaheadGUID: null,
-    typeaheadValueCache: [],
-    getTypeaheadValues: function( viewValue ) {
-      var guid = cenozo.generateGUID();
-      scope.lastTypeaheadGUID = guid;
-
-      return $timeout( function() {
-        if( guid != scope.lastTypeaheadGUID ) return [];
-        scope.typeaheadIsLoading = true;
-
-        // see if we have to rebuild the cache
-        if( 0 == scope.typeaheadValueCache.length ||
-            3 > viewValue.length ||
-            null == scope.typeaheadValueCache[0].word.match( '^'+viewValue.substring( 0, 3 ) ) ) {
-          return CnHttpFactory.instance( {
-            path: 'word',
-            data: {
-              select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
-              modifier: {
-                where: [ {
-                  column: 'language_id',
-                  operator: 'IN',
-                  value: scope.model.testEntryModel.viewModel.languageIdList
-                }, {
-                  column: 'misspelled', operator: '=', value: false
-                }, {
-                  column: 'word',
-                  operator: 3 > viewValue.length ? '=' : 'LIKE',
-                  value: 3 > viewValue.length ? viewValue : viewValue.substring( 0, 3 ) + '%'
-                } ],
-                order: { word: false },
-                limit: 10000 // do not limit the number of records returned
-              }
+          },
+          submitNewWord: function( selected ) {
+            // string if it's a new word, integer if it's an existing intrusion
+            if( angular.isObject( scope.newWord ) ||
+                ( null == scope.typeaheadModel.lastGUID && 0 < scope.newWord.length ) ) {
+              // prevent double-entry from enter key and typeahead selection
+              if( selected ) {
+                if( scope.preventSelectedNewWord ) {
+                  return;
+                }
+              } else scope.preventSelectedNewWord = true;
+              scope.submitWord( scope.newWord, selected );
             }
-          } ).query().then( function( response ) {
-            scope.typeaheadValueCache = angular.copy( response.data );
-            var list = 3 >= viewValue.length
-                     ? scope.typeaheadValueCache
-                     : scope.typeaheadValueCache.filter( function( word ) {
-                         return null != word.word.match( '^' + viewValue );
-                       } );
-            scope.lastTypeaheadGUID = null;
-            scope.typeaheadIsLoading = false;
-            return list;
-          } );
-        }
+          },
+          submitWord: function( word, selected ) {
+            if( angular.isUndefined( selected ) ) selected = false;
+            if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
+            scope.isWorking = true;
+            scope.newWord = '';
+            scope.model.viewModel.submitIntrusion(
+              word, scope.cursor,
+              'replace' == scope.cursorType
+            ).finally( function() {
+              scope.cursor = null; // return the cursor to the end of the list
+              scope.cursorType = null;
+              scope.isWorking = false;
+              $timeout( function() { postSubmit( selected ) }, 20 );
+            } );
+          },
+          removeWord: function( word ) {
+            CnModalConfirmFactory.instance( {
+              title: 'Remove ' + ( 'placeholder' == word.word_type ? 'placeholder' : '"' + word.word + '"' ) ,
+              message: 'Are you sure you want to remove ' +
+                       ( 'placeholder' == word.word_type ? 'the placeholder' : '"' + word.word + '"' ) +
+                       ' from the word list?'
+            } ).show().then( function( response ) {
+              if( response ) {
+                scope.isWorking = false;
+                scope.model.viewModel.deleteIntrusion( word ).finally( function() {
+                  // we may have to change the cursor if it is no longer valid
+                  if( null != scope.cursor ) {
+                    var len = scope.model.viewModel.record.length;
+                    if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor ) {
+                      scope.cursor = null;
+                      scope.cursorType = null;
+                    }
+                  }
 
-        var list = 3 >= viewValue.length
-                 ? scope.typeaheadValueCache
-                 : scope.typeaheadValueCache.filter( function( word ) {
-                     return null != word.word.match( '^' + viewValue );
-                   } );
-        scope.lastTypeaheadGUID = null;
-        scope.typeaheadIsLoading = false;
-        return list;
-      }, 200 );
-    }
-  } );
-};
+                  scope.isWorking = false;
+                  postSubmit( false );
+                } );
+              }
+            } );
+          }
+        } );
+      }
+    };
+  }
+] );
+
 
 /* ######################################################################################################## */
 cenozo.directive( 'cnSubmitWord', [
@@ -474,8 +496,8 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
-  '$modal', '$timeout', 'CnHttpFactory',
-  function( $modal, $timeout, CnHttpFactory ) {
+  '$modal', '$timeout', 'CnHttpFactory', 'CnWordTypeaheadFactory',
+  function( $modal, $timeout, CnHttpFactory, CnWordTypeaheadFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Select Word';
@@ -494,67 +516,13 @@ cenozo.service( 'CnModalSelectWordFactory', [
           controller: function( $scope, $modalInstance ) {
             $scope.model = self;
             angular.extend( $scope, {
+              typeaheadModel: CnWordTypeaheadFactory.instance( {
+                getLanguageIdRestrictList: function() { return $scope.model.languageIdRestrictList; }
+              } ),
               proceed: function() { $modalInstance.close( $scope.word ); },
               cancel: function() { $modalInstance.close( null ); },
               formatLabel: function( word ) {
                 return angular.isObject( word ) ? word.word + ' [' + word.code + ']' : '';
-              },
-              typeaheadIsLoading: false,
-              lastTypeaheadGUID: null,
-              typeaheadValueCache: [],
-              getTypeaheadValues: function( viewValue ) {
-                var guid = cenozo.generateGUID();
-                $scope.lastTypeaheadGUID = guid;
-
-                return $timeout( function() {
-                  if( guid != $scope.lastTypeaheadGUID ) return [];
-                  $scope.typeaheadIsLoading = true;
-
-                  // see if we have to rebuild the cache
-                  if( 0 == $scope.typeaheadValueCache.length ||
-                      3 > viewValue.length ||
-                      null == $scope.typeaheadValueCache[0].word.match( '^'+viewValue.substring( 0, 3 ) ) ) {
-                    var where = [ {
-                      column: 'misspelled', operator: '=', value: false
-                    }, {
-                      column: 'word',
-                      operator: 3 > viewValue.length ? '=' : 'LIKE',
-                      value: 3 > viewValue.length ? viewValue : viewValue.substring( 0, 3 ) + '%'
-                    } ];
-                    if( 0 < $scope.model.languageIdRestrictList.length ) where.push( {
-                      column: 'language_id',
-                      operator: 'IN',
-                      value: $scope.model.languageIdRestrictList.length
-                    } );
-
-                    return CnHttpFactory.instance( {
-                      path: 'word',
-                      data: {
-                        select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
-                        modifier: { where: where, order: { word: false }, limit: 10000 }
-                      },
-                    } ).query().then( function( response ) {
-                      $scope.typeaheadValueCache = angular.copy( response.data );
-                      var list = 3 >= viewValue.length
-                               ? $scope.typeaheadValueCache
-                               : $scope.typeaheadValueCache.filter( function( word ) {
-                                   return null != word.word.match( '^' + viewValue );
-                                 } );
-                      $scope.lastTypeaheadGUID = null;
-                      $scope.typeaheadIsLoading = false;
-                      return list;
-                    } );
-                  }
-
-                  var list = 3 >= viewValue.length
-                           ? $scope.typeaheadValueCache
-                           : $scope.typeaheadValueCache.filter( function( word ) {
-                               return null != word.word.match( '^' + viewValue );
-                             } );
-                  $scope.lastTypeaheadGUID = null;
-                  $scope.typeaheadIsLoading = false;
-                  return list;
-                }, 200 );
               }
             } );
           }

@@ -6,15 +6,15 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnFasDataView', [
-    'CnFasDataModelFactory', 'CnHttpFactory', 'CnModalConfirmFactory', '$timeout',
-    function( CnFasDataModelFactory, CnHttpFactory, CnModalConfirmFactory, $timeout ) {
+    'CnFasDataModelFactory', 'CnBaseRankDataViewDirectiveControllerFactory',
+    function( CnFasDataModelFactory, CnBaseRankDataViewDirectiveControllerFactory ) {
       return {
         templateUrl: cenozoApp.getFileUrl( 'cedar', 'view-rank-data.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?', editEnabled: '=' },
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnFasDataModelFactory.root;
-          cenozoApp.initRankDataViewDirectiveController( $scope, CnHttpFactory, CnModalConfirmFactory, $timeout );
+          CnBaseRankDataViewDirectiveControllerFactory.construct( $scope );
         }
       }
     }

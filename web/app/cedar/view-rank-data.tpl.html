@@ -6,9 +6,9 @@
            name="newWord"
            ng-model="newWord"
            typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
-                      for item in getTypeaheadValues( $viewValue )"
+                      for item in typeaheadModel.getValues( $viewValue )"
            typeahead-on-select="submitNewWord( true )"
-           ng-class="{ 'loading-small': typeaheadIsLoading }"
+           ng-class="{ 'loading-small': typeaheadModel.isLoading }"
            type="text"
            autocomplete="off"
            cn-submit-word="submitNewWord( false )"

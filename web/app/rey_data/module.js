@@ -40,8 +40,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnReyDataView', [
-    'CnReyDataModelFactory', 'CnHttpFactory', '$timeout',
-    function( CnReyDataModelFactory, CnHttpFactory, $timeout ) {
+    'CnReyDataModelFactory', 'CnHttpFactory', 'CnWordTypeaheadFactory', '$timeout',
+    function( CnReyDataModelFactory, CnHttpFactory, CnWordTypeaheadFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -50,17 +50,24 @@ define( function() {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnReyDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
-          $scope.typeaheadIsLoading = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
+            typeaheadModel: CnWordTypeaheadFactory.instance( {
+              getLanguageIdRestrictList: function() {
+                return $scope.model.testEntryModel.viewModel.languageIdList;
+              }
+            } ),
             preventSelectedNewWord: false,
             submitNewWord: function( selected ) {
               // string if it's a new word, integer if it's an existing intrusion
-              if( angular.isObject( $scope.newWord ) || 0 < $scope.newWord.length ) {
+              if( angular.isObject( $scope.newWord ) ||
+                  ( null == $scope.typeaheadModel.lastGUID && 0 < $scope.newWord.length ) ) {
                 // prevent double-entry from enter key and typeahead selection
                 if( selected ) {
-                  if( $scope.preventSelectedNewWord ) return;
+                  if( $scope.preventSelectedNewWord ) {
+                    return;
+                  }
                 } else $scope.preventSelectedNewWord = true;
 
                 $scope.isWorking = true;
@@ -102,30 +109,6 @@ define( function() {
                   }
                 } );
               }
-            },
-            getTypeaheadValues: function( viewValue ) {
-              $scope.typeaheadIsLoading = true;
-              return CnHttpFactory.instance( {
-                path: 'word',
-                data: {
-                  select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
-                  modifier: {
-                    where: [ {
-                      column: 'language_id',
-                      operator: 'IN',
-                      value: $scope.model.testEntryModel.viewModel.languageIdList
-                    }, {
-                      column: 'IFNULL( misspelled, false )', operator: '=', value: false
-                    }, {
-                      column: 'word', operator: 'LIKE', value: viewValue + '%'
-                    } ],
-                    order: { word: false }
-                  }
-                }
-              } ).query().then( function( response ) {
-                $scope.typeaheadIsLoading = false;
-                return response.data;
-              } );
             }
           } );
         }

@@ -14,11 +14,11 @@
              name="word"
              ng-model="word"
              typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
-                        for item in getTypeaheadValues( $viewValue )"
+                        for item in typeaheadModel.getValues( $viewValue )"
              typeahead-editable="true"
              typeahead-input-formatter="formatLabel( $model )"
              class="form-control"
-             ng-class="{ 'loading-small': typeaheadIsLoading }"
+             ng-class="{ 'loading-small': typeaheadModel.isLoading }"
              type="text"
              autocomplete="off"
              cn-autofocus></input>
@@ -26,6 +26,6 @@
   </div>
   <div class="modal-footer bg-info">
     <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
-    <button type="submit" class="btn btn-primary" ng-disabled="null != lastTypeaheadGUID">Proceed</button>
+    <button type="submit" class="btn btn-primary" ng-disabled="null != typeaheadModel.lastGUID">Proceed</button>
   </div>
 </form>
