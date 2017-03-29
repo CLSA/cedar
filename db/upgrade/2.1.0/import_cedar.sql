@@ -837,6 +837,20 @@ CREATE PROCEDURE import_cedar()
       CALL import_rey_word( 15, "river" );
     END IF;
 
+    SELECT "Deleting no-response words from dictionary and data" AS "";
+
+    CREATE TEMPORARY TABLE delete_word
+    SELECT id FROM word
+    WHERE word IN ( "participant provided no responses", "participant could not think of any words" );
+
+    DELETE FROM aft_data
+    WHERE word_id IN ( SELECT id FROM delete_word );
+
+    DELETE FROM fas_data
+    WHERE word_id IN ( SELECT id FROM delete_word );
+
+    DELETE FROM word
+    WHERE id IN ( SELECT id FROM delete_word );
   END //
 DELIMITER ;
 
