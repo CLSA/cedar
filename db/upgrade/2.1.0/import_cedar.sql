@@ -671,13 +671,15 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
         "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
           "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
         "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
         "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
         "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
         "JOIN test_type ON test_entry.test_type_id = test_type.id ",
         "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
         "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
-        "WHERE test_type.data_type = 'aft'" );
+        "WHERE v1_test.name = 'AFT' ",
+        "AND test_type.data_type = 'aft'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -695,13 +697,55 @@ CREATE PROCEDURE import_cedar()
         "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
         "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
           "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
         "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
         "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
         "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
         "JOIN test_type ON test_entry.test_type_id = test_type.id ",
         "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
         "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
-        "WHERE test_type.data_type = 'fas'" );
+        "WHERE v1_test.name = 'FAS (f words)' ",
+        "AND test_type.name = 'F-Word Fluency (FAS-F)'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO fas_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
+        "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
+               "test_entry.id, v1_test_entry_classification.rank, word.id ",
+        "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
+        "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
+        "WHERE v1_test.name = 'FAS (a words)' ",
+        "AND test_type.name = 'A-Word Fluency (FAS-A)'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO fas_data( update_timestamp, create_timestamp, test_entry_id, rank, word_id ) ",
+        "SELECT v1_test_entry_classification.update_timestamp, v1_test_entry_classification.create_timestamp, ",
+               "test_entry.id, v1_test_entry_classification.rank, word.id ",
+        "FROM ", @v1_cedar, ".test_entry_classification AS v1_test_entry_classification ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_classification.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON transcription.participant_id = v1_assignment.participant_id ",
+        "JOIN test_entry ON transcription.id = test_entry.transcription_id ",
+        "JOIN test_type ON test_entry.test_type_id = test_type.id ",
+        "JOIN ", @v1_cedar, ".word AS v1_word ON v1_test_entry_classification.word_id = v1_word.id ",
+        "LEFT JOIN word USING( language_id, word ) ", -- left because "-" is a placeholder
+        "WHERE v1_test.name = 'FAS (s words)' ",
+        "AND test_type.name = 'S-Word Fluency (FAS-S)'" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
