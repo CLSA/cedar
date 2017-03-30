@@ -46,6 +46,9 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           var self = this;
           var guid = cenozo.generateGUID();
 
+          // remove spaces and anything
+          value = value.toLowerCase().replace( /[^-' a-zàâäçèéêëîïôûùü]/g, '' );
+
           self.lastGUID = guid;
           return $timeout( function() {
             // return an empty list if this isn't the last GUID
@@ -54,15 +57,15 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
             self.isLoading = true;
 
             // see if we have to rebuild the cache
-            var v3 = value.substring( 0, 3 );
+            var value3 = value.substring( 0, 3 );
             if( 0 == self.valueCache.length ||
-                3 > value.length || null == self.valueCache[0].word.match( '^' + v3 ) ) {
+                3 > value.length || null == self.valueCache[0].word.match( '^' + value3 ) ) {
               var where = [ {
                 column: 'misspelled', operator: '=', value: false
               }, {
                 column: 'word',
                 operator: 3 > value.length ? '=' : 'LIKE',
-                value: 3 > value.length ? value : v3 + '%'
+                value: 3 > value.length ? value : value3 + '%'
               } ];
 
               // only restrict by language if there are any in the list
@@ -93,8 +96,8 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
-  'CnHttpFactory', 'CnModalConfirmFactory', 'CnWordTypeaheadFactory', '$timeout',
-  function( CnHttpFactory, CnModalConfirmFactory, CnWordTypeaheadFactory, $timeout ) {
+  'CnHttpFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', 'CnWordTypeaheadFactory', '$timeout',
+  function( CnHttpFactory, CnModalMessageFactory, CnModalConfirmFactory, CnWordTypeaheadFactory, $timeout ) {
     return {
       construct: function( scope ) {
         scope.isComplete = false;
@@ -141,12 +144,26 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
             if( angular.isObject( scope.newWord ) ||
                 ( null == scope.typeaheadModel.lastGUID && 0 < scope.newWord.length ) ) {
               // prevent double-entry from enter key and typeahead selection
-              if( selected ) {
-                if( scope.preventSelectedNewWord ) {
-                  return;
+              var proceed = true;
+              if( !selected ) scope.preventSelectedNewWord = true;
+              else if( scope.preventSelectedNewWord ) proceed = false;
+
+              if( proceed && angular.isString( scope.newWord ) ) {
+                scope.newWord = scope.newWord.replace( /[—–]/g, '-' ); // get rid of en- and em-dashes
+                var invalidChar = scope.newWord.toLowerCase().match( /[^-' a-zàâäçèéêëîïôûùü]/ );
+                if( null != invalidChar ) {
+                  CnModalMessageFactory.instance( {
+                    title: 'Invalid Character',
+                    message: 'You cannot use the invalid character "' + invalidChar[0] + '".\n\n' +
+                             'Please enter the word using only letters (a-z or àâäçèéêëîïôûùü), ' +
+                             'single-quotes (\'), dashes (-) and spaces.',
+                    error: true
+                  } ).show();
+                  proceed = false;
                 }
-              } else scope.preventSelectedNewWord = true;
-              scope.submitWord( scope.newWord, selected );
+              }
+
+              if( proceed ) scope.submitWord( scope.newWord, selected );
             }
           },
           submitWord: function( word, selected ) {
@@ -496,8 +513,8 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
-  '$modal', '$timeout', 'CnHttpFactory', 'CnWordTypeaheadFactory',
-  function( $modal, $timeout, CnHttpFactory, CnWordTypeaheadFactory ) {
+  '$modal', '$timeout', 'CnHttpFactory', 'CnModalMessageFactory', 'CnWordTypeaheadFactory',
+  function( $modal, $timeout, CnHttpFactory, CnModalMessageFactory, CnWordTypeaheadFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Select Word';
@@ -519,7 +536,25 @@ cenozo.service( 'CnModalSelectWordFactory', [
               typeaheadModel: CnWordTypeaheadFactory.instance( {
                 getLanguageIdRestrictList: function() { return $scope.model.languageIdRestrictList; }
               } ),
-              proceed: function() { $modalInstance.close( $scope.word ); },
+              proceed: function() {
+                var proceed = true;
+                if( $scope.word ) {
+                  $scope.word = $scope.word.replace( /[—–]/g, '-' ); // get rid of en- and em-dashes
+                  var invalidChar = $scope.word.toLowerCase().match( /[^-' a-zàâäçèéêëîïôûùü]/ );
+                  if( null != invalidChar ) {
+                    CnModalMessageFactory.instance( {
+                      title: 'Invalid Character',
+                      message: 'You cannot use the invalid character "' + invalidChar[0] + '".\n\n' +
+                               'Please enter the word using only letters (a-z or àâäçèéêëîïôûùü), ' +
+                               'single-quotes (\'), dashes (-) and spaces.',
+                      error: true
+                    } ).show();
+                    proceed = false;
+                  }
+                }
+                
+                if( proceed ) $modalInstance.close( $scope.word );
+              },
               cancel: function() { $modalInstance.close( null ); },
               formatLabel: function( word ) {
                 return angular.isObject( word ) ? word.word + ' [' + word.code + ']' : '';

@@ -4,3 +4,6 @@ SET SESSION CHARACTER_SET_CLIENT =latin1;
 
 All accented characters:
 ÀàÁáÂâÃãÄäÇçÈèÉéÊêËëÌìÍíÎîÏïÑñÒòÓóÔôÕõÖöŠšÚùÛúÜûÙüÝýŸÿŽž
+
+French-only, lowercase, accented characters:
+àâäçèéêëîïôûùü
