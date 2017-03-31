@@ -91,15 +91,6 @@ define( function() {
     }
   } );
 
-  /*
-  module.addExtraOperation( 'view', {
-    title: 'Misspelled',
-    operation: function( $state, model ) {
-    },
-    isIncluded: function( $state, model ) { return model.getEditEnabled(); }
-  } );
-  */
-
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnWordAdd', [
     'CnWordModelFactory',
