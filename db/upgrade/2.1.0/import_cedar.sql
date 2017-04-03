@@ -198,6 +198,40 @@ CREATE PROCEDURE import_cedar()
       )
     );
 
+    -- convert cedar v1 data to utf8 if any will be needed
+    SET @existing_data_count = ( SELECT
+      ( SELECT COUNT(*) FROM word ) +
+      ( SELECT COUNT(*) FROM aft_data ) +
+      ( SELECT COUNT(*) FROM fas_data ) +
+      ( SELECT COUNT(*) FROM mat_data ) +
+      ( SELECT COUNT(*) FROM rey_data )
+    );
+
+    IF @existing_data_count = 0 THEN
+      SELECT "Converting old word table from latin1 to utf8" AS "";
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARCHAR(45) CHARACTER SET 'latin1' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARBINARY(45) NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+      
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARCHAR(45) CHARACTER SET 'utf8' COLLATE 'utf8_bin' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+    END IF;
+
     SELECT "Importing roles from v1" AS "";
 
     SET @sql = CONCAT(
@@ -530,6 +564,7 @@ CREATE PROCEDURE import_cedar()
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
+
     END IF;
 
     SELECT "Importing assignments from v1" AS "";
@@ -851,6 +886,40 @@ CREATE PROCEDURE import_cedar()
 
     DELETE FROM word
     WHERE id IN ( SELECT id FROM delete_word );
+
+    IF @existing_data_count = 0 THEN
+
+      SELECT "Converting old word table back from utf8 to latin1" AS "";
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARBINARY(45) NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+      
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARCHAR(45) CHARACTER SET 'latin1' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+      
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARCHAR(45) CHARACTER SET 'latin1' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".word ",
+        "MODIFY word VARCHAR(45) CHARACTER SET 'utf8' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+    END IF;
   END //
 DELIMITER ;
 

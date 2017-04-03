@@ -44,7 +44,8 @@ DROP PROCEDURE IF EXISTS patch_word;
           "REFERENCES word (id) ",
           "ON DELETE NO ACTION ",
           "ON UPDATE NO ACTION) ",
-      "ENGINE = InnoDB" );
+      "ENGINE = InnoDB ",
+      "DEFAULT CHARACTER SET = utf8" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;

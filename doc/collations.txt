@@ -7,3 +7,18 @@ All accented characters:
 
 French-only, lowercase, accented characters:
 àâäçèéêëîïôûùü
+
+To check if column's data is in UTF8 (will return a count of how many rows are encoded in UTF8):
+SELECT COUNT(*) FROM table
+WHERE
+CHAR_LENGTH( CONVERT( CONVERT( col
+  USING LATIN1 )
+  USING BINARY )
+)
+!=
+CHAR_LENGTH( CONVERT( CONVERT( CONVERT( CONVERT( col
+  USING LATIN1 )
+  USING BINARY )
+  USING UTF8 )
+  USING BINARY )
+);

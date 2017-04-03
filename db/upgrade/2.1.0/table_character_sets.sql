@@ -16,6 +16,7 @@ CREATE PROCEDURE patch_table_character_sets()
     SELECT TABLE_NAME
     FROM information_schema.TABLES
     WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME NOT IN ( "special_letter", "word" ) -- already using utf8
     AND IFNULL( TABLE_COLLATION, "utf8_general_ci" ) != "utf8_general_ci";
 
     -- Declare 'handlers' for exceptions
