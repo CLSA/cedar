@@ -876,7 +876,12 @@ CREATE PROCEDURE import_cedar()
 
     CREATE TEMPORARY TABLE delete_word
     SELECT id FROM word
-    WHERE word IN ( "participant provided no responses", "participant could not think of any words" );
+    -- remove special "no response" words"
+    WHERE word IN ( "participant provided no responses", "participant could not think of any words" )
+    -- remove words that don't start with a letter
+    OR word RLIKE "^[- ']"
+    -- remove english words with invalid characters
+    OR ( word RLIKE "[^- 'a-z]" AND misspelled = 1 );
 
     DELETE FROM aft_data
     WHERE word_id IN ( SELECT id FROM delete_word );
