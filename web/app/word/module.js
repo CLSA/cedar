@@ -167,7 +167,6 @@ define( function() {
         this.onPatch = function( data ) {
           if( angular.isDefined( data.misspelled ) && true == data.misspelled ) {
             // get correctly spelled word when marking word as misspelled
-            console.log( self.record );
             return CnModalSelectWordFactory.instance( {
               message: 'Please select the correct spelling for this word.\n\n' +
                        'If you provide a word then all test-entries using the misspelled word will be ' +

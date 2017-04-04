@@ -75,6 +75,7 @@ abstract class base_rank_data_post extends \cenozo\service\post
 
     // replace the data with the full record
     $record = $this->get_leaf_record();
+    $db_test_type = $record->get_test_entry()->get_test_type();
     $db_word = $record->get_word();
     $this->set_data( util::json_encode( array (
       'id' => $record->id,
@@ -82,8 +83,11 @@ abstract class base_rank_data_post extends \cenozo\service\post
       'word' => is_null( $db_word ) ? NULL : $db_word->word,
       'code' => is_null( $db_word ) ? NULL : $db_word->get_language()->code,
       'word_type' => is_null( $db_word ) ?
-        'placeholder' :
-        ( is_null( $db_word->$data_type ) ? 'variant' : $db_word->$data_type )
+        'placeholder' : (
+          is_null( $db_word->$data_type ) ? 'variant' : (
+            'aft' == $data_type ? $db_word->$data_type : $db_word->get_fas( $db_test_type )
+          )
+        )
     ) ) );
   }
 }

@@ -59,7 +59,6 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
             "[-' a-z" + validLetters + "]*" + 
             "[a-z" + validLetters + "]$"
           );
-          console.log( validLetters, re, word.match( re ) );
           return null != word.match( re );
         },
         getValues: function( value ) {
@@ -133,7 +132,6 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
           document.getElementById( 'newWord' ).focus();
         }
 
-        console.log( scope.model.testEntryModel );
         angular.extend( scope, {
           typeaheadModel: CnWordTypeaheadFactory.instance( {
             getLanguageIdRestrictList: function() { return scope.model.testEntryModel.viewModel.languageIdList; },
