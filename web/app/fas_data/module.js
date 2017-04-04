@@ -36,6 +36,7 @@ define( function() {
       var object = function( root, testEntryModel ) {
         CnBaseDataModelFactory.construct( this, module, root, CnFasDataViewFactory );
         angular.extend( this, {
+          testType: 'fas',
           viewModel: CnFasDataViewFactory.instance( this, root ),
           testEntryModel: testEntryModel
         } );

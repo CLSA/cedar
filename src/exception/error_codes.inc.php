@@ -21,6 +21,8 @@ define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
 /**
  * "argument" error codes
  */
+define( 'ARGUMENT__CEDAR_DATABASE_WORD____SET__ERRNO',
+        ARGUMENT_CEDAR_BASE_ERRNO + 1 );
 
 /**
  * "database" error codes

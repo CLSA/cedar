@@ -88,7 +88,8 @@ define( function() {
     fas: {
       title: 'FAS Type',
       type: 'enum'
-    }
+    },
+    language_id: { type: 'hidden' }
   } );
 
   /* ######################################################################################################## */
@@ -166,11 +167,13 @@ define( function() {
         this.onPatch = function( data ) {
           if( angular.isDefined( data.misspelled ) && true == data.misspelled ) {
             // get correctly spelled word when marking word as misspelled
+            console.log( self.record );
             return CnModalSelectWordFactory.instance( {
               message: 'Please select the correct spelling for this word.\n\n' +
                        'If you provide a word then all test-entries using the misspelled word will be ' +
                        'changed to the selected word. You may leave the replacement word blank if you do ' +
-                       'want test-entries to be affected.'
+                       'want test-entries to be affected.',
+              languageIdRestrictList: [ self.record.language_id ]
             } ).show().then( function( response ) {
               if( angular.isDefined( response ) && null == response ) {
                 self.record.misspelled = null == self.lastMisspelledValue

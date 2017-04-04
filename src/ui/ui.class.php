@@ -21,6 +21,9 @@ class ui extends \cenozo\ui\ui
   {
     parent::build_module_list();
 
+    $module = $this->get_module( 'language' );
+    if( !is_null( $module ) ) $module->add_child( 'special_letter' );
+
     $module = $this->get_module( 'participant' );
     if( !is_null( $module ) ) $module->add_child( 'transcription', 'address' );
 

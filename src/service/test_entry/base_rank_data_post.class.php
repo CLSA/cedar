@@ -40,14 +40,26 @@ abstract class base_rank_data_post extends \cenozo\service\post
         );
         if( is_null( $db_word ) )
         {
-          $db_word = lib::create( 'database\word' );
-          $db_word->language_id = $language_id;
-          $db_word->word = $word;
-          $db_word->save();
+          try
+          {
+            $db_word = lib::create( 'database\word' );
+            $db_word->language_id = $language_id;
+            $db_word->word = $word;
+            $db_word->save();
+          }
+          catch( \cenozo\exception\argument $e )
+          {
+            $this->get_status()->set_code( 409 );
+          }
         }
 
-        if( $db_word->misspelled ) $this->get_status()->set_code( 406 );
-        else $this->get_leaf_record()->word_id = $db_word->id;
+        if( 300 > $this->get_status()->get_code() )
+        {
+          $data_type = str_replace( '_data', '', $this->get_leaf_subject() );
+          if( $db_word->misspelled ) $this->get_status()->set_code( 406 );
+          else if( 'invalid' == $db_word->$data_type ) $this->get_status()->set_code( 409 );
+          else $this->get_leaf_record()->word_id = $db_word->id;
+        }
       }
     }
   }

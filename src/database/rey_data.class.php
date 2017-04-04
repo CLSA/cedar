@@ -98,4 +98,60 @@ class rey_data extends base_data
     );
     static::db()->execute( $sql );
   }
+
+  /**
+   * Returns whether or not any of the variant words use a particular language
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param int|array(int) $language_id
+   * @return boolean
+   * @access public
+   */
+  public function has_variant_language( $language )
+  {
+    $language = static::db()->format_string( is_array( $language ) ? implode( ',', $language ) : $language );
+    $sql = sprintf(
+      'SELECT '."\n".
+        'IFNULL( FIND_IN_SET( drum_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( curtain_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( bell_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( coffee_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( school_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( parent_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( moon_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( garden_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( hat_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( farmer_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( nose_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( turkey_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( colour_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( house_variant.language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( river_variant.language_id, %s ), 0 ) AS has_language'."\n".
+      'FROM rey_data'."\n".
+      'LEFT JOIN rey_data_variant AS drum_variant ON drum_rey_data_variant_id = drum_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS curtain_variant ON curtain_rey_data_variant_id = curtain_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS bell_variant ON bell_rey_data_variant_id = bell_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS coffee_variant ON coffee_rey_data_variant_id = coffee_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS school_variant ON school_rey_data_variant_id = school_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS parent_variant ON parent_rey_data_variant_id = parent_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS moon_variant ON moon_rey_data_variant_id = moon_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS garden_variant ON garden_rey_data_variant_id = garden_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS hat_variant ON hat_rey_data_variant_id = hat_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS farmer_variant ON farmer_rey_data_variant_id = farmer_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS nose_variant ON nose_rey_data_variant_id = nose_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS turkey_variant ON turkey_rey_data_variant_id = turkey_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS colour_variant ON colour_rey_data_variant_id = colour_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS house_variant ON house_rey_data_variant_id = house_variant.id'."\n".
+      'LEFT JOIN rey_data_variant AS river_variant ON river_rey_data_variant_id = river_variant.id'."\n".
+      'WHERE rey_data.id = %s',
+      $language, $language, $language, $language, $language, $language, $language, $language,
+      $language, $language, $language, $language, $language, $language, $language,
+      static::db()->format_string( $this->id )
+    );
+
+    \cenozo\database\database::$debug = true;
+    log::debug( static::db()->get_one( $sql ) );
+    \cenozo\database\database::$debug = false;
+
+    return 1 == static::db()->get_one( $sql );
+  }
 }
