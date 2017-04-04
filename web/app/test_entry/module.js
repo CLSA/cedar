@@ -138,7 +138,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             onKeyboardShortcut: function( event ) {
               if( angular.isObject( event ) && event.ctrlKey && event.shiftKey ) {
                 var action = null;
-                if( 191 == event.keyCode ) action = 'togglePlay'; // Ctrl + /
+                if( 76 == event.keyCode ) action = 'togglePlay'; // Ctrl + L
                 else if( 188 == event.keyCode ) action = 'rewind'; // Ctrl + <
                 else if( 190 == event.keyCode ) action = 'forward'; // Ctrl + >
 
