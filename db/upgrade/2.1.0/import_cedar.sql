@@ -223,10 +223,33 @@ CREATE PROCEDURE import_cedar()
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
-      
+
       SET @sql = CONCAT(
         "ALTER TABLE ", @v1_cedar, ".word ",
         "MODIFY word VARCHAR(45) CHARACTER SET 'utf8' COLLATE 'utf8_bin' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SELECT "Converting old test_entry_note table from latin1 to utf8" AS "";
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note TEXT CHARACTER SET 'latin1' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note BLOB NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note TEXT CHARACTER SET 'utf8' COLLATE 'utf8_bin' NOT NULL" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -479,7 +502,8 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, 'invalid', 'invalid' ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, ",
+          "language_id, word, true, 'invalid', 'invalid' ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'Animal_Name_Mispelled' ",
@@ -493,7 +517,8 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, 'invalid', 'invalid' ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, ",
+          "language_id, word, true, 'invalid', 'invalid' ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'A_Words_Mispelled' ",
@@ -508,7 +533,8 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, 'invalid', 'invalid' ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, ",
+          "language_id, word, true, 'invalid', 'invalid' ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'F_Words_Mispelled' ",
@@ -523,7 +549,8 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, 'invalid', 'invalid' ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, ",
+          "language_id, word, true, 'invalid', 'invalid' ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'S_Words_Mispelled' ",
@@ -538,7 +565,8 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, true, 'invalid', 'invalid' ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, ",
+          "language_id, word, true, 'invalid', 'invalid' ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'REY_Mispelled'" );
@@ -577,7 +605,7 @@ CREATE PROCEDURE import_cedar()
           "update_timestamp, create_timestamp, ",
           "user_id, participant_id, site_id, start_datetime, end_datetime ) ",
         "SELECT update_timestamp, create_timestamp, ",
-               "IF( end_datetime IS NULL, user_id, NULL ), participant_id, site_id, start_datetime, end_datetime ",
+          "IF( end_datetime IS NULL, user_id, NULL ), participant_id, site_id, start_datetime, end_datetime ",
         "FROM ", @v1_cedar, ".assignment AS v1_assignment" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
@@ -611,8 +639,8 @@ CREATE PROCEDURE import_cedar()
           "update_timestamp, create_timestamp, ",
           "transcription_id, test_type_id, audio_status, participant_status, state ) ",
         "SELECT v1_test_entry.update_timestamp, v1_test_entry.create_timestamp, ",
-               "transcription.id, test_type.id, audio_status, participant_status, ",
-               "IF( 'requested' = deferred, 'deferred', IF( 'submitted' = completed, 'submitted', 'assigned' ) ) ",
+          "transcription.id, test_type.id, audio_status, participant_status, ",
+          "IF( 'requested' = deferred, 'deferred', IF( 'submitted' = completed, 'submitted', 'assigned' ) ) ",
         "FROM ", @v1_cedar, ".test_entry AS v1_test_entry ",
         "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
         "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
@@ -641,6 +669,35 @@ CREATE PROCEDURE import_cedar()
       SET assigned_count = assigned,
           deferred_count = deferred,
           submitted_count = submitted;
+    END IF;
+
+    SELECT "Importing test-entry notes from v1" AS "";
+
+    SET @test = ( SELECT COUNT(*) FROM test_entry_note );
+
+    IF @test = 0 THEN
+      SET @sql = CONCAT(
+        "INSERT INTO test_entry_note( ",
+          "update_timestamp, create_timestamp, test_entry_id, user_id, sticky, datetime, note ) ",
+        "SELECT v1_test_entry_note.update_timestamp, v1_test_entry_note.create_timestamp, ",
+          "test_entry.id, v1_test_entry_note.user_id, v1_test_entry_note.sticky, ",
+          "v1_test_entry_note.datetime, v1_test_entry_note.note ",
+        "FROM ", @v1_cedar, ".test_entry_note AS v1_test_entry_note ",
+        "JOIN ", @v1_cedar, ".test_entry AS v1_test_entry ",
+          "ON v1_test_entry_note.test_entry_id = v1_test_entry.id ",
+        "JOIN ", @v1_cedar, ".assignment AS v1_assignment ON v1_test_entry.assignment_id = v1_assignment.id ",
+        "JOIN transcription ON v1_assignment.participant_id = transcription.participant_id ",
+        "JOIN ", @v1_cedar, ".test AS v1_test ON v1_test_entry.test_id = v1_test.id ",
+        "JOIN test_type ON ( v1_test.rank <= 6 AND test_type.rank = v1_test.rank ) OR ",
+          "( v1_test.rank = 7 AND test_type.rank = 6 ) OR ( ",
+          "v1_test.rank >= 8 AND test_type.rank >= 7 ",
+          "AND test_type.name LIKE CONCAT( '%', substring( v1_test.name, 1, 3 ), '%' ) ",
+        ") ",
+        "JOIN test_entry ON test_type.id = test_entry.test_type_id ",
+         "AND transcription.id = test_entry.transcription_id" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
     END IF;
 
     SELECT "Adding languages to test-entries" AS "";
@@ -874,16 +931,23 @@ CREATE PROCEDURE import_cedar()
 
     SELECT "Deleting no-response words from dictionary and data" AS "";
 
-    CREATE TEMPORARY TABLE delete_word
-    SELECT id FROM word
-    -- remove special "no response" words"
-    WHERE word IN ( "participant provided no responses", "participant could not think of any words" )
-    -- remove words that don't start with a letter
-    OR word RLIKE "^[- ']"
-    -- remove words that don't end with a letter
-    OR word RLIKE "[- ']$"
-    -- remove english words with invalid characters
-    OR ( word RLIKE "[^- 'a-z]" AND misspelled = 1 );
+    SET @sql = CONCAT(
+      "CREATE TEMPORARY TABLE delete_word ",
+      "SELECT word.id FROM word ",
+      "JOIN ", @cenozo, ".language ON word.language_id = language.id ",
+      -- remove special 'no response' words'
+      "WHERE word IN ( 'participant provided no responses', 'participant could not think of any words' ) ",
+      -- remove words that don't start with a letter
+      "OR word RLIKE \"^[- ']\" ",
+      -- remove words that don't end with a letter
+      "OR word RLIKE \"[- ']$\" ",
+      -- remove english words with invalid characters
+      "OR ( language.code = 'en' AND word RLIKE \"[^- 'a-z]\" AND misspelled = 1 )" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    ALTER TABLE delete_word ADD PRIMARY KEY (id);
 
     DELETE FROM aft_data
     WHERE word_id IN ( SELECT id FROM delete_word );
@@ -895,7 +959,6 @@ CREATE PROCEDURE import_cedar()
     WHERE id IN ( SELECT id FROM delete_word );
 
     IF @existing_data_count = 0 THEN
-
       SELECT "Converting old word table back from utf8 to latin1" AS "";
 
       SET @sql = CONCAT(
@@ -904,14 +967,7 @@ CREATE PROCEDURE import_cedar()
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
-      
-      SET @sql = CONCAT(
-        "ALTER TABLE ", @v1_cedar, ".word ",
-        "MODIFY word VARCHAR(45) CHARACTER SET 'latin1' NOT NULL" );
-      PREPARE statement FROM @sql;
-      EXECUTE statement;
-      DEALLOCATE PREPARE statement;
-      
+
       SET @sql = CONCAT(
         "ALTER TABLE ", @v1_cedar, ".word ",
         "MODIFY word VARCHAR(45) CHARACTER SET 'latin1' NOT NULL" );
@@ -926,6 +982,28 @@ CREATE PROCEDURE import_cedar()
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
 
+      SELECT "Converting old test_entry_note table back from utf8 to latin1" AS "";
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note BLOB NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note TEXT CHARACTER SET 'latin1' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "ALTER TABLE ", @v1_cedar, ".test_entry_note ",
+        "MODIFY note TEXT CHARACTER SET 'utf8' NOT NULL" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
     END IF;
   END //
 DELIMITER ;
