@@ -242,6 +242,22 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
   }
 ] );
 
+cenozo.directive( 'cnAudio', [
+  '$sce',
+  function( $sce ) {
+    return {
+      restrict: 'A',
+      scope: { cnAudio: '=' },
+      replace: true,
+      template: '<audio ng-src="{{url}}" type="audio/wav" controls></audio>',
+      link: function( scope ) {
+        scope.$watch( 'cnAudio', function( newVal, oldVal ) {
+          if( newVal !== undefined ) scope.url = $sce.trustAsResourceUrl( newVal );
+        } );
+      }
+    };
+  }
+] );
 
 /* ######################################################################################################## */
 cenozo.directive( 'cnSubmitWord', [

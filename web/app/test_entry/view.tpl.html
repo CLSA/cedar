@@ -93,12 +93,11 @@
             <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
               <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
               <div class="col-sm-9">
-                <audio id="soundFile{{ soundFile.id }}"
-                       class="full-width"
-                       ng-focus="selectSoundFile( soundFile.id )"
-                       controls>
-                  <source src="{{ soundFile.url }}" type="audio/wav" />
-                </audio>
+                <div id="soundFile{{ soundFile.id }}"
+                     class="full-width"
+                     ng-focus="selectSoundFile( soundFile.id )"
+                     cn-audio="soundFile.url">
+                </div>
               </div>
             </div>
           </div>

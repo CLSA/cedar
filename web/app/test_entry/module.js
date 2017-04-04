@@ -194,8 +194,10 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             scope.participantStatusList = angular.copy( participantStatus.enumList );
             if( !participantStatus.required )
               scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
+          } );
 
-            // attach the sound file elements to the view model's list of sound files
+          // attach the sound file elements to the view model's list of sound files
+          scope.model.viewModel.onViewPromise.then( function() {
             $timeout( function() {
               var audioList = element[0].querySelectorAll( 'audio' );
               audioList.forEach( function( audioEl ) {
