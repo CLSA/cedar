@@ -44,4 +44,24 @@ class word extends \cenozo\database\record
 
     parent::__set( $column_name, $value );
   }
+
+  /**
+   * Returns the qualified value for the fas column based on the test type
+   * 
+   * This is necessary since the f-test has only f-words primary, a-test a-words and s-test s-words
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param database\test_type $db_test_type
+   * @return string
+   * @access public
+   */
+  public function get_fas( $db_test_type )
+  {
+    if( is_null( $db_test_type ) || 'fas' != $db_test_type->data_type )
+      throw lib::create( 'exception\argument', 'db_test_type', $db_test_type, __METHOD__ );
+
+    return 'primary' == $this->fas ? (
+      strtolower( substr( $this->word, 0, 1 ) ) == strtolower( substr( $db_test_type->name, 0, 1 ) ) ?
+        'primary' : 'intrusion'
+      ) : $this->fas;
+  }
 }
