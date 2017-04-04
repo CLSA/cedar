@@ -72,6 +72,10 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           return $timeout( function() {
             // return an empty list if this isn't the last GUID
             if( guid != self.lastGUID ) return [];
+            if( !self.isWordValid( value ) ) {
+              self.resolveList( value );
+              return [];
+            }
 
             self.isLoading = true;
 
@@ -175,7 +179,7 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
               if( proceed && angular.isString( scope.newWord ) ) {
                 // get rid of en- and em-dashes
                 scope.newWord = scope.newWord.toLowerCase().replace( /[—–]/g, '-' );
-                if( !scope.typeaheadModel.isWordValid( scope.newWord ) ) {
+                if( !scope.typeaheadModel.isWordValid( scope.newWord ) && !scope.newWord.match( /^-+$/ ) ) {
                   CnModalMessageFactory.instance( {
                     title: 'Invalid Word',
                     message: 'The word you have provided is invalid.\n\n' +
