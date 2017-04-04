@@ -8,6 +8,7 @@ SOURCE role_has_service.sql
 SOURCE setting.sql
 SOURCE writelog.sql
 
+SOURCE special_letter.sql
 SOURCE word.sql
 SOURCE homophone.sql
 SOURCE transcription.sql
