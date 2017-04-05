@@ -154,12 +154,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory',
-    'CnModalMessageFactory', 'CnModalConfirmFactory', 'CnModalNewIntrusionFactory',
-    'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory,
-              CnModalMessageFactory, CnModalConfirmFactory, CnModalNewIntrusionFactory,
-              CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalNewIntrusionFactory', 'CnHttpFactory', '$q',
+    function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalNewIntrusionFactory, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -196,19 +192,12 @@ define( function() {
             var text = angular.isString( word ) ? word : word.word;
             var label = self.wordList.findByProperty( 'label', text.ucWords() );
             if( label ) {
-              return CnModalConfirmFactory.instance( {
-                title: 'Primary Word',
-                message: 'You have selected a primary word which is already listed above.\n' +
-                         'Do you want "' + text.ucWords() + '" to be set to Yes?'
-              } ).show().then( function( response ) {
-                if( response ) {
-                  var data = {};
-                  data[label.name] = 1;
-                  self.onPatch( data ).then( function() {
-                    self.record[label.name] = 1;
-                    self.record[label.name + '_rey_data_variant_id'] = '';
-                  } );
-                }
+              var data = {};
+              data[label.name] = 1;
+              return self.onPatch( data ).then( function() {
+                self.record[label.name] = 1;
+                self.record[label.name + '_rey_data_variant_id'] = '';
+                label.value = 1;
               } );
             } else {
               // check if the word is one of the REY variants
@@ -216,20 +205,22 @@ define( function() {
                 return obj.language_id == self.record.language_id;
               } ).findByProperty( 'name', text );
               if( variant ) {
-                return CnModalConfirmFactory.instance( {
-                  title: 'Variant Word',
-                  message: 'You have selected a variant of the word "' + variant.word + '".\n' +
-                           'Do you want "' + variant.word + '" to be set to the variant "' + text + '"?'
-                } ).show().then( function( response ) {
-                  if( response ) {
-                    var data = {};
-                    data[variant.word + '_rey_data_variant_id'] = variant.value;
-                    self.onPatch( data ).then( function() {
-                      self.record[variant.word + '_rey_data_variant_id'] = variant.value;
-                      self.record[variant.word] = '';
-                    } );
-                  }
-                } );
+                if( !variant.allowed ) {
+                  return CnModalMessageFactory.instance( {
+                    title: 'Variant Not Allowed',
+                    message: 'You have selected the variant word "' + text + '" which is currently disabled ' +
+                      'because the test-entry has not been identified as using the variant\'s language.\n\n' +
+                      'If you wish to select this variant you must enable the relevant language first.'
+                  } ).show();
+                } else {
+                  var data = {};
+                  data[variant.word + '_rey_data_variant_id'] = variant.value;
+                  return self.onPatch( data ).then( function() {
+                    self.record[variant.word + '_rey_data_variant_id'] = variant.value;
+                    self.record[variant.word] = '';
+                    self.wordList.findByProperty( 'name', variant.word ).value = 'variant' + variant.value;
+                  } );
+                }
               }
             }
 
