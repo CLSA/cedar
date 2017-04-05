@@ -40,8 +40,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnReyDataView', [
-    'CnReyDataModelFactory', 'CnHttpFactory', 'CnWordTypeaheadFactory', '$timeout',
-    function( CnReyDataModelFactory, CnHttpFactory, CnWordTypeaheadFactory, $timeout ) {
+    'CnReyDataModelFactory', 'CnModalMessageFactory', 'CnWordTypeaheadFactory', '$timeout',
+    function( CnReyDataModelFactory, CnModalMessageFactory, CnWordTypeaheadFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -51,6 +51,15 @@ define( function() {
           $scope.isComplete = false;
           $scope.isWorking = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
+
+          // update which variants are allowed every time the language list changes
+          $scope.model.metadata.getPromise().then( function() {
+            $scope.$watch( 'model.testEntryModel.viewModel.languageIdList', function( list ) {
+              $scope.model.variantList.forEach( function( variant ) {
+                variant.allowed = 0 <= list.indexOf( variant.variant_language_id );
+              } );
+            } );
+          } );
 
           angular.extend( $scope, {
             typeaheadModel: CnWordTypeaheadFactory.instance( {
@@ -64,22 +73,46 @@ define( function() {
               if( angular.isObject( $scope.newWord ) ||
                   ( null == $scope.typeaheadModel.lastGUID && 0 < $scope.newWord.length ) ) {
                 // prevent double-entry from enter key and typeahead selection
-                if( selected ) {
-                  if( $scope.preventSelectedNewWord ) {
-                    return;
-                  }
-                } else $scope.preventSelectedNewWord = true;
+                var proceed = true;
+                if( !selected ) $scope.preventSelectedNewWord = true;
+                else if( $scope.preventSelectedNewWord ) proceed = false;
 
-                $scope.isWorking = true;
-                var word = $scope.newWord;
-                $scope.newWord = '';
-                $scope.model.viewModel.submitIntrusion( word ).finally( function() {
-                  $scope.isWorking = false;
-                  $timeout( function() {
-                    if( !selected ) $scope.preventSelectedNewWord = false;
-                    document.getElementById( 'newWord' ).focus();
-                  }, 20 );
-                } );
+                if( proceed && angular.isString( $scope.newWord ) ) {
+                  // get rid of en- and em-dashes
+                  $scope.newWord = $scope.newWord.toLowerCase().replace( /[—–]/g, '-' );
+                  if( $scope.newWord.match( /^-+$/ ) ) {
+                    CnModalMessageFactory.instance( {
+                      title: 'Placeholders Not Allowed',
+                      message: 'You cannot use placeholders for the REY test.',
+                      error: true
+                    } ).show().then( function() { $scope.newWord = ''; } );
+                    proceed = false;
+                  } else if( !$scope.typeaheadModel.isWordValid( $scope.newWord ) ) {
+                    CnModalMessageFactory.instance( {
+                      title: 'Invalid Word',
+                      message: 'The word you have provided is invalid.\n\n' +
+                               'Please enter a word at least two characters long using only letters, ' + 
+                               'single-quotes (\'), dashes (-) and spaces, and which starts with at ' +
+                               'least one alphabetic letter.',
+                      error: true
+                    } ).show();
+                    proceed = false;
+                  }
+                }
+
+                if( proceed ) {
+                  var word = $scope.newWord;
+                  if( angular.isUndefined( selected ) ) selected = false;
+                  if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
+                  $scope.newWord = '';
+                  $scope.model.viewModel.submitIntrusion( word ).finally( function() {
+                    $scope.isWorking = false;
+                    $timeout( function() {
+                      if( !selected ) $scope.preventSelectedNewWord = false;
+                      document.getElementById( 'newWord' ).focus();
+                    }, 20 );
+                  } );
+                }
               }
             },
             deleteWord: function( word ) {
@@ -206,7 +239,8 @@ define( function() {
               // it's a new word, so double-check with the user before proceeding
               return CnModalNewIntrusionFactory.instance( {
                 word: word,
-                language_id: self.record.language_id
+                language_id: self.record.language_id,
+                languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
               } ).show().then( function( response ) {
                 if( null != response ) {
                   // make sure the intrusion doesn't already exist
@@ -326,14 +360,16 @@ define( function() {
 
             CnHttpFactory.instance( {
               path: 'rey_data_variant',
-              data: { select: { column: [ 'id', 'word', 'language_id', 'variant' ] } }
+              data: { select: { column: [ 'id', 'word', 'language_id', 'variant', 'variant_language_id' ] } }
             } ).query().then( function success( response ) {
               response.data.forEach( function( item ) {
                 self.variantList.push( {
                   value: item.id,
                   word: item.word,
                   language_id: item.language_id,
-                  name: item.variant
+                  name: item.variant,
+                  variant_language_id: item.variant_language_id,
+                  allowed: false
                 } );
               } );
             } ),

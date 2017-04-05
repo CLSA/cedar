@@ -23,6 +23,8 @@ define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
  */
 define( 'ARGUMENT__CEDAR_DATABASE_WORD____SET__ERRNO',
         ARGUMENT_CEDAR_BASE_ERRNO + 1 );
+define( 'ARGUMENT__CEDAR_DATABASE_WORD__GET_FAS__ERRNO',
+        ARGUMENT_CEDAR_BASE_ERRNO + 2 );
 
 /**
  * "database" error codes

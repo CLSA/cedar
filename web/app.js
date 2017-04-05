@@ -189,7 +189,6 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
                     error: true
                   } ).show();
                   proceed = false;
-                } else {
                 }
               }
 

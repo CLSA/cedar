@@ -148,10 +148,6 @@ class rey_data extends base_data
       static::db()->format_string( $this->id )
     );
 
-    \cenozo\database\database::$debug = true;
-    log::debug( static::db()->get_one( $sql ) );
-    \cenozo\database\database::$debug = false;
-
     return 1 == static::db()->get_one( $sql );
   }
 }

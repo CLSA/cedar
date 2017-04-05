@@ -45,10 +45,11 @@
                value="variant{{ variant.value }}"
                ng-model="word.value"
                ng-change="patch( word.name )"
-               ng-disabled="!isComplete || !editEnabled"
+               ng-disabled="!variant.allowed || !isComplete || !editEnabled"
                type="radio"></input>
         <label for="{{ word.name }}_{{ variant.name }}"
                class="control-label"
+               ng-style="{ color: !variant.allowed || !isComplete || !editEnabled ? '#ccc' : '' }"
                style="text-align: left; min-width: 6em;">{{ variant.name }}</label>
       </span>
     </div>
@@ -87,8 +88,6 @@
            ng-model="newWord"
            typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
                       for item in typeaheadModel.getValues( $viewValue )"
-           typeahead-editable="true"
-           typeahead-min-length="2"
            typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadModel.isLoading }"
            type="text"
