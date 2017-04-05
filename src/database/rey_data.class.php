@@ -111,21 +111,21 @@ class rey_data extends base_data
     $language = static::db()->format_string( is_array( $language ) ? implode( ',', $language ) : $language );
     $sql = sprintf(
       'SELECT '."\n".
-        'IFNULL( FIND_IN_SET( drum_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( curtain_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( bell_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( coffee_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( school_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( parent_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( moon_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( garden_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( hat_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( farmer_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( nose_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( turkey_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( colour_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( house_variant.language_id, %s ), 0 ) OR'."\n".
-        'IFNULL( FIND_IN_SET( river_variant.language_id, %s ), 0 ) AS has_language'."\n".
+        'IFNULL( FIND_IN_SET( drum_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( curtain_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( bell_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( coffee_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( school_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( parent_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( moon_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( garden_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( hat_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( farmer_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( nose_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( turkey_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( colour_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( house_variant.variant_language_id, %s ), 0 ) OR'."\n".
+        'IFNULL( FIND_IN_SET( river_variant.variant_language_id, %s ), 0 ) AS has_language'."\n".
       'FROM rey_data'."\n".
       'LEFT JOIN rey_data_variant AS drum_variant ON drum_rey_data_variant_id = drum_variant.id'."\n".
       'LEFT JOIN rey_data_variant AS curtain_variant ON curtain_rey_data_variant_id = curtain_variant.id'."\n".
