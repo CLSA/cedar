@@ -88,25 +88,28 @@ define( function() {
             },
             patch: function( property ) {
               if( $scope.model.getEditEnabled() ) {
+                // convert the word-list value into a record value
                 var data = {};
-                data[property] = $scope.model.viewModel.record[property];
-
-                if( 'language_id' == property ) $scope.isComplete = false;
-                $scope.model.viewModel.onPatch( data ).then( function() {
-                  if( 'language_id' == property ) {
-                    $scope.model.viewModel.onView().then( function() { $scope.isComplete = true; } );
+                if( 'language_id' == property ) {
+                  $scope.isComplete = false;
+                  data.language_id = $scope.model.viewModel.record.language_id;
+                } else {
+                  var variantProperty = property + '_rey_data_variant_id';
+                  var wordValue = $scope.model.viewModel.wordList.findByProperty( 'name', property ).value;
+                  var match = wordValue.match( /variant([0-9]+)/ );
+                  if( null == match ) {
+                    data[property] = parseInt( wordValue );
+                    data[variantProperty] = null;
                   } else {
-                    // All words may only have a boolean value or a variant value, so if we're setting the word
-                    // or a variant to anything other than null make sure to empty the other value (the same is
-                    // automatically done on the server)
-                    if( '' != data[property] ) {
-                      var match = property.match( /_rey_data_variant_id/ );
-                      var otherProperty = match
-                                        ? property.substring( 0, match.index )
-                                        : property + '_rey_data_variant_id';
-                      $scope.model.viewModel.record[otherProperty] = '';
-                    }
+                    data[property] = null;
+                    data[variantProperty] = parseInt( match[1] );
                   }
+                }
+
+                $scope.model.viewModel.onPatch( data ).then( function() {
+                  // refresh the view if we've changed the language
+                  if( 'language_id' == property )
+                    $scope.model.viewModel.onView().then( function() { $scope.isComplete = true; } );
                 } );
               }
             }
@@ -158,7 +161,7 @@ define( function() {
 
             // check if the word is one of the REY words
             var text = angular.isString( word ) ? word : word.word;
-            var label = self.labelList.findByProperty( 'label', text.ucWords() );
+            var label = self.wordList.findByProperty( 'label', text.ucWords() );
             if( label ) {
               return CnModalConfirmFactory.instance( {
                 title: 'Primary Word',
@@ -254,42 +257,49 @@ define( function() {
           },
           updateLabelList: function() {
             if( 'fr' == self.record.language_code ) {
-              self.labelList = [
-                { name: 'drum', label: 'Tambour', },
-                { name: 'curtain', label: 'Rideau', },
-                { name: 'bell', label: 'Cloche', },
-                { name: 'coffee', label: 'Café', },
-                { name: 'school', label: 'École', },
-                { name: 'parent', label: 'Parent', },
-                { name: 'moon', label: 'Lune', },
-                { name: 'garden', label: 'Jardin', },
-                { name: 'hat', label: 'Chapeau', },
-                { name: 'farmer', label: 'Fermier', },
-                { name: 'nose', label: 'Nez', },
-                { name: 'turkey', label: 'Dinde', },
-                { name: 'colour', label: 'Couleur', },
-                { name: 'house', label: 'Maison', },
-                { name: 'river', label: 'Rivière' }
+              self.wordList = [
+                { name: 'drum', label: 'Tambour', value: null },
+                { name: 'curtain', label: 'Rideau', value: null },
+                { name: 'bell', label: 'Cloche', value: null },
+                { name: 'coffee', label: 'Café', value: null },
+                { name: 'school', label: 'École', value: null },
+                { name: 'parent', label: 'Parent', value: null },
+                { name: 'moon', label: 'Lune', value: null },
+                { name: 'garden', label: 'Jardin', value: null },
+                { name: 'hat', label: 'Chapeau', value: null },
+                { name: 'farmer', label: 'Fermier', value: null },
+                { name: 'nose', label: 'Nez', value: null },
+                { name: 'turkey', label: 'Dinde', value: null },
+                { name: 'colour', label: 'Couleur', value: null },
+                { name: 'house', label: 'Maison', value: null },
+                { name: 'river', label: 'Rivière', value: null }
               ];
             } else {
-              self.labelList = [
-                { name: 'drum', label: 'Drum', },
-                { name: 'curtain', label: 'Curtain', },
-                { name: 'bell', label: 'Bell', },
-                { name: 'coffee', label: 'Coffee', },
-                { name: 'school', label: 'School', },
-                { name: 'parent', label: 'Parent', },
-                { name: 'moon', label: 'Moon', },
-                { name: 'garden', label: 'Garden', },
-                { name: 'hat', label: 'Hat', },
-                { name: 'farmer', label: 'Farmer', },
-                { name: 'nose', label: 'Nose', },
-                { name: 'turkey', label: 'Turkey', },
-                { name: 'colour', label: 'Colour', },
-                { name: 'house', label: 'House', },
-                { name: 'river', label: 'River' }
+              self.wordList = [
+                { name: 'drum', label: 'Drum', value: null },
+                { name: 'curtain', label: 'Curtain', value: null },
+                { name: 'bell', label: 'Bell', value: null },
+                { name: 'coffee', label: 'Coffee', value: null },
+                { name: 'school', label: 'School', value: null },
+                { name: 'parent', label: 'Parent', value: null },
+                { name: 'moon', label: 'Moon', value: null },
+                { name: 'garden', label: 'Garden', value: null },
+                { name: 'hat', label: 'Hat', value: null },
+                { name: 'farmer', label: 'Farmer', value: null },
+                { name: 'nose', label: 'Nose', value: null },
+                { name: 'turkey', label: 'Turkey', value: null },
+                { name: 'colour', label: 'Colour', value: null },
+                { name: 'house', label: 'House', value: null },
+                { name: 'river', label: 'River', value: null }
               ];
             }
+
+            self.wordList.forEach( function( word ) {
+              var variantProperty = word.name + '_rey_data_variant_id';
+              if( Number.isInteger( self.record[word.name] ) ) word.value = self.record[word.name];
+              else if( Number.isInteger( self.record[variantProperty] ) )
+                word.value = 'variant' + self.record[variantProperty];
+            } );
           }
         } );
       }

@@ -14,33 +14,43 @@
     </div>
   </div>
   <hr/>
-  <div ng-repeat="word in model.viewModel.labelList" class="form-group" style="padding-bottom: 2px;">
-    <label for="{{ word.name }}" class="col-sm-3 control-label">{{ word.label }}</label>
-    <div class="col-sm-3">
-      <select id="{{ word.name }}"
-              name="{{ word.name }}"
-              ng-model="model.viewModel.record[word.name]"
-              ng-change="patch( word.name )"
-              ng-disabled="!isComplete || !editEnabled"
-              class="form-control">
-        <option value="">(empty)</option>
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-      </select>
+  <div ng-repeat="word in model.viewModel.wordList"
+       class="form-group"
+       ng-style="{ 'background-color': 0==$index%2 ? '#f5f5f5' : '' }"
+       style="padding-bottom: 2px; margin: 0px;">
+    <label class="col-sm-3 control-label">{{ word.label }}</label>
+    <div class="col-sm-4" style="text-align: center;">
+      <input id="{{ word.name }}_yes"
+             value="1"
+             ng-model="word.value"
+             ng-change="patch( word.name )"
+             ng-disabled="!isComplete || !editEnabled"
+             type="radio"></input>
+      <label for="{{ word.name }}_yes"
+             class="control-label"
+             style="text-align: left; min-width: 4em;">Yes</label>
+      <input id="{{ word.name }}_no"
+             value="0"
+             ng-model="word.value"
+             ng-change="patch( word.name )"
+             ng-disabled="!isComplete || !editEnabled"
+             type="radio"></input>
+      <label for="{{ word.name }}_no" class="control-label">No</label>
     </div>
-    <label for="{{ word.name }}_rey_data_variant_id" class="col-sm-1 control-label">variant</label>
-    <div class="col-sm-5" ng-init="emptyItem={'value':'','name':'(empty)'}">
-      <select id="{{ word.name }}_rey_data_variant_id"
-              name="{{ word.name }}_rey_data_variant_id"
-              ng-options="item.value as item.name for item in model.variantList |
-                            cnByObjectProperty:'language_id':model.viewModel.record.language_id |
-                            cnByObjectProperty:'word':word.name |
-                            cnAddItem:emptyItem:true"
-              ng-model="model.viewModel.record[word.name+'_rey_data_variant_id']"
-              ng-change="patch( word.name+'_rey_data_variant_id' )"
-              ng-disabled="!isComplete || !editEnabled"
-              class="form-control">
-      </select>
+    <div class="col-sm-5">
+      <span ng-repeat="variant in model.variantList |
+                      cnByObjectProperty:'language_id':model.viewModel.record.language_id |
+                      cnByObjectProperty:'word':word.name">
+        <input id="{{ word.name }}_{{ variant.name }}"
+               value="variant{{ variant.value }}"
+               ng-model="word.value"
+               ng-change="patch( word.name )"
+               ng-disabled="!isComplete || !editEnabled"
+               type="radio"></input>
+        <label for="{{ word.name }}_{{ variant.name }}"
+               class="control-label"
+               style="text-align: left; min-width: 6em;">{{ variant.name }}</label>
+      </span>
     </div>
   </div>
 </div>
