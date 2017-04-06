@@ -53,7 +53,8 @@ CREATE PROCEDURE import_rey_word( rank INT, word VARCHAR(7) )
         "ON v1_test_entry.id = v1_test_entry_has_language.test_entry_id ",
       "JOIN ", @v1_cedar, ".word AS v1_word ",
         "ON v1_test_entry_ranked_word.word_id = v1_word.id ",
-      "JOIN rey_data_variant ON v1_word.word = rey_data_variant.variant ",
+      "JOIN word ON v1_word.language_id = word.language_id AND v1_word.word = word.word ",
+      "JOIN rey_data_variant ON word.id = rey_data_variant.word_id ",
        "AND v1_test_entry_has_language.language_id = rey_data_variant.language_id ",
       "WHERE test_type.name = 'Immediate Word List (REY1)' ",
       "AND v1_test.name = 'REY' ",
@@ -137,7 +138,8 @@ CREATE PROCEDURE import_rey_word( rank INT, word VARCHAR(7) )
         "ON v1_test_entry.id = v1_test_entry_has_language.test_entry_id ",
       "JOIN ", @v1_cedar, ".word AS v1_word ",
         "ON v1_test_entry_ranked_word.word_id = v1_word.id ",
-      "JOIN rey_data_variant ON v1_word.word = rey_data_variant.variant ",
+      "JOIN word ON v1_word.language_id = word.language_id AND v1_word.word = word.word ",
+      "JOIN rey_data_variant ON word.id = rey_data_variant.word_id ",
        "AND v1_test_entry_has_language.language_id = rey_data_variant.language_id ",
       "WHERE test_type.name = 'Delayed Word List (REY2)' ",
       "AND v1_test.name = 'REY II' ",
@@ -490,7 +492,7 @@ CREATE PROCEDURE import_cedar()
 
       SET @sql = CONCAT(
         "INSERT IGNORE INTO word( update_timestamp, create_timestamp, language_id, word, misspelled, aft, fas ) ",
-        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, NULL, NULL, NULL ",
+        "SELECT v1_word.update_timestamp, v1_word.create_timestamp, language_id, word, 0, NULL, NULL ",
         "FROM ", @v1_cedar, ".word AS v1_word ",
         "JOIN ", @v1_cedar, ".dictionary AS v1_dictionary ON v1_dictionary.id = v1_word.dictionary_id ",
         "WHERE v1_dictionary.name = 'REY_Variant'" );
@@ -589,6 +591,190 @@ CREATE PROCEDURE import_cedar()
         "AND v1_dictionary.name NOT LIKE '%mispelled%' ",
         "AND v1_dictionary.name NOT IN( 'alpha_numeric', 'confirmation' ) ",
         "AND CHAR_LENGTH( v1_word.word ) > 1" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+    END IF;
+
+    SET @test = ( SELECT COUNT(*) FROM rey_data_variant );
+
+    IF @test = 0 THEN
+      SELECT "Importing REY variant words from v1" AS "";
+
+      SET @sql = CONCAT( "SELECT id INTO @en_language_id FROM ", @cenozo, ".language WHERE code = 'en'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT( "SELECT id INTO @fr_language_id FROM ", @cenozo, ".language WHERE code = 'fr'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      -- make sure all REY words are already in the dictionary
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO word( language_id, word, misspelled ) ",
+        "SELECT language.id, temp.word, 0 ",
+        "FROM ", @cenozo, ".language, ( ",
+          "SELECT 'armour' AS word UNION ",
+          "SELECT 'ball' AS word UNION ",
+          "SELECT 'bell' AS word UNION ",
+          "SELECT 'certain' AS word UNION ",
+          "SELECT 'coffee' AS word UNION ",
+          "SELECT 'collar' AS word UNION ",
+          "SELECT 'colour' AS word UNION ",
+          "SELECT 'cool' AS word UNION ",
+          "SELECT 'curtain' AS word UNION ",
+          "SELECT 'drub' AS word UNION ",
+          "SELECT 'drum' AS word UNION ",
+          "SELECT 'dumb' AS word UNION ",
+          "SELECT 'farmer' AS word UNION ",
+          "SELECT 'former' AS word UNION ",
+          "SELECT 'garden' AS word UNION ",
+          "SELECT 'hat' AS word UNION ",
+          "SELECT 'house' AS word UNION ",
+          "SELECT 'moon' AS word UNION ",
+          "SELECT 'nose' AS word UNION ",
+          "SELECT 'river' AS word UNION ",
+          "SELECT 'school' AS word UNION ",
+          "SELECT 'turkey' AS word ",
+        ") AS temp ",
+        "WHERE language.code = 'en'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO word( language_id, word, misspelled ) ",
+        "SELECT language.id, temp.word, 0 ",
+        "FROM ", @cenozo, ".language, ( ",
+          "SELECT 'café' AS word UNION ",
+          "SELECT 'chapeau' AS word UNION ",
+          "SELECT 'cloche' AS word UNION ",
+          "SELECT 'colle' AS word UNION ",
+          "SELECT 'couleur' AS word UNION ",
+          "SELECT 'couleuvre' AS word UNION ",
+          "SELECT 'dinde' AS word UNION ",
+          "SELECT 'école' AS word UNION ",
+          "SELECT 'fermier' AS word UNION ",
+          "SELECT 'jardin' AS word UNION ",
+          "SELECT 'lit d\\’eau' AS word UNION ",
+          "SELECT 'lune' AS word UNION ",
+          "SELECT 'maison' AS word UNION ",
+          "SELECT 'nez' AS word UNION ",
+          "SELECT 'rideau' AS word UNION ",
+          "SELECT 'rivière' AS word UNION ",
+          "SELECT 'tambour' AS word ",
+        ") AS temp ",
+        "WHERE language.code = 'fr'" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO rey_data_variant( word, language_id, word_id ) ",
+        "SELECT word.word, ", @en_language_id, ", variant_word.id ",
+        "FROM word ",
+        "JOIN ", @cenozo, ".language ON word.language_id = language.id ",
+        "CROSS JOIN word AS variant_word ",
+        "JOIN ", @cenozo, ".language AS variant_language ON variant_word.language_id = variant_language.id ",
+        "WHERE language.code = 'en' AND ( ",
+          "word.word = 'drum' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word IN ( 'dumb', 'drub' ) ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'tambour' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'curtain' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word = 'certain' ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'rideau' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'bell' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word = 'ball' ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'cloche' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'coffee' AND variant_language.code = 'fr' AND variant_word.word = 'café' ",
+        ") OR ( ",
+          "word.word = 'school' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word = 'cool' ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'école' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'moon' AND variant_language.code = 'fr' AND variant_word.word = 'lune' ",
+        ") OR ( ",
+          "word.word = 'garden' AND variant_language.code = 'fr' AND variant_word.word = 'jardin' ",
+        ") OR ( ",
+          "word.word = 'hat' AND variant_language.code = 'fr' AND variant_word.word = 'chapeau' ",
+        ") OR ( ",
+          "word.word = 'farmer' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word IN ( 'former', 'armour' ) ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'fermier' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'nose' AND variant_language.code = 'fr' AND variant_word.word = 'nez' ",
+        ") OR ( ",
+          "word.word = 'turkey' AND variant_language.code = 'fr' AND variant_word.word = 'dinde' ",
+        ") OR ( ",
+          "word.word = 'colour' AND ( ",
+            "( variant_language.code = 'en' AND variant_word.word = 'collar' ) OR "
+            "( variant_language.code = 'fr' AND variant_word.word = 'couleur' ) "
+          ") ",
+        ") OR ( ",
+          "word.word = 'house' AND variant_language.code = 'fr' AND variant_word.word = 'maison' ",
+        ") OR ( ",
+          "word.word = 'river' AND variant_language.code = 'fr' AND variant_word.word = 'rivière' ",
+        ")" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
+
+      SET @sql = CONCAT(
+        "INSERT IGNORE INTO rey_data_variant( word, language_id, word_id ) ",
+        "SELECT word.word, ", @fr_language_id, ", variant_word.id ",
+        "FROM word ",
+        "JOIN ", @cenozo, ".language ON word.language_id = language.id ",
+        "CROSS JOIN word AS variant_word ",
+        "JOIN ", @cenozo, ".language AS variant_language ON variant_word.language_id = variant_language.id ",
+        "WHERE language.code = 'en' AND ( ",
+          "word.word = 'drum' AND variant_language.code = 'en' AND variant_word.word = 'drum' "
+        ") OR ( ",
+          "word.word = 'curtain' AND ( ",
+            "( variant_language.code = 'fr' AND variant_word.word = 'lit d\\'eau' ) OR ",
+            "( variant_language.code = 'en' AND variant_word.word = 'curtain' ) ",
+          ") ",
+        ") OR ( ",
+          "word.word = 'bell' AND variant_language.code = 'en' AND variant_word.word = 'bell' ",
+        ") OR ( ",
+          "word.word = 'coffee' AND variant_language.code = 'en' AND variant_word.word = 'coffee' ",
+        ") OR ( ",
+          "word.word = 'school' AND ( ",
+            "( variant_language.code = 'fr' AND variant_word.word = 'colle' ) OR ",
+            "( variant_language.code = 'en' AND variant_word.word = 'school' ) ",
+          ") ",
+        ") OR ( ",
+          "word.word = 'moon' AND variant_language.code = 'en' AND variant_word.word = 'moon' ",
+        ") OR ( ",
+          "word.word = 'garden' AND variant_language.code = 'en' AND variant_word.word = 'garden' ",
+        ") OR ( ",
+          "word.word = 'hat' AND variant_language.code = 'en' AND variant_word.word = 'hat' ",
+        ") OR ( ",
+          "word.word = 'farmer' AND variant_language.code = 'en' AND variant_word.word = 'farmer' ",
+        ") OR ( ",
+          "word.word = 'nose' AND variant_language.code = 'en' AND variant_word.word = 'nose' ",
+        ") OR ( ",
+          "word.word = 'turkey' AND variant_language.code = 'en' AND variant_word.word = 'turkey' ",
+        ") OR ( ",
+          "word.word = 'colour' AND ( ",
+            "( variant_language.code = 'fr' AND variant_word.word = 'couleuvre' ) OR ",
+            "( variant_language.code = 'en' AND variant_word.word = 'colour' ) ",
+          ") ",
+        ") OR ( ",
+          "word.word = 'house' AND variant_language.code = 'en' AND variant_word.word = 'house' ",
+        ") OR ( ",
+          "word.word = 'river' AND variant_language.code = 'en' AND variant_word.word = 'river' ",
+        ")" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
@@ -957,6 +1143,10 @@ CREATE PROCEDURE import_cedar()
 
     DELETE FROM word
     WHERE id IN ( SELECT id FROM delete_word );
+
+    UPDATE word SET fas = "intrusion"
+    WHERE SUBSTRING( word, 1, 1 ) NOT IN ( "f", "a", "à", "â", "ä", "s" )
+    AND IFNULL( misspelled, 0 ) != 1;
 
     IF @existing_data_count = 0 THEN
       SELECT "Converting old word table back from utf8 to latin1" AS "";
