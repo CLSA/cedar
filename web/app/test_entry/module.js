@@ -200,7 +200,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           scope.model.viewModel.onViewPromise.then( function() {
             $timeout( function() {
               var audioList = element[0].querySelectorAll( 'audio' );
-              audioList.forEach( function( audioEl ) {
+              [].forEach.call( audioList, function( audioEl ) {
                 var id = audioEl.id.replace( 'soundFile', '' );
                 scope.model.viewModel.soundFileList.findByProperty( 'id', id ).element = audioEl;
               } );
