@@ -12,13 +12,38 @@ define( function() {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?', editEnabled: '=' },
-        controller: function( $scope ) { 
+        controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnPrematDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
+            cursor: null,
+            cursorType: null,
+            toggleCursor: function( rank ) {
+              if( null == $scope.cursorType ) {
+                $scope.cursorType = 'insert';
+                $scope.cursor = rank;
+              } else if( 'insert' == $scope.cursorType ) {
+                if( rank == $scope.cursor ) {
+                  $scope.cursorType = 'replace';
+                } else {
+                  $scope.cursorType = 'insert';
+                  $scope.cursor = rank;
+                }
+              } else {
+                if( rank == $scope.cursor ) {
+                  $scope.cursorType = null;
+                  $scope.cursor = null;
+                } else {
+                  $scope.cursorType = 'insert';
+                  $scope.cursor = rank;
+                }
+              }
+
+              document.getElementById( 'newWord' ).focus();
+            },
             newWordCache: '',
             checkNewWord: function() {
               // if the match fails then go back to the cache
@@ -30,24 +55,34 @@ define( function() {
             submitNewWord: function() {
               if( 0 < $scope.newWord.length ) {
                 $scope.isWorking = true;
-                $scope.model.viewModel.submitWord( $scope.newWord )
+                $scope.model.viewModel.submitWord( $scope.newWord, $scope.cursor, 'replace' == $scope.cursorType )
                   .then( function() { $scope.newWord = ''; $scope.newWordCache = ''; } )
                   .finally( function() {
+                    $scope.cursor = null;
+                    $scope.cursorType = null;
                     $scope.isWorking = false;
                     $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
                   } );
               }
             },
-            changeWord: function( index ) {
+            removeWord: function( index ) {
               $scope.isWorking = true;
-              $scope.model.viewModel.changeWord( index ).finally( function() { $scope.isWorking = false; } );
-            },
-            deleteWord: function( index ) {
-              $scope.isWorking = true;
-              $scope.model.viewModel.deleteWord( index ).finally( function() { $scope.isWorking = false; } );
+              $scope.model.viewModel.deleteWord( index ).finally( function() {
+                // we may have to change the cursor if it is no longer valid
+                if( null != $scope.cursor ) {
+                  var len = $scope.model.viewModel.record.length;
+                  if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor ) {
+                    $scope.cursor = null;
+                    $scope.cursorType = null;
+                  }
+                }
+
+                $scope.isWorking = false;
+                document.getElementById( 'newWord' ).focus();
+              } );
             }
           } );
-        }   
+        }
       }
     }
   ] );
@@ -61,12 +96,36 @@ define( function() {
         CnBaseDataViewFactory.construct( this, parentModel, root );
 
         angular.extend( this, {
-          submitWord: function( word ) {
+          submitWord: function( word, rank, replace ) {
+            var data = { value: word };
+            if( null != rank ) data.rank = rank;
+
             return CnHttpFactory.instance( {
               path: this.parentModel.getServiceResourcePath(),
-              data: { value: word }
+              data: data
             } ).post().then( function( response ) {
-              self.record.push( { id: response.data, word: word } );
+              if( null != rank ) {
+                var index = self.record.findIndexByProperty( 'rank', rank );
+                if( null != index ) {
+                  // remove the word at the found index if we are in replace mode
+                  if( replace ) {
+                    return CnHttpFactory.instance( {
+                      path: self.parentModel.getServiceResourcePath() + '/' + self.record[index].id
+                    } ).delete().then( function() {
+                      self.record.splice( index, 1, response.data );
+                    } );
+                  } else {
+                    self.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                    self.record.splice( index, 0, response.data );
+                  }
+                } else {
+                  console.warning(
+                    'Tried inserting word at rank "' + rank + '", which was not found in the list'
+                  );
+                }
+              } else {
+                self.record.push( response.data );
+              }
             } );
           },
           deleteWord: function( index ) {
@@ -76,14 +135,6 @@ define( function() {
               } ).delete().then( function() {
                 self.record.splice( index, 1 );
               } );
-            } else return $q.all();
-          },
-          changeWord: function( index ) {
-            if( angular.isDefined( this.record[index] ) ) {
-              return CnHttpFactory.instance( {
-                path: this.parentModel.getServiceResourcePath() + '/' + this.record[index].id,
-                data: { value: this.record[index].word }
-              } ).patch()
             } else return $q.all();
           }
         } );
@@ -109,7 +160,7 @@ define( function() {
               order: { rank: false },
               limit: 10000 // do not limit the number of records returned
             } );
-            data.select = { column: [ 'id', { column: 'value', alias: 'word' } ] };
+            data.select = { column: [ 'id', 'rank', { column: 'value', alias: 'word' } ] };
           }
           return data;
         };

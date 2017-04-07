@@ -1,6 +1,6 @@
 <div class="form-group first-form-group" ng-show="editEnabled">
   <label for="newWord" class="col-sm-3 control-label">Enter Number or Letter</label>
-  <div class="col-sm-3">
+  <div class="col-sm-9">
     <input class="form-control"
            id="newWord"
            name="newWord"
@@ -8,36 +8,48 @@
            ng-model="newWord"
            ng-change="checkNewWord()"
            cn-submit-word="submitNewWord()"
-           ng-disabled="!isComplete || isWorking"
-           autofocus></input>
+           ng-disabled="!isComplete || isWorking || !editEnabled"
+           cn-autofocus></input>
+    <div class="col-sm-6 form-text">(only numbers or a single letter is accepted)</div>
   </div>
-  <div class="col-sm-6 form-text">(only numbers or a single letter is accepted)</div>
 </div>
 <hr ng-show="editEnabled" />
-<div class="container-fluid loading" ng-if="!isComplete" ng-class="{ 'first-form-group': !editEnabled }"></div>
-<div class="container-fluid" ng-if="isComplete" ng-class="{ 'first-form-group': !editEnabled }">
+<div class="container-fluid loading" ng-if="!isComplete"></div>
+<div class="container-fluid" ng-class="{ 'first-form-group': !editEnabled }" ng-if="isComplete">
   <div ng-if="0 == model.viewModel.record.length" class="text-info">
     No words have been entered.
   </div>
-  <div class="row" ng-repeat="doNotUse in model.viewModel.record track by $index" ng-if="$index % 6 == 0">
-    <div class="col-sm-2 input-box"
+  <div class="row"
+       style="margin-bottom: 4px;"
+       ng-repeat="doNotUse in model.viewModel.record track by $index" ng-if="$index % 6 == 0">
+    <div class="col-sm-2 col-slim"
          ng-repeat="i in [$index, $index+1, $index+2, $index+3, $index+4, $index+5]"
          ng-if="null != model.viewModel.record[i]">
-      <div>
-        <div class="col-slim" ng-class="editEnabled ? 'col-xs-9' : 'col-xs-12'">
-          <input class="form-control"
-                 type="text"
-                 ng-model="model.viewModel.record[i].word"
-                 ng-change="changeWord(i)"
-                 ng-disabled="!isComplete || isWorking || !editEnabled"></input>
-        </div>
-        <div class="col-xs-2 col-slim" ng-show="editEnabled">
-          <button class="btn btn-danger"
-                  ng-disabled="isWorking"
-                  ng-click="deleteWord(i)">
-            <i class="glyphicon glyphicon-remove"></i>
-          </button>
-        </div>
+      <div class="col-xs-4" ng-if="editEnabled">
+        <button class="btn btn-default"
+                ng-class="{ 'active': cursor == model.viewModel.record[i].rank }"
+                type="button"
+                tooltip="{{
+                  cursor != model.viewModel.record[i].rank ? 'Insert Here' :
+                  ( 'insert' == cursorType ? 'Replace Here' : 'Remove Replace' )
+                }}"
+                ng-disabled="isWorking || !editEnabled"
+                ng-click="toggleCursor( model.viewModel.record[i].rank )">
+          <i class="glyphicon" ng-class="{
+            'glyphicon-unchecked': cursor != model.viewModel.record[i].rank,
+            'glyphicon-log-in': cursor == model.viewModel.record[i].rank && 'insert' == cursorType,
+            'glyphicon-new-window': cursor == model.viewModel.record[i].rank && 'replace' == cursorType
+          }"></i>
+        </button>
+      </div>
+      <div ng-class="editEnabled ? 'col-xs-8' : 'col-xs-12'">
+        <button class="btn btn-default full-width"
+                type="button"
+                tooltip="Click to remove"
+                ng-disabled="isWorking || !editEnabled"
+                ng-click="removeWord( i )">
+          {{ model.viewModel.record[i].word }}
+        </button>
       </div>
     </div>
   </div>
