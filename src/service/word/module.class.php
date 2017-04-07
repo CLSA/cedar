@@ -29,7 +29,15 @@ class module extends \cenozo\service\module
     if( $select->has_table_columns( 'animal_language' ) || !is_null( $this->get_resource() ) )
       $modifier->left_join( 'language', 'animal_word.language_id', 'animal_language.id', 'animal_language' );
     if( $select->has_table_columns( 'sister_word' ) || !is_null( $this->get_resource() ) )
+    {
       $modifier->left_join( 'word', 'word.sister_word_id', 'sister_word.id', 'sister_word' );
+    }
+    else if( $select->has_column( 'sister_list' ) )
+    {
+      $modifier->left_join( 'word', 'word.id', 'sister_word.sister_word_id', 'sister_word' );
+      $modifier->group( 'word.id' );
+      $select->add_column( 'GROUP_CONCAT( sister_word.word )', 'sister_list', false );
+    }
     if( $select->has_table_columns( 'sister_language' ) || !is_null( $this->get_resource() ) )
       $modifier->left_join( 'language', 'sister_word.language_id', 'sister_language.id', 'sister_language' );
 
@@ -44,6 +52,23 @@ class module extends \cenozo\service\module
         'CONCAT( sister_word.word, " [", sister_language.code, "]" )',
         'formatted_sister_word_id',
         false );
+    }
+    else if( $this->get_argument( 'rey_words', false ) )
+    {
+      $rey_data_variant_class_name = lib::get_class_name( 'database\rey_data_variant' );
+      $rey_data_variant_sel = lib::create( 'database\select' );
+      $rey_data_variant_sel->from( 'rey_data_variant' );
+      $rey_data_variant_sel->add_column( 'word_id' );
+      $rey_data_variant_sel->get_distinct();
+
+      // restrict to the REY primary and variant words
+      $modifier->where_bracket( true );
+      $modifier->where_bracket( true );
+      $modifier->where( 'word.word', 'IN', $rey_data_variant_class_name::get_enum_values( 'word' ) );
+      $modifier->where( 'language.code', '=', 'en' );
+      $modifier->where_bracket( false );
+      $modifier->or_where( 'word.id', 'IN', sprintf( '( %s )', $rey_data_variant_sel->get_sql() ), false );
+      $modifier->where_bracket( false );
     }
   }
 }

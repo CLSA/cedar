@@ -91,7 +91,7 @@ define( function() {
                     CnModalMessageFactory.instance( {
                       title: 'Invalid Word',
                       message: 'The word you have provided is invalid.\n\n' +
-                               'Please enter a word at least two characters long using only letters, ' + 
+                               'Please enter a word at least two characters long using only letters, ' +
                                'single-quotes (\'), dashes (-) and spaces, and which starts with at ' +
                                'least one alphabetic letter.',
                       error: true
@@ -154,8 +154,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalNewIntrusionFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalNewIntrusionFactory, CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory', 'CnHttpFactory', '$q',
+    function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalNewWordFactory, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -188,71 +188,117 @@ define( function() {
             // remove case and double quotes if they are found at the start/end
             if( angular.isString( word ) ) word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
-            // check if the word is one of the REY words
+            // split the word up by spaces
             var text = angular.isString( word ) ? word : word.word;
-            var label = self.wordList.findByProperty( 'label', text.ucWords() );
-            if( label ) {
-              var data = {};
-              data[label.name] = 1;
-              return self.onPatch( data ).then( function() {
-                self.record[label.name] = 1;
-                self.record[label.name + '_rey_data_variant_id'] = '';
-                label.value = 1;
-              } );
-            } else {
+            var tempWordList = text.split( / +/ ).getUnique();
+            var newWordList = [];
+
+            // for each sub-word look for REY words and parse them out
+            tempWordList.forEach( function( text ) {
+              // get unique list of all primary/variant words that match
+              var matchList = text.match( self.parentModel.wordRegExp );
+              if( null == matchList ) {
+                newWordList.push( text );
+              } else {
+                matchList = matchList.getUnique();
+
+                // convert sister words
+                matchList.forEach( function( matchWord, index, array ) {
+                  self.parentModel.sisterList.some( function( sisterWord ) {
+                    if( 0 <= sisterWord.sisterWordList.indexOf( matchWord ) ) {
+                      array[index] = sisterWord.word;
+                      return true;
+                    }
+                  } );
+                } );
+
+                // get unique list of all remaining words (removing empty strings)
+                newWordList = newWordList.concat(
+                  matchList,
+                  text.split( self.parentModel.wordOrSpaceRegExp ).filter( function( string ) {
+                    return 0 < string.length;
+                  } ).getUnique()
+                );
+              }
+            } );
+
+            // if the input was an object, there is only one word in the new list and it matches that object then
+            // replace the list with the input word object
+            if( angular.isObject( word ) && 1 == newWordList.length && word.word == newWordList[0] )
+              newWordList = word;
+
+            // return a collection of all promises resulting from processing each word in the list
+            return $q.all( newWordList.reduce( function( promiseList, word ) {
+              var text = angular.isString( word ) ? word : word.word;
+
+              // check if the word is one of the REY words
+              var label = self.wordList.findByProperty( 'label', text.ucWords() );
+              if( label ) {
+                var data = {};
+                data[label.name] = 1;
+                promiseList.push( self.onPatch( data ).then( function() {
+                  self.record[label.name] = 1;
+                  self.record[label.name + '_rey_data_variant_id'] = '';
+                  label.value = 1;
+                } ) );
+                return promiseList;
+              }
+
               // check if the word is one of the REY variants
               var variant = self.parentModel.variantList.filter( function( obj ) {
                 return obj.language_id == self.record.language_id;
               } ).findByProperty( 'name', text );
               if( variant ) {
                 if( !variant.allowed ) {
-                  return CnModalMessageFactory.instance( {
+                  promiseList.push( CnModalMessageFactory.instance( {
                     title: 'Variant Not Allowed',
                     message: 'You have selected the variant word "' + text + '" which is currently disabled ' +
                       'because the test-entry has not been identified as using the variant\'s language.\n\n' +
                       'If you wish to select this variant you must enable the relevant language first.'
-                  } ).show();
+                  } ).show() );
                 } else {
                   var data = {};
                   data[variant.word + '_rey_data_variant_id'] = variant.value;
-                  return self.onPatch( data ).then( function() {
+                  promiseList.push( self.onPatch( data ).then( function() {
                     self.record[variant.word + '_rey_data_variant_id'] = variant.value;
                     self.record[variant.word] = '';
                     self.wordList.findByProperty( 'name', variant.word ).value = 'variant' + variant.value;
-                  } );
+                  } ) );
                 }
+                return promiseList;
               }
-            }
 
-            // If we get this far then we've either got a word that wasn't caught by the above
-            // tests or is a word id (from the typeahead).
-            if( angular.isString( word ) ) {
-              // it's a new word, so double-check with the user before proceeding
-              return CnModalNewIntrusionFactory.instance( {
-                word: word,
-                language_id: self.record.language_id,
-                languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
-              } ).show().then( function( response ) {
-                if( null != response ) {
-                  // make sure the intrusion doesn't already exist
-                  return self.intrusionList.some( function( intrusion ) {
-                    return intrusion.language_id == response && intrusion.word == word;
-                  } ) ? CnModalMessageFactory.instance( {
-                    title: 'Intrusion Already Exists',
-                    message: 'The intrusion you have submitted has already been added to this REY test and does ' +
-                             'need to be added multiple times.'
-                  } ).show() : sendIntrusion( { language_id: response, word: word } );
-                }
-              } );
-            } else if( self.intrusionList.findByProperty( 'id', word.id ) ) {
-              return CnModalMessageFactory.instance( {
-                title: 'Intrusion Already Exists',
-                message: 'The intrusion you have submitted has already been added to this REY test and does ' +
-                         'need to be added multiple times.'
-              } ).show();
-            } else {
-              return sendIntrusion( word ); // it's not a new word so send it immediately
-            }
+              // the word is neither a REY primary or variant, so send it as a new word
+              if( angular.isString( word ) ) {
+                // it's a new word, so double-check with the user before proceeding
+                promiseList.push( CnModalNewWordFactory.instance( {
+                  word: word,
+                  language_id: self.record.language_id,
+                  languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
+                } ).show().then( function( response ) {
+                  if( null != response ) {
+                    // make sure the intrusion doesn't already exist
+                    return self.intrusionList.some( function( intrusion ) {
+                      return intrusion.language_id == response && intrusion.word == word;
+                    } ) ? CnModalMessageFactory.instance( {
+                      title: 'Intrusion Already Exists',
+                      message: 'The intrusion you have submitted has already been added to this REY test and does ' +
+                               'need to be added multiple times.'
+                    } ).show() : sendIntrusion( { language_id: response, word: word } );
+                  }
+                } ) );
+              } else if( self.intrusionList.findByProperty( 'id', word.id ) ) {
+                promiseList.push( CnModalMessageFactory.instance( {
+                  title: 'Intrusion Already Exists',
+                  message: 'The intrusion you have submitted has already been added to this REY test and does ' +
+                           'need to be added multiple times.'
+                } ).show() );
+              } else {
+                promiseList.push( sendIntrusion( word ) ); // it's not a new word so send it immediately
+              }
+
+              return promiseList;
+            }, [] ) );
           },
           deleteIntrusion: function( wordRecord ) {
             return CnHttpFactory.instance( {
@@ -341,6 +387,9 @@ define( function() {
         CnBaseDataModelFactory.construct( this, module );
         this.viewModel = CnReyDataViewFactory.instance( this, root );
         this.testEntryModel = testEntryModel;
+        this.wordRegExp = null;
+        this.wordOrSpaceRegExp = null;
+        this.sisterList = [];
         this.variantList = [];
         this.languageList = [];
 
@@ -350,9 +399,41 @@ define( function() {
             this.$$getMetadata(),
 
             CnHttpFactory.instance( {
+              path: 'word?rey_words=1',
+              data: { select: { column: [ 'id', 'word', 'sister_list' ] } }
+            } ).query().then( function( response ) {
+              response.data.forEach( function( item ) {
+                self.sisterList.push( {
+                  id: item.id,
+                  word: item.word,
+                  sisterWordList: null == item.sister_list ? [] : item.sister_list.split( ',' )
+                } );
+              } );
+
+              // build the regular expressions that matches any primary, variant or sister word
+              var regString = '';
+              self.sisterList.forEach( function( sisterWord ) {
+                if( 0 < regString.length ) regString += '|';
+                sisterWord.sisterWordList.forEach( function( sister ) {
+                  regString += '^' + sister + '|' + sister + '$';
+                } );
+                regString += '^' + sisterWord.word + '|' + sisterWord.word + '$';
+              } );
+              self.wordRegExp = new RegExp( regString, 'gi' );
+              self.wordOrSpaceRegExp = new RegExp( regString + '| +', 'gi' );
+            } ),
+
+            CnHttpFactory.instance( {
               path: 'rey_data_variant',
-              data: { select: { column: [ 'id', 'word', 'language_id', 'variant', 'variant_language_id' ] } }
-            } ).query().then( function success( response ) {
+              data: {
+                select: {
+                  column: [ 'id', 'word', 'language_id',
+                    { table: 'variant', column: 'word', alias: 'variant' },
+                    { table: 'variant', column: 'language_id', alias: 'variant_language_id' }
+                  ]
+                }
+              }
+            } ).query().then( function( response ) {
               response.data.forEach( function( item ) {
                 self.variantList.push( {
                   value: item.id,
@@ -371,7 +452,7 @@ define( function() {
                 select: { column: [ 'id', 'name' ] },
                 modifier: { where: { column: 'active', operator: '=', value: true } }
               }
-            } ).query().then( function success( response ) {
+            } ).query().then( function( response ) {
               response.data.forEach( function( item ) {
                 self.languageList.push( { value: item.id, name: item.name } );
               } );

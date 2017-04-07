@@ -50,8 +50,10 @@ class post extends \cenozo\service\post
 
           // see if the input is one of the REY words or variants
           $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'language_id', '=', $db_rey_data->language_id );
-          $modifier->where( 'variant', '=', $word );
+          $modifier->join( 'word', 'rey_data_variant.word_id', 'variant.id', '', 'variant' );
+          $modifier->where( 'rey_data_variant.language_id', '=', $db_rey_data->language_id );
+          $modifier->where( 'variant.language_id', '=', $language_id );
+          $modifier->where( 'variant.word', '=', $word );
           if( $rey_data_class_name::column_exists( $word ) ||
               0 < $rey_data_variant_class_name::count( $modifier ) )
           {
