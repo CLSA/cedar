@@ -275,8 +275,8 @@ cenozo.directive( 'cnSubmitWord', [
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewIntrusionFactory',
-  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewIntrusionFactory ) {
+  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory',
+  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewWordFactory ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
@@ -363,7 +363,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                 word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
                 // it's a new word, so double-check with the user before proceeding
-                return CnModalNewIntrusionFactory.instance( {
+                return CnModalNewWordFactory.instance( {
                   word: word,
                   languageId: object.parentModel.testEntryModel.viewModel.record.participant_language_id,
                   languageIdRestrictList: object.parentModel.testEntryModel.viewModel.languageIdList
@@ -446,12 +446,12 @@ cenozo.factory( 'CnBaseDataModelFactory', [
 ] );
 
 /* ######################################################################################################## */
-cenozo.service( 'CnModalNewIntrusionFactory', [
+cenozo.service( 'CnModalNewWordFactory', [
   '$modal', 'CnHttpFactory',
   function( $modal, CnHttpFactory ) {
     var object = function( params ) {
       var self = this;
-      this.title = 'New Intrusion';
+      this.title = 'Confirm Word';
       this.word = null;
       this.languageId = null;
       this.languageIdRestrictList = [];
@@ -483,7 +483,7 @@ cenozo.service( 'CnModalNewIntrusionFactory', [
             backdrop: 'static',
             keyboard: true,
             modalFade: true,
-            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-intrusion.tpl.html' ),
+            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-word.tpl.html' ),
             controller: function( $scope, $modalInstance ) {
               $scope.model = self;
               $scope.proceed = function() { $modalInstance.close( $scope.model.languageId ); };
