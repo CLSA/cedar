@@ -216,7 +216,7 @@ define( function() {
                 newWordList = newWordList.concat(
                   matchList,
                   text.split( self.parentModel.wordOrSpaceRegExp ).filter( function( string ) {
-                    return 0 < string.length;
+                    return 2 < string.length;
                   } ).getUnique()
                 );
               }

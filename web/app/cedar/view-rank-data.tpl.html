@@ -5,7 +5,7 @@
            id="newWord"
            name="newWord"
            ng-model="newWord"
-           typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
+           uib-typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
                       for item in typeaheadModel.getValues( $viewValue )"
            typeahead-on-select="submitNewWord( true )"
            ng-class="{ 'loading-small': typeaheadModel.isLoading }"

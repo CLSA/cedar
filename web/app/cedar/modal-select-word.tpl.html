@@ -13,7 +13,7 @@
              id="word"
              name="word"
              ng-model="word"
-             typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
+             uib-typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
                         for item in typeaheadModel.getValues( $viewValue )"
              typeahead-editable="true"
              typeahead-input-formatter="formatLabel( $model )"
