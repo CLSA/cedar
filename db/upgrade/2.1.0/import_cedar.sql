@@ -26,7 +26,10 @@ CREATE PROCEDURE import_rey_word( rank INT, word VARCHAR(7) )
       "WHERE test_type.name = 'Immediate Word List (REY1)' ",
       "AND v1_test.name = 'REY' ",
       "AND v1_ranked_word_set.rank = ", rank, " ",
-      "AND v1_test_entry_ranked_word.selection IN( 'yes', 'no' ) ",
+      "AND ( ",
+        "v1_test_entry_ranked_word.selection IN( 'yes', 'no' ) OR ",
+        "( v1_test_entry_ranked_word.word_id IS NULL AND v1_test_entry_ranked_word.word_id IS NULL ) ",
+      ") ",
       "ON DUPLICATE KEY UPDATE ", word, " = VALUES( ", word, " )" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
@@ -111,7 +114,10 @@ CREATE PROCEDURE import_rey_word( rank INT, word VARCHAR(7) )
       "WHERE test_type.name = 'Delayed Word List (REY2)' ",
       "AND v1_test.name = 'REY II' ",
       "AND v1_ranked_word_set.rank = ", rank, " ",
-      "AND v1_test_entry_ranked_word.selection IN( 'yes', 'no' ) ",
+      "AND ( ",
+        "v1_test_entry_ranked_word.selection IN( 'yes', 'no' ) OR ",
+        "( v1_test_entry_ranked_word.word_id IS NULL AND v1_test_entry_ranked_word.word_id IS NULL ) ",
+      ") ",
       "ON DUPLICATE KEY UPDATE ", word, " = VALUES( ", word, " )" );
     PREPARE statement FROM @sql;
     EXECUTE statement;
@@ -174,6 +180,27 @@ CREATE PROCEDURE import_rey_word( rank INT, word VARCHAR(7) )
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT(
+      "UPDATE rey_data ",
+      "JOIN rey_data_has_word ON rey_data.id = rey_data_has_word.rey_data_id ",
+      "JOIN word ON rey_data_has_word.word_id = word.id ",
+      "JOIN word AS sister_word ON word.sister_word_id = sister_word.id ",
+      "SET rey_data.", word, " = 1 ",
+      "WHERE sister_word.word = '", word, "'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
+    DROP TABLE IF EXISTS word_list;
+    CREATE TEMPORARY TABLE word_list
+    SELECT word.id
+    FROM word
+    JOIN word AS sister_word ON word.sister_word_id = sister_word.id
+    WHERE sister_word.word = word;
+    ALTER TABLE word_list ADD INDEX dk_id( id );
+
+    DELETE FROM rey_data_has_word WHERE word_id IN ( SELECT id FROM word_list );
 
   END //
 DELIMITER ;
