@@ -40,8 +40,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnReyDataView', [
-    'CnReyDataModelFactory', 'CnModalMessageFactory', 'CnWordTypeaheadFactory', '$timeout',
-    function( CnReyDataModelFactory, CnModalMessageFactory, CnWordTypeaheadFactory, $timeout ) {
+    'CnReyDataModelFactory', 'CnModalMessageFactory', 'CnWordTypeaheadFactory', '$timeout', '$q',
+    function( CnReyDataModelFactory, CnModalMessageFactory, CnWordTypeaheadFactory, $timeout, $q ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -142,7 +142,10 @@ define( function() {
                 $scope.model.viewModel.onPatch( data ).then( function() {
                   // refresh the view if we've changed the language
                   if( 'language_id' == property )
-                    $scope.model.viewModel.onView().then( function() { $scope.isComplete = true; } );
+                    $q.all( [
+                      $scope.model.viewModel.onView(),
+                      $scope.model.testEntryModel.viewModel.languageModel.listModel.onList( true )
+                    ] ).then( function() { $scope.isComplete = true; } );
                 } );
               }
             }
