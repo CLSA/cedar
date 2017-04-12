@@ -57,6 +57,29 @@ class test_entry extends \cenozo\database\record
           if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
         }
       }
+      else if( 'rey' == $data_type )
+      {
+        // make sure there is no missing data
+        $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
+        $db_rey_data = $rey_data_class_name::get_unique_record( 'test_entry_id', $this->id );
+        if( ( is_null( $db_rey_data->drum ) && is_null( $db_rey_data->drum_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->curtain ) && is_null( $db_rey_data->curtain_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->bell ) && is_null( $db_rey_data->bell_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->coffee ) && is_null( $db_rey_data->coffee_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->school ) && is_null( $db_rey_data->school_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->parent ) && is_null( $db_rey_data->parent_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->moon ) && is_null( $db_rey_data->moon_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->garden ) && is_null( $db_rey_data->garden_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->hat ) && is_null( $db_rey_data->hat_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->farmer ) && is_null( $db_rey_data->farmer_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->nose ) && is_null( $db_rey_data->nose_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->turkey ) && is_null( $db_rey_data->turkey_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->colour ) && is_null( $db_rey_data->colour_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->house ) && is_null( $db_rey_data->house_rey_data_variant_id ) ) ||
+            ( is_null( $db_rey_data->river ) && is_null( $db_rey_data->river_rey_data_variant_id ) ) ) {
+          $allowed = false;
+        }
+      }
 
       if( !$allowed )
       {
