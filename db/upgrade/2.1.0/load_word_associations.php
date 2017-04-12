@@ -79,114 +79,106 @@ class patch
     foreach( $result as $row ) $language_list[$row['code']] = $row['id'];
 
     out( 'Creating animal associations' );
-    if( false === $this->db->query( 'UPDATE word SET animal_word_id = NULL' ) ) error( $this->db->error );
-    else
+    $line = 1;
+    try
     {
-      $line = 1;
-      try
+      foreach( file( 'animal_list.csv' ) as $string )
       {
-        foreach( file( 'animal_list.csv' ) as $string )
+        $error = false;
+        $parts = explode( ',', str_replace( "\n", '', $string ) );
+        if( 0 < count( $parts ) % 2 ) throw new Exception;
+
+        if( 4 <= count( $parts ) )
         {
-          $error = false;
-          $parts = explode( ',', str_replace( "\n", '', $string ) );
-          if( 0 < count( $parts ) % 2 ) throw new Exception;
-
-          if( 4 <= count( $parts ) )
+          $alt_list = array();
+          for( $index = 0; $index < count( $parts ); $index+=2 )
           {
-            $alt_list = array();
-            for( $index = 0; $index < count( $parts ); $index+=2 )
+            // make sure all words are enclosed by quotes
+            $language_code = $parts[$index];
+            if( !preg_match( '/^"[^"]+"$/', $language_code ) ) throw new Exception;
+            $language_id = $language_list[substr( $language_code, 1, -1 )];
+            $word = $parts[$index+1];
+            if( !preg_match( '/^"[^"]+"$/', $word ) ) throw new Exception;
+
+            if( 0 == $index ) $base = array( 'language_id' => $language_id, 'word' => $word );
+            else
             {
-              // make sure all words are enclosed by quotes
-              $language_code = $parts[$index];
-              if( !preg_match( '/^"[^"]+"$/', $language_code ) ) throw new Exception;
-              $language_id = $language_list[substr( $language_code, 1, -1 )];
-              $word = $parts[$index+1];
-              if( !preg_match( '/^"[^"]+"$/', $word ) ) throw new Exception;
-
-              if( 0 == $index ) $base = array( 'language_id' => $language_id, 'word' => $word );
-              else
-              {
-                if( !array_key_exists( $language_id, $alt_list ) ) $alt_list[$language_id] = array();
-                $alt_list[$language_id][] = $word;
-              }
+              if( !array_key_exists( $language_id, $alt_list ) ) $alt_list[$language_id] = array();
+              $alt_list[$language_id][] = $word;
             }
-
-            $sql = sprintf(
-              'UPDATE word, word AS animal_word'."\n".
-              'SET word.animal_word_id = animal_word.id'."\n".
-              'WHERE animal_word.language_id = %d AND animal_word.word = %s AND ('."\n",
-              $base['language_id'],
-              $base['word']
-            );
-
-            $first = true;
-            foreach( $alt_list as $language_id => $word_list )
-            {
-              $sql .= sprintf( '  %s( word.language_id = %s AND word.word IN (%s) )'."\n",
-                               $first ? '' : 'OR ',
-                               $language_id,
-                               implode( ',', $word_list ) );
-              $first = false;
-            }
-
-            $sql .= ');'."\n";
-
-            if( false === $this->db->query( $sql ) ) error( $this->db->error );
           }
-          $line++;
+
+          $sql = sprintf(
+            'UPDATE word, word AS animal_word'."\n".
+            'SET word.animal_word_id = animal_word.id'."\n".
+            'WHERE animal_word.language_id = %d AND animal_word.word = %s AND ('."\n",
+            $base['language_id'],
+            $base['word']
+          );
+
+          $first = true;
+          foreach( $alt_list as $language_id => $word_list )
+          {
+            $sql .= sprintf( '  %s( word.language_id = %s AND word.word IN (%s) )'."\n",
+                             $first ? '' : 'OR ',
+                             $language_id,
+                             implode( ',', $word_list ) );
+            $first = false;
+          }
+
+          $sql .= ');'."\n";
+
+          if( false === $this->db->query( $sql ) ) error( $this->db->error );
         }
+        $line++;
       }
-      catch( Exception $e )
-      {
-        error('Error while parsing line '.$line );
-      }
+    }
+    catch( Exception $e )
+    {
+      error('Error while parsing line '.$line );
     }
 
     out( 'Creating sister associations' );
-    if( false === $this->db->query( 'UPDATE word SET sister_word_id = NULL' ) ) error( $this->db->error );
-    else
+    $line = 1;
+    try
     {
-      $line = 1;
-      try
+      foreach( file( 'sister_list.csv' ) as $string )
       {
-        foreach( file( 'sister_list.csv' ) as $string )
+        $error = false;
+        $parts = explode( ',', str_replace( "\n", '', $string ) );
+        if( 2 < count( $parts ) )
         {
-          $error = false;
-          $parts = explode( ',', str_replace( "\n", '', $string ) );
-          if( 2 < count( $parts ) )
+          // make sure all words are enclosed by quotes
+          foreach( $parts as $word ) if( !preg_match( '/^"[^"]+"$/', $word ) ) throw new Exception;
+
+          $language_code = array_shift( $parts ); // remove the language
+          $language_id = $language_list[substr( $language_code, 1, -1 )];
+          $base_word = array_shift( $parts ); // remove the base word
+
+          $sql = sprintf(
+            'UPDATE word, word AS base_word'."\n".
+            'SET word.sister_word_id = base_word.id'."\n".
+            'WHERE base_word.language_id = %s'."\n".
+            'AND base_word.language_id = word.language_id'."\n".
+            'AND base_word.word = %s'."\n".
+            'AND word.word IN (%s);'."\n",
+            $language_id,
+            $base_word,
+            implode( ',', $parts )
+          );
+
+          if( false === $this->db->query( $sql ) )
           {
-            // make sure all words are enclosed by quotes
-            foreach( $parts as $word ) if( !preg_match( '/^"[^"]+"$/', $word ) ) throw new Exception;
-
-            $language_code = array_shift( $parts ); // remove the language
-            $language_id = $language_list[substr( $language_code, 1, -1 )];
-            $base_word = array_shift( $parts ); // remove the base word
-
-            $sql = sprintf(
-              'UPDATE word, word AS base_word'."\n".
-              'SET word.sister_word_id = base_word.id'."\n".
-              'WHERE base_word.language_id = %s'."\n".
-              'AND base_word.language_id = word.language_id'."\n".
-              'AND base_word.word = %s'."\n".
-              'AND word.word IN (%s);'."\n",
-              $language_id,
-              $base_word,
-              implode( ',', $parts )
-            );
-
-            if( false === $this->db->query( $sql ) )
-            {
-              error( $this->db->error );
-              break;
-            }
+            error( $this->db->error );
+            break;
           }
-          $line++;
         }
+        $line++;
       }
-      catch( Exception $e )
-      {
-        error('Error while parsing line '.$line );
-      }
+    }
+    catch( Exception $e )
+    {
+      error('Error while parsing line '.$line );
     }
 
     out( 'Creating homophone associations' );
