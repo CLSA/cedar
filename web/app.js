@@ -447,8 +447,8 @@ cenozo.factory( 'CnBaseDataModelFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalNewWordFactory', [
-  '$modal', 'CnHttpFactory',
-  function( $modal, CnHttpFactory ) {
+  '$uibModal', 'CnHttpFactory',
+  function( $uibModal, CnHttpFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Confirm Word';
@@ -479,15 +479,15 @@ cenozo.service( 'CnModalNewWordFactory', [
             self.languageList.push( { value: item.id, name: item.name } );
           } );
 
-          return $modal.open( {
+          return $uibModal.open( {
             backdrop: 'static',
             keyboard: true,
             modalFade: true,
             templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-word.tpl.html' ),
-            controller: function( $scope, $modalInstance ) {
+            controller: function( $scope, $uibModalInstance ) {
               $scope.model = self;
-              $scope.proceed = function() { $modalInstance.close( $scope.model.languageId ); };
-              $scope.cancel = function() { $modalInstance.close( null ); };
+              $scope.proceed = function() { $uibModalInstance.close( $scope.model.languageId ); };
+              $scope.cancel = function() { $uibModalInstance.close( null ); };
             }
           } ).result;
         } );
@@ -500,8 +500,8 @@ cenozo.service( 'CnModalNewWordFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectTypistFactory', [
-  '$modal', 'CnSession', 'CnHttpFactory',
-  function( $modal, CnSession, CnHttpFactory ) {
+  '$uibModal', 'CnSession', 'CnHttpFactory',
+  function( $uibModal, CnSession, CnHttpFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Select Typist';
@@ -548,15 +548,15 @@ cenozo.service( 'CnModalSelectTypistFactory', [
             } );
           } );
         } ).then( function() {
-          return $modal.open( {
+          return $uibModal.open( {
             backdrop: 'static',
             keyboard: true,
             modalFade: true,
             templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-typist.tpl.html' ),
-            controller: function( $scope, $modalInstance ) {
+            controller: function( $scope, $uibModalInstance ) {
               $scope.model = self;
-              $scope.proceed = function() { $modalInstance.close( $scope.user_id ); };
-              $scope.cancel = function() { $modalInstance.close( null ); };
+              $scope.proceed = function() { $uibModalInstance.close( $scope.user_id ); };
+              $scope.cancel = function() { $uibModalInstance.close( null ); };
             }
           } ).result;
         } );
@@ -569,8 +569,8 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
-  '$modal', '$timeout', 'CnModalMessageFactory', 'CnWordTypeaheadFactory',
-  function( $modal, $timeout, CnModalMessageFactory, CnWordTypeaheadFactory ) {
+  '$uibModal', '$timeout', 'CnModalMessageFactory', 'CnWordTypeaheadFactory',
+  function( $uibModal, $timeout, CnModalMessageFactory, CnWordTypeaheadFactory ) {
     var object = function( params ) {
       var self = this;
       this.title = 'Select Word';
@@ -581,12 +581,12 @@ cenozo.service( 'CnModalSelectWordFactory', [
       angular.extend( this, params );
 
       this.show = function() {
-        return $modal.open( {
+        return $uibModal.open( {
           backdrop: 'static',
           keyboard: true,
           modalFade: true,
           templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-word.tpl.html' ),
-          controller: function( $scope, $modalInstance ) {
+          controller: function( $scope, $uibModalInstance ) {
             $scope.model = self;
             angular.extend( $scope, {
               typeaheadModel: CnWordTypeaheadFactory.instance( {
@@ -609,9 +609,9 @@ cenozo.service( 'CnModalSelectWordFactory', [
                   }
                 }
                 
-                if( proceed ) $modalInstance.close( $scope.word );
+                if( proceed ) $uibModalInstance.close( $scope.word );
               },
-              cancel: function() { $modalInstance.close( null ); },
+              cancel: function() { $uibModalInstance.close( null ); },
               formatLabel: function( word ) {
                 return angular.isObject( word ) ? word.word + ' [' + word.code + ']' : '';
               }
