@@ -204,7 +204,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 var id = audioEl.id.replace( 'soundFile', '' );
                 scope.model.viewModel.soundFileList.findByProperty( 'id', id ).element = audioEl;
               } );
-            }, 100 );
+            }, 200 );
           } );
         }
       };
