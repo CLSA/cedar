@@ -6,8 +6,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnMatDataView', [
-    'CnMatDataModelFactory', '$timeout',
-    function( CnMatDataModelFactory, $timeout ) {
+    'CnMatDataModelFactory', 'CnModalConfirmFactory', '$timeout',
+    function( CnMatDataModelFactory, CnModalConfirmFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -66,19 +66,27 @@ define( function() {
               }
             },
             removeWord: function( index ) {
+              var word = $scope.model.viewModel.record[index].word;
               $scope.isWorking = true;
-              $scope.model.viewModel.deleteWord( index ).finally( function() {
-                // we may have to change the cursor if it is no longer valid
-                if( null != $scope.cursor ) {
-                  var len = $scope.model.viewModel.record.length;
-                  if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor ) {
-                    $scope.cursor = null;
-                    $scope.cursorType = null;
-                  }
-                }
+              CnModalConfirmFactory.instance( {
+                title: 'Remove "' + word + '"',
+                message: 'Are you sure you want to remove "' + word + '" from the word list?'
+              } ).show().then( function( response ) {
+                if( response ) {
+                  $scope.model.viewModel.deleteWord( index ).finally( function() {
+                    // we may have to change the cursor if it is no longer valid
+                    if( null != $scope.cursor ) {
+                      var len = $scope.model.viewModel.record.length;
+                      if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor ) {
+                        $scope.cursor = null;
+                        $scope.cursorType = null;
+                      }
+                    }
 
-                $scope.isWorking = false;
-                document.getElementById( 'newWord' ).focus();
+                    $scope.isWorking = false;
+                    document.getElementById( 'newWord' ).focus();
+                  } );
+                }
               } );
             }
           } );
