@@ -672,6 +672,8 @@ CREATE PROCEDURE import_cedar()
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
 
+      SELECT "Importing rey-data variant words" AS "";
+
       SET @sql = CONCAT(
         "INSERT IGNORE INTO rey_data_variant( word, language_id, word_id ) ",
         "SELECT word.word, ", @en_language_id, ", variant_word.id ",
@@ -779,6 +781,60 @@ CREATE PROCEDURE import_cedar()
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
 
+      SELECT "Making sure all rey-word sister words are present" AS "";
+
+      SET @sql = CONCAT(
+        "INSERT INTO word( language_id, word, sister_word_id, misspelled ) ",
+        "SELECT language.id, temp.word, temp.sister_word_id, 0 ",
+        "FROM ", @cenozo, ".language, ( ",
+          "SELECT 'drums' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'drum' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'curtains' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'curtain' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'bells' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'bell' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'coffees' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'coffee' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'schooled' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'school' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'schooling' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'school' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'schools' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'school' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'parents' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'parent' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'parenting' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'parent' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'moons' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'moon' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'gardens' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'garden' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'gardening' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'garden' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'hats' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'hat' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'farmers' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'farmer' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'noses' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'nose' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'turkeys' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'turkey' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'colours' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'colour' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'coloured' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'colour' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'colouring' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'colour' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'houses' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'house' AND language_id = ", @en_language_id, " UNION ",
+          "SELECT 'rivers' AS word, word.id AS sister_word_id FROM word ",
+            "WHERE word = 'river' AND language_id = ", @en_language_id, " ",
+        ") AS temp ",
+        "WHERE language.code = 'en' ",
+        "ON DUPLICATE KEY UPDATE sister_word_id = temp.sister_word_id" );
+      PREPARE statement FROM @sql;
+      EXECUTE statement;
+      DEALLOCATE PREPARE statement;
     END IF;
 
     SELECT "Importing assignments from v1" AS "";
