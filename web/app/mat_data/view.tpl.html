@@ -29,7 +29,7 @@
         <button class="btn btn-default"
                 ng-class="{ 'active': cursor == model.viewModel.record[i].rank }"
                 type="button"
-                tooltip="{{
+                uib-tooltip="{{
                   cursor != model.viewModel.record[i].rank ? 'Insert Here' :
                   ( 'insert' == cursorType ? 'Replace Here' : 'Remove Replace' )
                 }}"
@@ -45,7 +45,7 @@
       <div ng-class="editEnabled ? 'col-xs-8' : 'col-xs-12'">
         <button class="btn btn-default full-width"
                 type="button"
-                tooltip="Click to remove"
+                uib-tooltip="Click to remove"
                 ng-disabled="isWorking || !editEnabled"
                 ng-click="removeWord( i )">
           {{ model.viewModel.record[i].word }}

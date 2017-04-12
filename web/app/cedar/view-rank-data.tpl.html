@@ -18,7 +18,7 @@
   <div class="col-sm-3">
     <button class="btn btn-default full-width"
             type="button"
-            tooltip="Add a placeholder word that can be filled in later."
+            uib-tooltip="Add a placeholder word that can be filled in later."
             ng-disabled="!isComplete || isWorking || !editEnabled"
             ng-click="submitWord( { id: null } )">Add Placeholder</button>
   </div>
@@ -39,7 +39,7 @@
         <button class="btn btn-default"
                 ng-class="{ 'active': cursor == model.viewModel.record[i].rank }"
                 type="button"
-                tooltip="{{
+                uib-tooltip="{{
                   cursor != model.viewModel.record[i].rank ? 'Insert Here' :
                   ( 'insert' == cursorType ? 'Replace Here' : 'Remove Replace' )
                 }}"
@@ -61,7 +61,7 @@
                   'btn-default': 'primary' == model.viewModel.record[i].word_type,
                   'btn-info': 'placeholder' == model.viewModel.record[i].word_type
                 }"
-                tooltip="{{ 'Click to remove ' + model.viewModel.record[i].word_type }}"
+                uib-tooltip="{{ 'Click to remove ' + model.viewModel.record[i].word_type }}"
                 ng-disabled="isWorking || !editEnabled"
                 ng-click="removeWord( model.viewModel.record[i] )">
           <span ng-if="'placeholder' != model.viewModel.record[i].word_type"

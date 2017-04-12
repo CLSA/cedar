@@ -11,11 +11,11 @@
           <i class="glyphicon glyphicon-refresh glyph-hover btn-primary btn-header"
              ng-if="isComplete"
              ng-click="refresh(); $event.stopPropagation()"
-             tooltip="Click to refresh data"
+             uib-tooltip="Click to refresh data"
              tooltip-placement="left"></i>
           <i class="glyphicon glyph-hover btn-primary btn-header"
              ng-class="collapsed ? 'glyphicon-collapse-down' : 'glyphicon-collapse-up'"
-             tooltip="Click to expand details"
+             uib-tooltip="Click to expand details"
              tooltip-placement="left"></i>
         </div>
         {{ model.viewModel.record.test_type_name }} Data
