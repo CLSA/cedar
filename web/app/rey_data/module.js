@@ -225,11 +225,19 @@ define( function() {
             // if the input was an object, there is only one word in the new list and it matches that object then
             // replace the list with the input word object
             if( angular.isObject( word ) && 1 == newWordList.length && word.word == newWordList[0] )
-              newWordList = word;
+              newWordList = [ word ];
 
             // return a collection of all promises resulting from processing each word in the list
             return $q.all( newWordList.reduce( function( promiseList, word ) {
               var text = angular.isString( word ) ? word : word.word;
+
+              // convert sister words
+              self.parentModel.sisterList.some( function( sisterWord ) {
+                if( 0 <= sisterWord.sisterWordList.indexOf( text ) ) {
+                  text = sisterWord.word;
+                  return true;
+                }
+              } );
 
               // check if the word is one of the REY words
               var label = self.wordList.findByProperty( 'label', text.ucWords() );
