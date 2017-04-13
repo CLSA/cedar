@@ -1,0 +1,36 @@
+REY1
+================================================================
++1 for every word marked as true
++1 for every word marked as a variant
+
+
+REY2
+================================================================
+no score if prompted during REY1
++1 for every word marked as true
+       and REY1 variant of that word not used
++1 for every word marked as a variant
+       and variant also in REY1
+
+
+AFT (inclusive)
+================================================================
++1 for every unique primary word
+
+
+AFT (exclusive)
+================================================================
++1 for every unique primary word group, grouping by animal-word group
+
+
+MAT
+================================================================
+no score if first response is not "1"
++1 for every letter/number in sequence after "1"
+eg: a,2,b,3,c,4,d,5,e,6,f,7,g,8,h,9,i,10,j,11,k,12,l,13,m,14,n,
+    15,o,16,p,17,q,18,r,19,s,20,t,21,u,22,v,23,w,24,x,25,y,26,z
+
+
+FAS
+================================================================
++1 for every unique word group, grouping by sister-word group

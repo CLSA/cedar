@@ -35,7 +35,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       state: {
         title: 'State',
         type: 'string'
-      }
+      },
     },
     defaultOrder: {
       column: 'test_type.rank',
@@ -488,7 +488,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         this.viewModel = CnTestEntryViewFactory.instance( this, root );
 
         this.isTypist = true;
-        CnSession.promise.then( function() { self.isTypist = 'typist' == CnSession.role.name; } );
+        CnSession.promise.then( function() {
+          self.isTypist = 'typist' == CnSession.role.name;
+          if( !self.isTypist ) {
+            self.addColumn( 'score', { title: 'Score', type: 'number' } );
+            self.addColumn( 'alt_score', { title: 'Alt Score', type: 'number' } );
+          }
+        } );
 
         this.transitionToParentViewState = function( subject, identifier ) {
           // check if the user still has access to the transcription before proceeding

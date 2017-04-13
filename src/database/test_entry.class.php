@@ -81,7 +81,12 @@ class test_entry extends \cenozo\database\record
         }
       }
 
-      if( !$allowed )
+      if( $allowed )
+      {
+        parent::__set( $column_name, $value );
+        $this->calculate_score();
+      }
+      else
       {
         throw lib::create( 'exception\runtime',
           'Tried to change test-entry\'s state to submitted while data is not currently in a submittable state.',
@@ -89,8 +94,7 @@ class test_entry extends \cenozo\database\record
         );
       }
     }
-
-    parent::__set( $column_name, $value );
+    else parent::__set( $column_name, $value );
   }
 
   /**
@@ -210,5 +214,221 @@ class test_entry extends \cenozo\database\record
         $modifier->get_sql()
       ) );
     }
+  }
+
+  /**
+   * Re-calculates the test-entry's score, storing the value in the score column
+   * 
+   * Note, if the test-entry is not submitted the score will always be NULL.
+   * This method sets the score and alt_score columns but does not save the record.
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access public
+   */
+  public function calculate_score()
+  {
+    $score = NULL;
+    $alt_score = NULL;
+    if( 'submitted' == $this->state && (
+          is_null( $this->audio_status ) ||
+          ( 'unusable' != $this->audio_status && 'unavailable' != $this->audio_status )
+        ) && (
+          is_null( $this->participant_status ) || 'refused' != $this->participant_status
+        ) )
+    {
+      $score = 0;
+
+      $select = lib::create( 'database\select' );
+      $select->from( 'test_entry' );
+
+      $modifier = lib::create( 'database\modifier' );
+      $modifier->where( 'test_entry.id', '=', $this->id );
+
+      $db_test_type = $this->get_test_type();
+      if( 'fas' == $db_test_type->data_type )
+      {
+        $select->add_column(
+          'IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( sister_word_id, word_id ) ) )',
+          'score',
+          false
+        );
+
+        $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
+        $modifier->left_join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
+        $modifier->left_join( 'word', 'fas_data.word_id', 'word.id' );
+        $modifier->where( 'IFNULL( word.fas, "primary" )', '=', 'primary' );
+        $modifier->where_braket( true );
+        $modifier->where( 'word.id', '=', NULL );
+        $modifier->or_where(
+          'SUBSTRING( word.word, 1, 1 )', '=', 'LOWER( SUBSTRING( test_type.name, 1, 1 ) )', false );
+        $modifier->where_braket( false );
+
+        $row = current( $this->select( $select, $modifier ) );
+        $score = $row['score'];
+      }
+      else if( 'rey' == $db_test_type->data_type )
+      {
+        if( false != strpos( $db_test_type->name, '(REY1)' ) )
+        {
+          $select->add_column(
+            'IF( drum OR drum_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( curtain OR curtain_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( bell OR bell_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( coffee OR coffee_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( school OR school_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( parent OR parent_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( moon OR moon_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( garden OR garden_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( hat OR hat_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( farmer OR farmer_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( nose OR nose_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( turkey OR turkey_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( colour OR colour_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( house OR house_rey_data_variant_id IS NOT NULL, 1, 0 ) + '.
+            'IF( river OR river_rey_data_variant_id IS NOT NULL, 1, 0 )',
+            'score',
+            false
+          );
+
+          $modifier->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
+        }
+        else // REY2
+        {
+          $select->add_column(
+            'IF( ( rey_data.drum AND first_rey_data.drum_rey_data_variant_id IS NULL ) OR  '.
+                '( rey_data.drum_rey_data_variant_id = first_rey_data.drum_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.curtain AND first_rey_data.curtain_rey_data_variant_id IS NULL ) OR  '.
+                '( rey_data.curtain_rey_data_variant_id = first_rey_data.curtain_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.bell AND first_rey_data.bell_rey_data_variant_id IS NULL ) OR  '.
+                '( rey_data.bell_rey_data_variant_id = first_rey_data.bell_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.coffee AND first_rey_data.coffee_rey_data_variant_id IS NULL ) OR  '.
+                '( rey_data.coffee_rey_data_variant_id = first_rey_data.coffee_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.school AND first_rey_data.school_rey_data_variant_id IS NULL ) OR  '.
+                '( rey_data.school_rey_data_variant_id = first_rey_data.school_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.parent AND first_rey_data.parent_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.parent_rey_data_variant_id = first_rey_data.parent_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.moon AND first_rey_data.moon_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.moon_rey_data_variant_id = first_rey_data.moon_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.garden AND first_rey_data.garden_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.garden_rey_data_variant_id = first_rey_data.garden_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.hat AND first_rey_data.hat_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.hat_rey_data_variant_id = first_rey_data.hat_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.farmer AND first_rey_data.farmer_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.farmer_rey_data_variant_id = first_rey_data.farmer_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.nose AND first_rey_data.nose_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.nose_rey_data_variant_id = first_rey_data.nose_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.turkey AND first_rey_data.turkey_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.turkey_rey_data_variant_id = first_rey_data.turkey_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.colour AND first_rey_data.colour_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.colour_rey_data_variant_id = first_rey_data.colour_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.house AND first_rey_data.house_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.house_rey_data_variant_id = first_rey_data.house_rey_data_variant_id ), 1, 0 ) + '.
+            'IF( ( rey_data.river AND first_rey_data.river_rey_data_variant_id IS NULL ) OR '.
+                '( rey_data.river_rey_data_variant_id = first_rey_data.river_rey_data_variant_id ), 1, 0 )',
+            'score',
+            false
+          );
+
+          $modifier->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
+          $modifier->join(
+            'test_entry',
+            'first_test_entry.transcription_id',
+            'test_entry.transcription_id',
+            '',
+            'first_test_entry'
+          );
+          $modifier->join(
+            'test_type',
+            'first_test_entry.test_type_id',
+            'first_test_type.id',
+            '',
+            'first_test_type'
+          );
+          $modifier->join(
+            'rey_data',
+            'first_test_entry.id',
+            'first_rey_data.test_entry_id',
+            '',
+            'first_rey_data'
+          );
+          $modifier->where( 'first_test_type.name', 'LIKE', '%(REY1)' );
+        }
+
+        $row = current( $this->select( $select, $modifier ) );
+        $score = $row['score'];
+      }
+      else if( 'aft' == $db_test_type->data_type )
+      {
+        $select->add_column(
+          'IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( animal_word_id, word_id ) ) )',
+          'score',
+          false
+        );
+        $select->add_column(
+          'IF( word_id IS NULL, 0, COUNT( DISTINCT word_id ) )',
+          'alt_score',
+          false
+        );
+
+        $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
+        $modifier->left_join( 'aft_data', 'test_entry.id', 'aft_data.test_entry_id' );
+        $modifier->left_join( 'word', 'aft_data.word_id', 'word.id' );
+        $modifier->where( 'IFNULL( word.aft, "primary" )', '=', 'primary' );
+
+        $row = current( $this->select( $select, $modifier ) );
+        $score = $row['score'];
+        $alt_score = $row['alt_score'];
+      }
+      else if( 'premat' == $db_test_type->data_type )
+      {
+        // the pre-MAT test isn't scored
+      }
+      else if( 'mat' == $db_test_type->data_type )
+      {
+        $select->add_table_column( 'mat_data', 'rank' );
+        $select->add_table_column( 'mat_data', 'value' );
+
+        $modifier->join( 'mat_data', 'test_entry.id', 'mat_data.test_entry_id' );
+        $modifier->order( 'mat_data.rank' );
+
+        foreach( $this->select( $select, $modifier ) as $row )
+        {
+          if( 1 == $row['rank'] && '1' != $row['value'] )
+          {
+            $score = NULL;
+            break;
+          }
+
+          if( ( $row['rank'] == 2 && $row['value'] == 'a' ) || ( $row['rank'] == 3 && $row['value'] == '2' ) ||
+              ( $row['rank'] == 4 && $row['value'] == 'b' ) || ( $row['rank'] == 5 && $row['value'] == '3' ) ||
+              ( $row['rank'] == 6 && $row['value'] == 'c' ) || ( $row['rank'] == 7 && $row['value'] == '4' ) ||
+              ( $row['rank'] == 8 && $row['value'] == 'd' ) || ( $row['rank'] == 9 && $row['value'] == '5' ) ||
+              ( $row['rank'] == 10 && $row['value'] == 'e' ) || ( $row['rank'] == 11 && $row['value'] == '6' ) ||
+              ( $row['rank'] == 12 && $row['value'] == 'f' ) || ( $row['rank'] == 13 && $row['value'] == '7' ) ||
+              ( $row['rank'] == 14 && $row['value'] == 'g' ) || ( $row['rank'] == 15 && $row['value'] == '8' ) ||
+              ( $row['rank'] == 16 && $row['value'] == 'h' ) || ( $row['rank'] == 17 && $row['value'] == '9' ) ||
+              ( $row['rank'] == 18 && $row['value'] == 'i' ) || ( $row['rank'] == 19 && $row['value'] == '10' ) ||
+              ( $row['rank'] == 20 && $row['value'] == 'j' ) || ( $row['rank'] == 21 && $row['value'] == '11' ) ||
+              ( $row['rank'] == 22 && $row['value'] == 'k' ) || ( $row['rank'] == 23 && $row['value'] == '12' ) ||
+              ( $row['rank'] == 24 && $row['value'] == 'l' ) || ( $row['rank'] == 25 && $row['value'] == '13' ) ||
+              ( $row['rank'] == 26 && $row['value'] == 'm' ) || ( $row['rank'] == 27 && $row['value'] == '14' ) ||
+              ( $row['rank'] == 28 && $row['value'] == 'n' ) || ( $row['rank'] == 29 && $row['value'] == '15' ) ||
+              ( $row['rank'] == 30 && $row['value'] == 'o' ) || ( $row['rank'] == 31 && $row['value'] == '16' ) ||
+              ( $row['rank'] == 32 && $row['value'] == 'p' ) || ( $row['rank'] == 33 && $row['value'] == '17' ) ||
+              ( $row['rank'] == 34 && $row['value'] == 'q' ) || ( $row['rank'] == 35 && $row['value'] == '18' ) ||
+              ( $row['rank'] == 36 && $row['value'] == 'r' ) || ( $row['rank'] == 37 && $row['value'] == '19' ) ||
+              ( $row['rank'] == 38 && $row['value'] == 's' ) || ( $row['rank'] == 39 && $row['value'] == '20' ) ||
+              ( $row['rank'] == 40 && $row['value'] == 't' ) || ( $row['rank'] == 41 && $row['value'] == '21' ) ||
+              ( $row['rank'] == 42 && $row['value'] == 'u' ) || ( $row['rank'] == 43 && $row['value'] == '22' ) ||
+              ( $row['rank'] == 44 && $row['value'] == 'v' ) || ( $row['rank'] == 45 && $row['value'] == '23' ) ||
+              ( $row['rank'] == 46 && $row['value'] == 'w' ) || ( $row['rank'] == 47 && $row['value'] == '24' ) ||
+              ( $row['rank'] == 48 && $row['value'] == 'x' ) || ( $row['rank'] == 49 && $row['value'] == '25' ) ||
+              ( $row['rank'] == 50 && $row['value'] == 'y' ) || ( $row['rank'] == 51 && $row['value'] == '26' ) ||
+              ( $row['rank'] == 52 && $row['value'] == 'z' ) ) $score++;
+        }
+      }
+    }
+
+    $this->score = $score;
+    $this->alt_score = $alt_score;
   }
 }
