@@ -6,8 +6,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnMatDataView', [
-    'CnMatDataModelFactory', 'CnModalConfirmFactory', '$timeout',
-    function( CnMatDataModelFactory, CnModalConfirmFactory, $timeout ) {
+    'CnMatDataModelFactory', 'CnModalConfirmFactory', '$timeout', '$q',
+    function( CnMatDataModelFactory, CnModalConfirmFactory, $timeout, $q ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -54,15 +54,42 @@ define( function() {
             },
             submitNewWord: function() {
               if( 0 < $scope.newWord.length ) {
-                $scope.isWorking = true;
-                $scope.model.viewModel.submitWord( $scope.newWord, $scope.cursor, 'replace' == $scope.cursorType )
-                  .then( function() { $scope.newWord = ''; $scope.newWordCache = ''; } )
-                  .finally( function() {
-                    $scope.cursor = null;
-                    $scope.cursorType = null;
-                    $scope.isWorking = false;
+                // show a warning to the user if the first entry is not a 1
+                var promise = $q.all();
+                if( ( 0 == $scope.model.viewModel.record.length || 1 == $scope.cursor ) &&
+                    '1' != $scope.newWord ) {
+                  promise = CnModalConfirmFactory.instance( {
+                    title: 'First word should be "1"',
+                    message:
+                      'Warning, the first word to this test should always be "1".\n\n' +
+                      'Please confirm that the participant started with something other than the number "1" ' +
+                      'and that this was not caused by the beginning of the recording being missing.\n\n' +
+                      'Are you sure you wish to make "' + $scope.newWord + '" the first word?'
+                  } ).show();
+                }
+
+                promise.then( function( response ) {
+                  if( false !== response ) {
+                    $scope.isWorking = true;
+                    $scope.model.viewModel.submitWord(
+                      $scope.newWord,
+                      $scope.cursor,
+                      'replace' == $scope.cursorType
+                    ).then( function() {
+                      $scope.newWord = '';
+                      $scope.newWordCache = '';
+                    } ).finally( function() {
+                      $scope.cursor = null;
+                      $scope.cursorType = null;
+                      $scope.isWorking = false;
+                      $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
+                    } );
+                  } else {
+                    $scope.newWord = '';
+                    $scope.newWordCache = '';
                     $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
-                  } );
+                  }
+                } );
               }
             },
             removeWord: function( index ) {
