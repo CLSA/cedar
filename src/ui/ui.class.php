@@ -50,7 +50,11 @@ class ui extends \cenozo\ui\ui
     }
 
     $module = $this->get_module( 'user' );
-    if( !is_null( $module ) ) $module->add_child( 'transcription', 'access' );
+    if( !is_null( $module ) )
+    {
+      $module->add_child( 'transcription', 'access' );
+      $module->add_choose( 'cohort' );
+    }
 
     $module = $this->get_module( 'word' );
     if( !is_null( $module ) ) $module->add_child( 'homophone' );

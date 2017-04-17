@@ -63,6 +63,14 @@ class post extends \cenozo\service\post
             'participant_sound_file_total.participant_id'
           );
 
+          // the participant belongs to a cohort that the user had access to
+          $participant_mod->join(
+            'user_has_cohort',
+            'participant.cohort_id',
+            'user_has_cohort.cohort_id'
+          );
+          $participant_mod->where( 'user_has_cohort.user_id', '=', $db_user->id );
+
           // the participant's default language must be spoken by the typist
           if( 0 < $db_user->get_language_count() )
           {
