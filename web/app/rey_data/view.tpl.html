@@ -28,6 +28,7 @@
              type="radio"></input>
       <label for="{{ word.name }}_yes"
              class="control-label"
+             ng-style="{ color: !isComplete || !editEnabled ? '#ccc' : '' }"
              style="text-align: left; min-width: 4em;">Yes</label>
       <input id="{{ word.name }}_no"
              value="0"
@@ -35,7 +36,9 @@
              ng-change="patch( word.name )"
              ng-disabled="!isComplete || !editEnabled"
              type="radio"></input>
-      <label for="{{ word.name }}_no" class="control-label">No</label>
+      <label for="{{ word.name }}_no"
+             ng-style="{ color: !isComplete || !editEnabled ? '#ccc' : '' }"
+             class="control-label">No</label>
     </div>
     <div class="col-sm-5">
       <span ng-repeat="variant in model.variantList |
