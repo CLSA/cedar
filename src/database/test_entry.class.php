@@ -34,50 +34,56 @@ class test_entry extends \cenozo\database\record
     {
       $allowed = true;
       $data_type = $this->get_test_type()->data_type;
-      if( 'aft' == $data_type )
+
+      if( 'unusable' != $this->audio_status &&
+          'unavailable' != $this->audio_status &&
+          'refused' != $this->participant_status )
       {
-        // make sure there are no placeholders
-        $modifier = lib::create( 'database\modifier' );
-        $modifier->where( 'word_id', '=', NULL );
-        if( 0 < $this->get_aft_data_count( $modifier ) ) $allowed = false;
-      }
-      else if( 'fas' == $data_type )
-      {
-        // make sure there are no placeholders
-        $modifier = lib::create( 'database\modifier' );
-        $modifier->where( 'word_id', '=', NULL );
-        if( 0 < $this->get_fas_data_count( $modifier ) ) $allowed = false;
-      }
-      else if( 'premat' == $data_type )
-      {
-        if( is_null( $this->audio_status ) && is_null( $this->participant_status ) )
+        if( 'aft' == $data_type )
         {
-          $premat_data_class_name = lib::get_class_name( 'database\premat_data' );
-          $db_premat_data = $premat_data_class_name::get_unique_record( 'test_entry_id', $this->id );
-          if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
+          // make sure there are no placeholders
+          $modifier = lib::create( 'database\modifier' );
+          $modifier->where( 'word_id', '=', NULL );
+          if( 0 < $this->get_aft_data_count( $modifier ) ) $allowed = false;
         }
-      }
-      else if( 'rey' == $data_type )
-      {
-        // make sure there is no missing data
-        $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
-        $db_rey_data = $rey_data_class_name::get_unique_record( 'test_entry_id', $this->id );
-        if( ( is_null( $db_rey_data->drum ) && is_null( $db_rey_data->drum_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->curtain ) && is_null( $db_rey_data->curtain_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->bell ) && is_null( $db_rey_data->bell_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->coffee ) && is_null( $db_rey_data->coffee_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->school ) && is_null( $db_rey_data->school_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->parent ) && is_null( $db_rey_data->parent_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->moon ) && is_null( $db_rey_data->moon_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->garden ) && is_null( $db_rey_data->garden_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->hat ) && is_null( $db_rey_data->hat_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->farmer ) && is_null( $db_rey_data->farmer_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->nose ) && is_null( $db_rey_data->nose_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->turkey ) && is_null( $db_rey_data->turkey_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->colour ) && is_null( $db_rey_data->colour_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->house ) && is_null( $db_rey_data->house_rey_data_variant_id ) ) ||
-            ( is_null( $db_rey_data->river ) && is_null( $db_rey_data->river_rey_data_variant_id ) ) ) {
-          $allowed = false;
+        else if( 'fas' == $data_type )
+        {
+          // make sure there are no placeholders
+          $modifier = lib::create( 'database\modifier' );
+          $modifier->where( 'word_id', '=', NULL );
+          if( 0 < $this->get_fas_data_count( $modifier ) ) $allowed = false;
+        }
+        else if( 'premat' == $data_type )
+        {
+          if( is_null( $this->audio_status ) && is_null( $this->participant_status ) )
+          {
+            $premat_data_class_name = lib::get_class_name( 'database\premat_data' );
+            $db_premat_data = $premat_data_class_name::get_unique_record( 'test_entry_id', $this->id );
+            if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
+          }
+        }
+        else if( 'rey' == $data_type )
+        {
+          // make sure there is no missing data
+          $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
+          $db_rey_data = $rey_data_class_name::get_unique_record( 'test_entry_id', $this->id );
+          if( ( is_null( $db_rey_data->drum ) && is_null( $db_rey_data->drum_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->curtain ) && is_null( $db_rey_data->curtain_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->bell ) && is_null( $db_rey_data->bell_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->coffee ) && is_null( $db_rey_data->coffee_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->school ) && is_null( $db_rey_data->school_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->parent ) && is_null( $db_rey_data->parent_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->moon ) && is_null( $db_rey_data->moon_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->garden ) && is_null( $db_rey_data->garden_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->hat ) && is_null( $db_rey_data->hat_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->farmer ) && is_null( $db_rey_data->farmer_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->nose ) && is_null( $db_rey_data->nose_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->turkey ) && is_null( $db_rey_data->turkey_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->colour ) && is_null( $db_rey_data->colour_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->house ) && is_null( $db_rey_data->house_rey_data_variant_id ) ) ||
+              ( is_null( $db_rey_data->river ) && is_null( $db_rey_data->river_rey_data_variant_id ) ) ) {
+            $allowed = false;
+          }
         }
       }
 
