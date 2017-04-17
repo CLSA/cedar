@@ -1,0 +1,7 @@
+<a href
+   tabindex="-1"
+   ng-bind-html="
+     '<span class=\'rounded language-code bg-info text-info\'>' + match.model.code + '</span> ' +
+     ( match.model.word | uibTypeaheadHighlight:query )"
+   ng-attr-title="{{ match.model.word }}"></a>
+

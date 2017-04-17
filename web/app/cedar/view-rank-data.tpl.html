@@ -5,9 +5,9 @@
            id="newWord"
            name="newWord"
            ng-model="newWord"
-           uib-typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
-                      for item in typeaheadModel.getValues( $viewValue )"
+           uib-typeahead="item for item in typeaheadModel.getValues( $viewValue )"
            typeahead-on-select="submitNewWord( true )"
+           typeahead-template-url="{{ wordTypeaheadTemplateUrl }}"
            ng-class="{ 'loading-small': typeaheadModel.isLoading }"
            type="text"
            autocomplete="off"

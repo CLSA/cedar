@@ -13,11 +13,9 @@
              id="word"
              name="word"
              ng-model="word"
-             uib-typeahead="item as '<span class=\'rounded language-code bg-info\'>' + item.code + '</span> ' + item.word
-                        for item in typeaheadModel.getValues( $viewValue )"
-             typeahead-editable="true"
+             uib-typeahead="item for item in typeaheadModel.getValues( $viewValue )"
+             typeahead-template-url="{{ wordTypeaheadTemplateUrl }}"
              typeahead-input-formatter="formatLabel( $model )"
-             class="form-control"
              ng-class="{ 'loading-small': typeaheadModel.isLoading }"
              type="text"
              autocomplete="off"

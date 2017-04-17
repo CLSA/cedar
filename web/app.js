@@ -56,8 +56,8 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           var validLetters = this.getValidLetters();
           var re = new RegExp(
             "^[a-z" + validLetters + "]" +
-            "[-' a-z" + validLetters + "]*" + 
-            "[a-z" + validLetters + "]$"
+            "([-' a-z" + validLetters + "]*" + 
+            "[a-z" + validLetters + "])?$"
           );
           return null != word.match( re );
         },
@@ -129,6 +129,7 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
       construct: function( scope ) {
         scope.isComplete = false;
         scope.isWorking = false;
+        scope.wordTypeaheadTemplateUrl = cenozoApp.getFileUrl( 'cedar', 'word-typeahead-match.tpl.html' );
         scope.model.viewModel.onView().finally( function() { scope.isComplete = true; } );
 
         function postSubmit( selected ) {
@@ -588,6 +589,7 @@ cenozo.service( 'CnModalSelectWordFactory', [
           templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-word.tpl.html' ),
           controller: function( $scope, $uibModalInstance ) {
             $scope.model = self;
+            $scope.wordTypeaheadTemplateUrl = cenozoApp.getFileUrl( 'cedar', 'word-typeahead-match.tpl.html' );
             angular.extend( $scope, {
               typeaheadModel: CnWordTypeaheadFactory.instance( {
                 getLanguageIdRestrictList: function() { return $scope.model.languageIdRestrictList; }
@@ -595,17 +597,19 @@ cenozo.service( 'CnModalSelectWordFactory', [
               proceed: function() {
                 var proceed = true;
                 if( $scope.word ) {
-                  $scope.word = $scope.word.toLowerCase().replace( /[—–]/g, '-' ); // get rid of en- and em-dashes
-                  if( !$scope.typeaheadModel.isWordValid( $scope.word ) ) {
-                    CnModalMessageFactory.instance( {
-                      title: 'Invalid Word',
-                      message: 'The word you have provided is invalid.\n\n' +
-                               'Please enter a word at least two characters long using only letters, ' + 
-                               'single-quotes (\'), dashes (-) and spaces, and which starts with at ' +
-                               'least one alphabetic letter.',
-                      error: true
-                    } ).show();
-                    proceed = false;
+                  if( angular.isString( $scope.word ) ) {
+                    var text = $scope.word.toLowerCase().replace( /[—–]/g, '-' ); // get rid of en- and em-dashes
+                    if( !$scope.typeaheadModel.isWordValid( text ) ) {
+                      CnModalMessageFactory.instance( {
+                        title: 'Invalid Word',
+                        message: 'The word you have provided is invalid.\n\n' +
+                                 'Please enter a word at least two characters long using only letters, ' + 
+                                 'single-quotes (\'), dashes (-) and spaces, and which starts with at ' +
+                                 'least one alphabetic letter.',
+                        error: true
+                      } ).show();
+                      proceed = false;
+                    }
                   }
                 }
                 

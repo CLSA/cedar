@@ -50,6 +50,7 @@ define( function() {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnReyDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
+          $scope.wordTypeaheadTemplateUrl = cenozoApp.getFileUrl( 'cedar', 'word-typeahead-match.tpl.html' );
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           // update which variants are allowed every time the language list changes
