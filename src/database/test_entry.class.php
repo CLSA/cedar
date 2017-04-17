@@ -256,11 +256,11 @@ class test_entry extends \cenozo\database\record
         $modifier->left_join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
         $modifier->left_join( 'word', 'fas_data.word_id', 'word.id' );
         $modifier->where( 'IFNULL( word.fas, "primary" )', '=', 'primary' );
-        $modifier->where_braket( true );
+        $modifier->where_bracket( true );
         $modifier->where( 'word.id', '=', NULL );
         $modifier->or_where(
           'SUBSTRING( word.word, 1, 1 )', '=', 'LOWER( SUBSTRING( test_type.name, 1, 1 ) )', false );
-        $modifier->where_braket( false );
+        $modifier->where_bracket( false );
 
         $row = current( $this->select( $select, $modifier ) );
         $score = $row['score'];
