@@ -13,6 +13,7 @@ SOURCE word.sql
 SOURCE homophone.sql
 SOURCE transcription.sql
 SOURCE transcription_has_language.sql
+SOURCE transcription_has_user.sql
 SOURCE test_type.sql
 SOURCE test_type_has_cohort.sql
 SOURCE filename_format.sql
@@ -34,6 +35,7 @@ SOURCE user_has_language.sql
 SOURCE participant_sound_file_total.sql
 SOURCE update_participant_sound_file_total.sql
 SOURCE update_transcription_has_language.sql
+SOURCE update_transcription_has_user.sql
 
 SOURCE import_cedar.sql
 

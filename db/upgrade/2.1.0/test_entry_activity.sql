@@ -47,3 +47,45 @@ DELIMITER ;
 -- now call the procedure and remove the procedure
 CALL patch_test_entry_activity();
 DROP PROCEDURE IF EXISTS patch_test_entry_activity;
+
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS test_entry_activity_AFTER_INSERT $$
+CREATE DEFINER = CURRENT_USER TRIGGER test_entry_activity_AFTER_INSERT AFTER INSERT ON test_entry_activity FOR EACH ROW
+BEGIN
+  SET @transcription_id = (
+    SELECT transcription_id
+    FROM test_entry
+    WHERE id = NEW.test_entry_id
+  );
+  CALL update_transcription_has_user( @transcription_id );
+END$$
+
+
+DROP TRIGGER IF EXISTS test_entry_activity_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER test_entry_activity_AFTER_UPDATE AFTER UPDATE ON test_entry_activity FOR EACH ROW
+BEGIN
+  IF OLD.user_id != NEW.user_id THEN
+    SET @transcription_id = (
+      SELECT transcription_id
+      FROM test_entry
+      WHERE id = NEW.test_entry_id
+    );
+    CALL update_transcription_has_user( @transcription_id );
+  END IF;
+END$$
+
+
+DROP TRIGGER IF EXISTS test_entry_activity_AFTER_DELETE $$
+CREATE DEFINER = CURRENT_USER TRIGGER test_entry_activity_AFTER_DELETE AFTER DELETE ON test_entry_activity FOR EACH ROW
+BEGIN
+  SET @transcription_id = (
+    SELECT transcription_id
+    FROM test_entry
+    WHERE id = OLD.test_entry_id
+  );
+  CALL update_transcription_has_user( @transcription_id );
+END$$
+
+DELIMITER ;
