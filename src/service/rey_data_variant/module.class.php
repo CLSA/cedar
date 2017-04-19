@@ -21,14 +21,7 @@ class module extends \cenozo\service\module
   {
     parent::prepare_read( $select, $modifier );
 
-    if( $select->has_table_columns( 'variant' ) )
-      $modifier->join( 'word', 'rey_data_variant.word_id', 'variant.id', '', 'variant' );
-
-    if( $select->has_column( 'sister_list' ) )
-    {
-      $modifier->left_join( 'word', 'rey_data_variant.word_id', 'sister_word.sister_word_id', 'sister_word' );
-      $modifier->group( 'rey_data_variant.id' );
-      $select->add_column( 'GROUP_CONCAT( sister_word.word )', 'sister_list', false );
-    }
+    $modifier->join( 'word', 'rey_data_variant.word_id', 'variant.id', '', 'variant' );
+    $modifier->join( 'language', 'variant.language_id', 'variant_language.id', '', 'variant_language' );
   }
 }
