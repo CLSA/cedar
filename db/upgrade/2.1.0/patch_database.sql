@@ -19,6 +19,7 @@ SOURCE test_type_has_cohort.sql
 SOURCE filename_format.sql
 SOURCE sound_file.sql
 SOURCE test_entry.sql
+SOURCE test_entry_has_word.sql
 SOURCE test_entry_has_language.sql
 SOURCE test_entry_activity.sql
 SOURCE test_entry_note.sql
@@ -36,6 +37,7 @@ SOURCE participant_sound_file_total.sql
 SOURCE update_participant_sound_file_total.sql
 SOURCE update_transcription_has_language.sql
 SOURCE update_transcription_has_user.sql
+SOURCE update_test_entry_has_word.sql
 
 SOURCE import_cedar.sql
 

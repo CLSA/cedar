@@ -21,7 +21,24 @@ CREATE TABLE IF NOT EXISTS rey_data_has_word (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+
 DELIMITER $$
+
+DROP TRIGGER IF EXISTS rey_data_has_word_AFTER_INSERT $$
+CREATE DEFINER = CURRENT_USER TRIGGER rey_data_has_word_AFTER_INSERT AFTER INSERT ON rey_data_has_word FOR EACH ROW
+BEGIN
+  SET @test_entry_id = ( SELECT test_entry_id FROM rey_data WHERE id = NEW.rey_data_id );
+  CALL update_test_entry_has_word( @test_entry_id );
+END$$
+
+
+DROP TRIGGER IF EXISTS rey_data_has_word_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER rey_data_has_word_AFTER_UPDATE AFTER UPDATE ON rey_data_has_word FOR EACH ROW
+BEGIN
+  SET @test_entry_id = ( SELECT test_entry_id FROM rey_data WHERE id = NEW.rey_data_id );
+  CALL update_test_entry_has_word( @test_entry_id );
+END$$
+
 
 DROP TRIGGER IF EXISTS rey_data_has_word_AFTER_DELETE $$
 CREATE DEFINER = CURRENT_USER TRIGGER rey_data_has_word_AFTER_DELETE AFTER DELETE ON rey_data_has_word FOR EACH ROW
@@ -39,6 +56,9 @@ BEGIN
     AND aft IS NULL
     AND fas IS NULL;
   END IF;
+
+  SET @test_entry_id = ( SELECT test_entry_id FROM rey_data WHERE id = OLD.rey_data_id );
+  CALL update_test_entry_has_word( @test_entry_id );
 END;$$
 
 DELIMITER ;

@@ -25,6 +25,20 @@ ENGINE = InnoDB;
 
 DELIMITER $$
 
+DROP TRIGGER IF EXISTS fas_data_AFTER_INSERT $$
+CREATE DEFINER = CURRENT_USER TRIGGER fas_data_AFTER_INSERT AFTER INSERT ON fas_data FOR EACH ROW
+BEGIN
+  CALL update_test_entry_has_word( NEW.test_entry_id );
+END$$
+
+
+DROP TRIGGER IF EXISTS fas_data_AFTER_UPDATE $$
+CREATE DEFINER = CURRENT_USER TRIGGER fas_data_AFTER_UPDATE AFTER UPDATE ON fas_data FOR EACH ROW
+BEGIN
+  CALL update_test_entry_has_word( NEW.test_entry_id );
+END$$
+
+
 DROP TRIGGER IF EXISTS aft_data_AFTER_DELETE $$
 CREATE DEFINER = CURRENT_USER TRIGGER aft_data_AFTER_DELETE AFTER DELETE ON aft_data FOR EACH ROW
 BEGIN
@@ -41,6 +55,8 @@ BEGIN
     AND aft IS NULL
     AND fas IS NULL;
   END IF;
+
+  CALL update_test_entry_has_word( OLD.test_entry_id );
 END;$$
 
 DELIMITER ;

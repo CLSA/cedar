@@ -164,6 +164,12 @@ define( function() {
         CnBaseViewFactory.construct( this, parentModel, root );
         this.lastMisspelledValue = null;
 
+        // disable the choosing of test-entries using this word
+        this.deferred.promise.then( function() {
+          if( angular.isDefined( self.testEntryModel ) )
+            self.testEntryModel.getChooseEnabled = function() { return false; };
+        } );
+
         this.onPatch = function( data ) {
           if( angular.isDefined( data.misspelled ) && true == data.misspelled ) {
             // get correctly spelled word when marking word as misspelled
