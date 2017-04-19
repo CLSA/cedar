@@ -19,7 +19,6 @@ SOURCE test_type_has_cohort.sql
 SOURCE filename_format.sql
 SOURCE sound_file.sql
 SOURCE test_entry.sql
-SOURCE test_entry_has_word.sql
 SOURCE test_entry_has_language.sql
 SOURCE test_entry_activity.sql
 SOURCE test_entry_note.sql
@@ -34,12 +33,17 @@ SOURCE user_has_cohort.sql
 SOURCE user_has_language.sql
 
 SOURCE participant_sound_file_total.sql
+SOURCE word_test_entry_total.sql
 SOURCE update_participant_sound_file_total.sql
+SOURCE update_word_test_entry_total.sql
 SOURCE update_transcription_has_language.sql
 SOURCE update_transcription_has_user.sql
 SOURCE update_test_entry_has_word.sql
 
 SOURCE import_cedar.sql
+
+-- must be doen after importing cedar1
+SOURCE test_entry_has_word.sql
 
 SOURCE table_character_sets.sql
 SOURCE column_character_sets.sql

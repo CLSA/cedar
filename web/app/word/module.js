@@ -39,6 +39,10 @@ define( function() {
       fas: {
         column: 'word.fas',
         title: 'FAS Type'
+      },
+      test_entry_count: {
+        title: 'Used',
+        type: 'number'
       }
     },
     defaultOrder: {

@@ -21,6 +21,8 @@ class module extends \cenozo\service\module
   {
     parent::prepare_read( $select, $modifier );
 
+    $db = lib::create( 'business\session' )->get_database();
+
     // we must always join to the language table (for the word module's typeaheads)
     $modifier->left_join( 'language', 'word.language_id', 'language.id' );
 
@@ -69,6 +71,13 @@ class module extends \cenozo\service\module
       $modifier->where_bracket( false );
       $modifier->or_where( 'word.id', 'IN', sprintf( '( %s )', $rey_data_variant_sel->get_sql() ), false );
       $modifier->where_bracket( false );
+    }
+
+    // add the total number of test_entrys
+    if( $select->has_column( 'test_entry_count' ) )
+    {
+      $select->add_column( 'word_test_entry_total.total', 'test_entry_count', false );
+      $modifier->join( 'word_test_entry_total', 'word.id', 'word_test_entry_total.word_id' );
     }
   }
 }

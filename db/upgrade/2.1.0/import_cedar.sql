@@ -1248,6 +1248,7 @@ CREATE PROCEDURE import_cedar()
 
     SELECT "Deleting no-response words from dictionary and data" AS "";
 
+    DROP TABLE IF EXISTS delete_word;
     SET @sql = CONCAT(
       "CREATE TEMPORARY TABLE delete_word ",
       "SELECT word.id FROM word ",
@@ -1278,25 +1279,6 @@ CREATE PROCEDURE import_cedar()
     UPDATE word SET fas = 'intrusion'
     WHERE SUBSTRING( word, 1, 1 ) NOT IN ( 'f', 'a', 'à', 'â', 'ä', 's' )
     AND IFNULL( misspelled, 0 ) != 1;
-
-    SELECT "Determining which words each test-entry uses" AS "";
-
-    SET @test = ( SELECT COUNT(*) FROM test_entry_has_word );
-
-    IF @test = 0 THEN
-      INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
-      SELECT DISTINCT test_entry_id, word_id
-      FROM aft_data;
-
-      INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
-      SELECT DISTINCT test_entry_id, word_id
-      FROM fas_data;
-
-      INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
-      SELECT DISTINCT rey_data.test_entry_id, rey_data_has_word.word_id
-      FROM rey_data
-      JOIN rey_data_has_word ON rey_data.id = rey_data_has_word.rey_data_id;
-    END IF;
 
   END //
 DELIMITER ;

@@ -17,7 +17,7 @@ DROP PROCEDURE IF EXISTS patch_participant_sound_file_total;
         "participant_id INT UNSIGNED NOT NULL, ",
         "update_timestamp TIMESTAMP NOT NULL, ",
         "create_timestamp TIMESTAMP NOT NULL, ",
-        "total INT NOT NULL, ",
+        "total INT UNSIGNED NOT NULL DEFAULT 0, ",
         "datetime DATETIME NOT NULL, ",
         "PRIMARY KEY (participant_id), ",
         "INDEX fk_participant_id (participant_id ASC), ",
