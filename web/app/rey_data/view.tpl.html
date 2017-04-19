@@ -74,6 +74,7 @@
                   'btn-danger': 'intrusion' == model.viewModel.intrusionList[i].word_type
                 }"
                 uib-tooltip="Click to remove word"
+                ng-disabled="!isComplete || isWorking || !editEnabled"
                 ng-click="deleteWord( model.viewModel.intrusionList[i] )">
           <span class="rounded language-code bg-info">{{ model.viewModel.intrusionList[i].code }}</span>
           {{ model.viewModel.intrusionList[i].word }}
@@ -84,7 +85,7 @@
 </div>
 <div class="form-group" style="padding-bottom: 0px;" ng-show="editEnabled">
   <label for="newWord" class="col-sm-3 control-label">Enter Word</label>
-  <div class="col-sm-9">
+  <div class="col-sm-6">
     <input class="form-control"
            id="newWord"
            name="newWord"
@@ -97,5 +98,11 @@
            autocomplete="off"
            cn-submit-word="submitNewWord( false )"
            ng-disabled="!isComplete || isWorking || !editEnabled"></input>
+  </div>
+  <div class="col-sm-3">
+    <button type="button"
+            class="btn btn-default full-width"
+            ng-click="model.viewModel.setRemainingWordsAsNo()"
+            ng-disabled="!isComplete || isWorking || !editEnabled">Mark Remaining As No</button>
   </div>
 </div>

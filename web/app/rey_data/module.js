@@ -142,11 +142,17 @@ define( function() {
 
                 $scope.model.viewModel.onPatch( data ).then( function() {
                   // refresh the view if we've changed the language
-                  if( 'language_id' == property )
+                  if( 'language_id' == property ) {
                     $q.all( [
                       $scope.model.viewModel.onView(),
                       $scope.model.testEntryModel.viewModel.languageModel.listModel.onList( true )
                     ] ).then( function() { $scope.isComplete = true; } );
+                  } else {
+                    $scope.model.viewModel.record[property] =
+                      null == data[property] ? '' : data[property];
+                    $scope.model.viewModel.record[variantProperty] =
+                      null == data[variantProperty] ? '' : data[variantProperty];
+                  }
                 } );
               }
             }
@@ -319,6 +325,24 @@ define( function() {
               var index = self.intrusionList.findIndexByProperty( 'id', wordRecord.id );
               if( null != index ) self.intrusionList.splice( index, 1 );
             } );
+          },
+          setRemainingWordsAsNo: function() {
+            if( self.parentModel.getEditEnabled() ) {
+              // convert the word-list value into a record value
+              var data = {};
+              self.wordList.forEach( function( word ) {
+                var property = word.name;
+                var variantProperty = property + '_rey_data_variant_id';
+                if( "" === self.record[property] && "" === self.record[variantProperty] ) data[word.name] = 0;
+              } );
+
+              return self.onPatch( data ).then( function() {
+                for( var property in data ) {
+                  self.record[property] = 0;
+                  self.wordList.findByProperty( 'name', property ).value = 0;
+                }
+              } );
+            }
           },
           onView: function() {
             return $q.all( [
