@@ -15,6 +15,25 @@ use cenozo\lib, cenozo\log, cedar\util;
 class test_entry extends \cenozo\database\record
 {
   /**
+   * Determines whether the test-entry has a status that prevents it from being fully entered
+   * 
+   * This is done based on the audio and participant status columns
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @return boolean
+   * @access public
+   */
+  public function is_completable()
+  {
+    return (
+      is_null( $this->audio_status ) ||
+      ( 'unusable' != $this->audio_status && 'unavailable' != $this->audio_status )
+    ) && (
+      is_null( $this->participant_status ) ||
+      'refused' != $this->participant_status
+    );
+  }
+
+  /**
    * Override parent method
    */
   public function save()
@@ -35,9 +54,7 @@ class test_entry extends \cenozo\database\record
       $allowed = true;
       $data_type = $this->get_test_type()->data_type;
 
-      if( 'unusable' != $this->audio_status &&
-          'unavailable' != $this->audio_status &&
-          'refused' != $this->participant_status )
+      if( $this->is_completable() )
       {
         if( 'aft' == $data_type )
         {
@@ -55,12 +72,9 @@ class test_entry extends \cenozo\database\record
         }
         else if( 'premat' == $data_type )
         {
-          if( is_null( $this->audio_status ) && is_null( $this->participant_status ) )
-          {
-            $premat_data_class_name = lib::get_class_name( 'database\premat_data' );
-            $db_premat_data = $premat_data_class_name::get_unique_record( 'test_entry_id', $this->id );
-            if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
-          }
+          $premat_data_class_name = lib::get_class_name( 'database\premat_data' );
+          $db_premat_data = $premat_data_class_name::get_unique_record( 'test_entry_id', $this->id );
+          if( is_null( $db_premat_data->counting ) || is_null( $db_premat_data->alphabet ) ) $allowed = false;
         }
         else if( 'rey' == $data_type )
         {
@@ -234,12 +248,7 @@ class test_entry extends \cenozo\database\record
   {
     $score = NULL;
     $alt_score = NULL;
-    if( 'submitted' == $this->state && (
-          is_null( $this->audio_status ) ||
-          ( 'unusable' != $this->audio_status && 'unavailable' != $this->audio_status )
-        ) && (
-          is_null( $this->participant_status ) || 'refused' != $this->participant_status
-        ) )
+    if( 'submitted' == $this->state && $this->is_completable() )
     {
       $score = 0;
 
