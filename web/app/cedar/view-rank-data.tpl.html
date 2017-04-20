@@ -62,7 +62,7 @@
                   'btn-danger': 'invalid' == model.viewModel.record[i].word_type,
                   'btn-basic': 'placeholder' == model.viewModel.record[i].word_type
                 }"
-                uib-tooltip="{{ 'Click to remove ' + model.viewModel.record[i].word_type }}"
+                uib-tooltip="Click to remove {{ model.viewModel.record[i].word_type }}"
                 ng-disabled="isWorking || !editEnabled"
                 ng-click="removeWord( model.viewModel.record[i] )">
           <span ng-if="'placeholder' != model.viewModel.record[i].word_type"

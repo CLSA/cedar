@@ -249,12 +249,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               data: { state: state },
               onError: function( response ) {
                 if( 409 == response.status ) {
-                  return CnModalMessageFactory.instance( {
-                    title: 'Cannot Submit',
-                    message: 'aft' == self.record.data_type || 'fas' == self.record.data_type
-                           ? 'The test-entry cannot be submitted if it contains placeholders or invalid words.'
-                           : 'The test-entry cannot be submitted while there is missing data.'
-                  } ).show();
+                  var message = 'The test-entry cannot be submitted if it ';
+                  message += 'aft' == self.record.data_type || 'fas' == self.record.data_type
+                           ? 'contains invalid words or placeholders.'
+                           : 'rey' == self.record.data_type
+                           ? 'contains invalid words or there is missing data.'
+                           : 'is missing data.';
+                  return CnModalMessageFactory.instance( { title: 'Cannot Submit', message: message } ).show();
                 } else CnModalMessageFactory.httpError( response );
               }
             } ).patch().then( function() {

@@ -101,6 +101,13 @@ class test_entry extends \cenozo\database\record
               ( is_null( $db_rey_data->house ) && is_null( $db_rey_data->house_rey_data_variant_id ) ) ||
               ( is_null( $db_rey_data->river ) && is_null( $db_rey_data->river_rey_data_variant_id ) ) ) {
             $allowed = false;
+          } else {
+            // make sure there are no placeholders or invalid words
+            $modifier = lib::create( 'database\modifier' );
+            $modifier->join( 'rey_data_has_word', 'rey_data.id', 'rey_data_has_word.rey_data_id' );
+            $modifier->join( 'word', 'rey_data_has_word.word_id', 'word.id' );
+            $modifier->where( 'IFNULL( word.misspelled, false )', '=', true );
+            if( 0 < $this->get_rey_data_count( $modifier ) ) $allowed = false;
           }
         }
       }

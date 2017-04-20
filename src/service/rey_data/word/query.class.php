@@ -22,6 +22,10 @@ class query extends \cenozo\service\query
     parent::prepare();
 
     // add the word type as a column
-    $this->select->add_column( 'IF( word.misspelled IS NULL, "variant", "intrusion" )', 'word_type', false );
+    $this->select->add_column(
+      'IF( word.misspelled IS NULL, "variant", IF( word.misspelled, "invalid", "intrusion" ) )',
+      'word_type',
+      false
+    );
   }
 }

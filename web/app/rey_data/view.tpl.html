@@ -71,9 +71,10 @@
         <button class="btn full-width"
                 ng-class="{
                   'btn-warning': 'variant' == model.viewModel.intrusionList[i].word_type,
-                  'btn-danger': 'intrusion' == model.viewModel.intrusionList[i].word_type
+                  'btn-success': 'intrusion' == model.viewModel.intrusionList[i].word_type,
+                  'btn-danger': 'invalid' == model.viewModel.intrusionList[i].word_type
                 }"
-                uib-tooltip="Click to remove word"
+                uib-tooltip="Click to remove {{ model.viewModel.intrusionList[i].word_type }}"
                 ng-disabled="!isComplete || isWorking || !editEnabled"
                 ng-click="deleteWord( model.viewModel.intrusionList[i] )">
           <span class="rounded language-code bg-info">{{ model.viewModel.intrusionList[i].code }}</span>
