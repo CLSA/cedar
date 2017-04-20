@@ -9,11 +9,13 @@ DROP PROCEDURE IF EXISTS patch_word_test_entry_total;
     IF @test = 0 THEN 
       INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
       SELECT DISTINCT test_entry_id, word_id
-      FROM aft_data;
+      FROM aft_data
+      WHERE word_id IS NOT NULL;
 
       INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
       SELECT DISTINCT test_entry_id, word_id
-      FROM fas_data;
+      FROM fas_data
+      WHERE word_id IS NOT NULL;
 
       INSERT IGNORE INTO test_entry_has_word( test_entry_id, word_id )
       SELECT DISTINCT rey_data.test_entry_id, rey_data_has_word.word_id

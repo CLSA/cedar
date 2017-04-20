@@ -252,7 +252,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                   return CnModalMessageFactory.instance( {
                     title: 'Cannot Submit',
                     message: 'aft' == self.record.data_type || 'fas' == self.record.data_type
-                           ? 'The test-entry cannot be submitted if it contains placeholders.'
+                           ? 'The test-entry cannot be submitted if it contains placeholders or invalid words.'
                            : 'The test-entry cannot be submitted while there is missing data.'
                   } ).show();
                 } else CnModalMessageFactory.httpError( response );

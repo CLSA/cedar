@@ -35,18 +35,33 @@ class patch extends \cenozo\service\patch
   /**
    * Override parent method
    */
+  protected function setup()
+  {
+    parent::setup();
+
+    $db_word = $this->get_leaf_record();
+    if( $db_word->misspelled )
+    {
+      $db_word->aft = 'invalid';
+      $db_word->fas = 'invalid';
+    }
+  }
+
+  /**
+   * Override parent method
+   */
   protected function execute()
   {
-    $db_misspelled_word = $this->get_leaf_record();
+    $db_word = $this->get_leaf_record();
 
     // add the corrected word if it exists
-    if( !is_null( $this->correct_word ) )
+    if( $db_word->misspelled && !is_null( $this->correct_word ) )
     {
       // convert correct word if it is provided as a string
       if( is_string( $this->correct_word ) )
       {
         $object = new \stdClass();
-        $object->language_id = $db_misspelled_word->language_id;
+        $object->language_id = $db_word->language_id;
         $object->word = $this->correct_word;
         $this->correct_word = $object;
       }
@@ -59,46 +74,46 @@ class patch extends \cenozo\service\patch
       {
         // see if the word already exists
         $word_class_name = lib::get_class_name( 'database\word' );
-        $db_word = $word_class_name::get_unique_record(
+        $db_correct_word = $word_class_name::get_unique_record(
           array( 'language_id', 'word' ),
           array( $this->correct_word->language_id, $this->correct_word->word )
         );
 
-        if( is_null( $db_word ) )
+        if( is_null( $db_correct_word ) )
         {
-          $db_word = lib::create( 'database\word' );
-          $db_word->language_id = $this->correct_word->language_id;
-          $db_word->word = $this->correct_word->word;
-          $db_word->misspelled = false;
-          $db_word->save();
+          $db_correct_word = lib::create( 'database\word' );
+          $db_correct_word->language_id = $this->correct_word->language_id;
+          $db_correct_word->word = $this->correct_word->word;
+          $db_correct_word->misspelled = false;
+          $db_correct_word->save();
         }
 
-        if( $db_word->misspelled )
+        if( $db_correct_word->misspelled )
         {
           throw lib::create( 'exception\notice',
             sprintf( 'You cannot correct the misspelled word "%s" with the word "%s" since it is also misspelled.',
-                     $db_misspelled_word->word,
-                     $db_word->word ),
+                     $db_word->word,
+                     $db_correct_word->word ),
             __METHOD__
           );
         }
 
-        $this->correct_word = $db_word;
+        $this->correct_word = $db_correct_word;
       }
     }
 
     parent::execute();
 
     // if we have a corrected word then find all tests that use the misspelled and change it to the corrected
-    if( !is_null( $this->correct_word ) )
+    if( $db_word->misspelled && !is_null( $this->correct_word ) )
     {
       $aft_data_class_name = lib::get_class_name( 'database\aft_data' );
       $fas_data_class_name = lib::get_class_name( 'database\fas_data' );
       $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
 
-      $aft_data_class_name::substitute_word( $db_misspelled_word, $this->correct_word );
-      $fas_data_class_name::substitute_word( $db_misspelled_word, $this->correct_word );
-      $rey_data_class_name::substitute_word( $db_misspelled_word, $this->correct_word );
+      $aft_data_class_name::substitute_word( $db_word, $this->correct_word );
+      $fas_data_class_name::substitute_word( $db_word, $this->correct_word );
+      $rey_data_class_name::substitute_word( $db_word, $this->correct_word );
     }
   }
 

@@ -56,10 +56,11 @@
         <button class="btn full-width"
                 type="button"
                 ng-class="{
-                  'btn-success': 'variant' == model.viewModel.record[i].word_type,
-                  'btn-danger': 'intrusion' == model.viewModel.record[i].word_type,
+                  'btn-warning': 'variant' == model.viewModel.record[i].word_type,
+                  'btn-success': 'intrusion' == model.viewModel.record[i].word_type,
                   'btn-default': 'primary' == model.viewModel.record[i].word_type,
-                  'btn-info': 'placeholder' == model.viewModel.record[i].word_type
+                  'btn-danger': 'invalid' == model.viewModel.record[i].word_type,
+                  'btn-basic': 'placeholder' == model.viewModel.record[i].word_type
                 }"
                 uib-tooltip="{{ 'Click to remove ' + model.viewModel.record[i].word_type }}"
                 ng-disabled="isWorking || !editEnabled"

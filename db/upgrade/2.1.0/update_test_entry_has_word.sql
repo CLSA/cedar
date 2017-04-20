@@ -15,18 +15,20 @@ BEGIN
     WHERE test_entry.id = proc_test_entry_id
   );
   IF "aft" = @data_type THEN
-       INSERT INTO test_entry_has_word( test_entry_id, word_id )
-       SELECT DISTINCT proc_test_entry_id, word_id
+    INSERT INTO test_entry_has_word( test_entry_id, word_id )
+    SELECT DISTINCT proc_test_entry_id, word_id
     FROM aft_data
-    WHERE test_entry_id = proc_test_entry_id;
+    WHERE test_entry_id = proc_test_entry_id
+    AND word_id IS NOT NULL;
   ELSEIF "fas" = @data_type THEN
-       INSERT INTO test_entry_has_word( test_entry_id, word_id )
-       SELECT DISTINCT proc_test_entry_id, word_id
+    INSERT INTO test_entry_has_word( test_entry_id, word_id )
+    SELECT DISTINCT proc_test_entry_id, word_id
     FROM fas_data
-    WHERE test_entry_id = proc_test_entry_id;
+    WHERE test_entry_id = proc_test_entry_id
+    AND word_id IS NOT NULL;
   ELSEIF "rey" = @data_type THEN
-       INSERT INTO test_entry_has_word( test_entry_id, word_id )
-       SELECT DISTINCT proc_test_entry_id, word_id
+    INSERT INTO test_entry_has_word( test_entry_id, word_id )
+    SELECT DISTINCT proc_test_entry_id, word_id
     FROM rey_data_has_word
     JOIN rey_data ON rey_data_has_word.rey_data_id = rey_data.id
     WHERE rey_data.test_entry_id = proc_test_entry_id;

@@ -58,16 +58,20 @@ class test_entry extends \cenozo\database\record
       {
         if( 'aft' == $data_type )
         {
-          // make sure there are no placeholders
+          // make sure there are no placeholders or invalid words
           $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'word_id', '=', NULL );
+          $modifier->left_join( 'word', 'aft_data.word_id', 'word.id' );
+          $modifier->where( 'aft_data.word_id', '=', NULL );
+          $modifier->or_where( 'word.aft', '=', 'invalid' );
           if( 0 < $this->get_aft_data_count( $modifier ) ) $allowed = false;
         }
         else if( 'fas' == $data_type )
         {
-          // make sure there are no placeholders
+          // make sure there are no placeholders or invalid words
           $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'word_id', '=', NULL );
+          $modifier->left_join( 'word', 'fas_data.word_id', 'word.id' );
+          $modifier->where( 'fas_data.word_id', '=', NULL );
+          $modifier->or_where( 'word.fas', '=', 'invalid' );
           if( 0 < $this->get_fas_data_count( $modifier ) ) $allowed = false;
         }
         else if( 'premat' == $data_type )
