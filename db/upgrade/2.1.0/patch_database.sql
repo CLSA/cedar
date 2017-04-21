@@ -44,6 +44,9 @@ SOURCE import_cedar.sql
 
 -- must be doen after importing cedar1
 SOURCE test_entry_has_word.sql
+SOURCE post_aft_data.sql
+SOURCE post_fas_data.sql
+SOURCE post_rey_data_has_word.sql
 
 SOURCE table_character_sets.sql
 SOURCE column_character_sets.sql
