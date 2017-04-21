@@ -64,6 +64,11 @@ class patch extends \cenozo\service\patch
     {
       $db_word->misspelled = false;
     }
+
+    if( !$db_word->animal_code && 'primary' == $db_word->aft )
+      $db_word->aft = NULL;
+    else if( $db_word->animal_code )
+      $db_word->aft = 'primary';
   }
 
   /**

@@ -19,9 +19,9 @@ define( function() {
         column: 'word.word',
         title: 'Word'
       },
-      animal_word: {
-        column: 'animal_word.word',
-        title: 'Parent Animal'
+      animal_code: {
+        column: 'word.animal_code',
+        title: 'Animal Code'
       },
       sister_word: {
         column: 'sister_word.word',
@@ -63,14 +63,11 @@ define( function() {
       type: 'string',
       constant: true
     },
-    animal_word_id: {
-      title: 'Parent Animal Word',
-      type: 'lookup-typeahead',
-      typeahead: {
-        table: 'word',
-        select: 'CONCAT( word.word, " [", language.code, "]" )',
-        where: 'word.word'
-      }
+    animal_code: {
+      title: 'Animal Code',
+      type: 'string',
+      // regex is exactly 7 integers >= 0 delimited by a period (.)
+      regex: '^([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)$'
     },
     sister_word_id: {
       title: 'Parent Sister Word',
@@ -245,6 +242,12 @@ define( function() {
                        'intrusion' == data.fas || 'primary' == data.fas ) {
               // setting aft or fas to intrusion or primary means the word cannot be misspelled
               self.record.misspelled = false;
+            } else if( angular.isDefined( data.animal_code ) ) {
+              if( 0 == data.animal_code.length ) {
+                if( 'primary' == self.record.aft ) self.record.aft = '';
+              } else {
+                self.record.aft = 'primary';
+              }
             }
           } );
         };

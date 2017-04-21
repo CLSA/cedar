@@ -26,10 +26,6 @@ class module extends \cenozo\service\module
     // we must always join to the language table (for the word module's typeaheads)
     $modifier->left_join( 'language', 'word.language_id', 'language.id' );
 
-    if( $select->has_table_columns( 'animal_word' ) || !is_null( $this->get_resource() ) )
-      $modifier->left_join( 'word', 'word.animal_word_id', 'animal_word.id', 'animal_word' );
-    if( $select->has_table_columns( 'animal_language' ) || !is_null( $this->get_resource() ) )
-      $modifier->left_join( 'language', 'animal_word.language_id', 'animal_language.id', 'animal_language' );
     if( $select->has_table_columns( 'sister_word' ) || !is_null( $this->get_resource() ) )
     {
       $modifier->left_join( 'word', 'word.sister_word_id', 'sister_word.id', 'sister_word' );
@@ -45,11 +41,7 @@ class module extends \cenozo\service\module
 
     if( !is_null( $this->get_resource() ) )
     {
-      // include the animal word language/word as supplemental data
-      $select->add_column(
-        'CONCAT( animal_word.word, " [", animal_language.code, "]" )',
-        'formatted_animal_word_id',
-        false );
+      // include the sister language/word as supplemental data
       $select->add_column(
         'CONCAT( sister_word.word, " [", sister_language.code, "]" )',
         'formatted_sister_word_id',

@@ -86,50 +86,49 @@ class patch
       {
         $error = false;
         $parts = explode( ',', str_replace( "\n", '', $string ) );
-        if( 0 < count( $parts ) % 2 ) throw new Exception;
+        if( 3 > count( $parts ) ) throw new Exception;
 
-        if( 4 <= count( $parts ) )
+        // make sure code is enclosed by quotes and is seven consecutive integers delimited by a period (.)
+        $code = $parts[0];
+        if( !preg_match( '/^"([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)"$/', $code ) ) throw new Exception;
+        $code = substr( $code, 1, -1 );
+
+        $first = true;
+        $current_language_id = NULL;
+        $where_sql = '';
+        for( $index = 1; $index < count( $parts ); $index++ )
         {
-          $alt_list = array();
-          for( $index = 0; $index < count( $parts ); $index+=2 )
+          // make sure all words are enclosed by quotes
+          $string = $parts[$index];
+          if( !preg_match( '/^"[^"]+"$/', $string ) ) throw new Exception;
+          $string = substr( $string, 1, -1 );
+
+          if( array_key_exists( $string, $language_list ) )
           {
-            // make sure all words are enclosed by quotes
-            $language_code = $parts[$index];
-            if( !preg_match( '/^"[^"]+"$/', $language_code ) ) throw new Exception;
-            $language_id = $language_list[substr( $language_code, 1, -1 )];
-            $word = $parts[$index+1];
-            if( !preg_match( '/^"[^"]+"$/', $word ) ) throw new Exception;
-
-            if( 0 == $index ) $base = array( 'language_id' => $language_id, 'word' => $word );
-            else
-            {
-              if( !array_key_exists( $language_id, $alt_list ) ) $alt_list[$language_id] = array();
-              $alt_list[$language_id][] = $word;
-            }
+            $current_language_id = $language_list[$string];
           }
-
-          $sql = sprintf(
-            'UPDATE word, word AS animal_word'."\n".
-            'SET word.animal_word_id = animal_word.id'."\n".
-            'WHERE animal_word.language_id = %d AND animal_word.word = %s AND ('."\n",
-            $base['language_id'],
-            $base['word']
-          );
-
-          $first = true;
-          foreach( $alt_list as $language_id => $word_list )
+          else
           {
-            $sql .= sprintf( '  %s( word.language_id = %s AND word.word IN (%s) )'."\n",
-                             $first ? '' : 'OR ',
-                             $language_id,
-                             implode( ',', $word_list ) );
-            $first = false;
+            if( is_null( $current_language_id ) ) throw new Exception;
+            $where_sql .= sprintf(
+              '%s( language_id = %s AND word = "%s" )'."\n",
+              $first ? '' : 'OR ',
+              $current_language_id,
+              $string
+            );
+            if( $first ) $first = false;
           }
-
-          $sql .= ');'."\n";
-
-          if( false === $this->db->query( $sql ) ) error( $this->db->error );
         }
+
+        $sql = sprintf(
+          'UPDATE word'."\n".
+          'SET word.animal_code = "%s"'."\n".
+          'WHERE %s',
+          $code,
+          $where_sql
+        );
+
+        if( false === $this->db->query( $sql ) ) error( $this->db->error );
         $line++;
       }
     }

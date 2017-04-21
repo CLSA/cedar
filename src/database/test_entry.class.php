@@ -384,25 +384,7 @@ class test_entry extends \cenozo\database\record
       }
       else if( 'aft' == $db_test_type->data_type )
       {
-        $select->add_column(
-          'IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( animal_word_id, word_id ) ) )',
-          'score',
-          false
-        );
-        $select->add_column(
-          'IF( word_id IS NULL, 0, COUNT( DISTINCT word_id ) )',
-          'alt_score',
-          false
-        );
-
-        $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
-        $modifier->left_join( 'aft_data', 'test_entry.id', 'aft_data.test_entry_id' );
-        $modifier->left_join( 'word', 'aft_data.word_id', 'word.id' );
-        $modifier->where( 'IFNULL( word.aft, "primary" )', '=', 'primary' );
-
-        $row = current( $this->select( $select, $modifier ) );
-        $score = $row['score'];
-        $alt_score = $row['alt_score'];
+        // TODO: re-write
       }
       else if( 'premat' == $db_test_type->data_type )
       {
