@@ -161,12 +161,14 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
-    'CnBaseViewFactory', 'CnModalSelectWordFactory',
-    function( CnBaseViewFactory, CnModalSelectWordFactory ) {
+    'CnBaseViewFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory', '$q',
+    function( CnBaseViewFactory, CnModalSelectWordFactory, CnModalTextFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
         this.lastMisspelledValue = null;
+        this.lastAftValue = null;
+        this.lastFasValue = null;
 
         // disable the choosing of test-entries using this word
         this.deferred.promise.then( function() {
@@ -175,25 +177,59 @@ define( function() {
         } );
 
         this.onPatch = function( data ) {
-          if( angular.isDefined( data.misspelled ) && true == data.misspelled ) {
-            // get correctly spelled word when marking word as misspelled
-            return CnModalSelectWordFactory.instance( {
-              message: 'Please select the correct spelling for this word.\n\n' +
-                       'If you provide a word then all test-entries using the misspelled word will be ' +
-                       'changed to the selected word. You may leave the replacement word blank if you do ' +
-                       'want test-entries to be affected.',
-              languageIdRestrictList: [ self.record.language_id ]
-            } ).show().then( function( response ) {
+          function undoChange( data ) {
+            if( true == data.misspelled ) {
+              self.record.misspelled =
+                null == self.lastMisspelledValue ? self.backupRecord.misspelled : self.lastMisspelledValue;
+            } else if( 'invalid' == data.aft ) {
+              self.record.aft = null == self.lastAftValue ? self.backupRecord.aft : self.lastAftValue;
+            } else if( 'invalid' == data.fas ) {
+              self.record.fas = null == self.lastFasValue ? self.backupRecord.fas : self.lastFasValue;
+            }
+          }
+
+          if( true == data.misspelled || 'invalid' == data.aft || 'invalid' == data.fas ) {
+            var which = 'invalid' == data.aft ? 'All AFT' : 'invalid' == data.fas ? 'All FAS' : 'All';
+            var promise = true == data.misspelled
+                        ? CnModalSelectWordFactory.instance( {
+                            message:
+                              'Please select the correct spelling for this word.\n\n' +
+                              'If you provide a word then all test-entries using the misspelled word will be ' +
+                              'changed to the selected word. You may leave the replacement word blank if you do ' +
+                              'want test-entries to be affected.',
+                            languageIdRestrictList: [ self.record.language_id ]
+                          } ).show()
+                        : $q.all().then( function() { return undefined; } );
+            
+            return promise.then( function( response ) {
               if( angular.isDefined( response ) && null == response ) {
-                self.record.misspelled = null == self.lastMisspelledValue
-                                       ? self.backupRecord.misspelled
-                                       : self.lastMisspelledValue;
+                undoChange( data );
               } else {
                 if( angular.isDefined( response ) ) data.correct_word = response;
-                return self.$$onPatch( data ).then( function() {
-                  // setting misspelled to true means aft and fas must be invalid
-                  self.record.aft = 'invalid';
-                  self.record.fas = 'invalid';
+
+                // get a message to leave in test-entries using this word
+                return CnModalTextFactory.instance( {
+                  title: 'Test Entry Note',
+                  message: which + ' test entries using this word will be re-assigned to the last user that ' +
+                           'it was assigned to.  Please provide a note that will be added to these test-entries:',
+                  text: 'The ' + self.record.language + ' word "' + self.record.word + '" which is used by ' +
+                        'this test-entry has been marked as invalid. Please replace this word with another ' +
+                        'valid word and re-submit.',
+                  minLength: 10
+                } ).show().then( function( response ) {
+                  if( !response ) {
+                    undoChange( data );
+                  } else {
+                    data.note = response;
+                    return self.$$onPatch( data ).then( function() {
+                      // setting misspelled to true means aft and fas must be invalid
+                      self.record.aft = 'invalid';
+                      self.record.fas = 'invalid';
+                      
+                      // if a note was added then the test-entry list may have changed
+                      if( angular.isDefined( self.testEntryModel ) ) self.testEntryModel.listModel.onList( true );
+                    } );
+                  }
                 } );
               }
             } );
@@ -203,10 +239,11 @@ define( function() {
           return self.$$onPatch( data ).then( function() {
             if( angular.isDefined( data.misspelled ) ) {
               self.lastMisspelledValue = data.misspelled;
-            } else if(
-              ( angular.isDefined( data.aft ) && ( 'intrusion' == data.aft || 'primary' == data.aft ) ) ||
-              ( angular.isDefined( data.aft ) && ( 'intrusion' == data.aft || 'primary' == data.aft ) ) ) {
-              // setting aft to intrusion or primary means the word cannot be misspelled
+              self.lastAftValue = data.aft;
+              self.lastFasValue = data.fas;
+            } else if( 'intrusion' == data.aft || 'primary' == data.aft ||
+                       'intrusion' == data.fas || 'primary' == data.fas ) {
+              // setting aft or fas to intrusion or primary means the word cannot be misspelled
               self.record.misspelled = false;
             }
           } );

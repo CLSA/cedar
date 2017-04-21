@@ -19,6 +19,13 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       friendlyColumn: 'test_type_name'
     },
     columnList: {
+      transcription_uid: {
+        column: 'participant.uid',
+        title: 'UID',
+        isIncluded: function( $state, model ) {
+          return 'transcription.view' != $state.current.name;
+        }
+      },
       test_type_name: {
         column: 'test_type.name',
         title: 'Type'
@@ -382,7 +389,14 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               // get the sound file list for this test-entry
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/sound_file',
-                data: { select: { column: [ 'id', 'name', 'url' ] } }
+                data: { select: { column: [ 'id', 'name', 'url' ] } },
+                onError: function( response ) {
+                  // don't show error message for missing recordings (too disruptive)
+                  if( 404 == response.status ) {
+                    console.warning(
+                      'Problem loading sound files for ' + self.parentModel.getServiceResourcePath() );
+                  } else return CnModalMessageFactory.httpError( response );
+                }
               } ).query().then( function( response ) {
                 self.soundFileList = response.data;
                 // add an active property to track which recording the user is working with
