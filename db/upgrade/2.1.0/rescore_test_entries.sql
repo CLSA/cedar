@@ -99,21 +99,7 @@ AND COALESCE( test_entry.audio_status, '' ) != 'unavailable'
 AND COALESCE( test_entry.participant_status, '' ) != 'refused'
 AND COALESCE( first_test_entry.participant_status, '' ) NOT LIKE 'prompt%';
 
-INSERT INTO test_entry_score
-SELECT test_entry.id,
-       IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( animal_word_id, word_id ) ) ) AS score,
-       IF( word_id IS NULL, 0, COUNT( DISTINCT word_id ) ) AS alt_score
-FROM test_entry
-JOIN test_type ON test_entry.test_type_id = test_type.id
-LEFT JOIN aft_data ON test_entry.id = aft_data.test_entry_id
-LEFT JOIN word ON aft_data.word_id = word.id
-WHERE test_type.data_type = 'aft'
-AND 'submitted' = test_entry.state
-AND COALESCE( test_entry.audio_status, '' ) != 'unusable'
-AND COALESCE( test_entry.audio_status, '' ) != 'unavailable'
-AND COALESCE( test_entry.participant_status, '' ) != 'refused'
-AND IFNULL( word.aft, 'primary' ) = 'primary'
-GROUP BY test_entry.id;
+-- TODO: score all AFT tests
 
 INSERT INTO test_entry_score
 SELECT test_entry.id,
