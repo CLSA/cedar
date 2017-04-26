@@ -40,8 +40,16 @@ define( function() {
         column: 'word.fas',
         title: 'FAS Type'
       },
-      test_entry_count: {
-        title: 'Used',
+      aft_count: {
+        title: '#AFT',
+        type: 'number'
+      },
+      fas_count: {
+        title: '#FAS',
+        type: 'number'
+      },
+      rey_count: {
+        title: '#REY',
         type: 'number'
       }
     },

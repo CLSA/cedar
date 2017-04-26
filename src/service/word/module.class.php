@@ -65,11 +65,81 @@ class module extends \cenozo\service\module
       $modifier->where_bracket( false );
     }
 
-    // add the total number of test_entrys
+    // add the total number of test_entries using the word
     if( $select->has_column( 'test_entry_count' ) )
     {
       $select->add_column( 'word_test_entry_total.total', 'test_entry_count', false );
       $modifier->join( 'word_test_entry_total', 'word.id', 'word_test_entry_total.word_id' );
+    }
+
+    // add the total number of uses in each test-type
+    if( $select->has_column( 'aft_count' ) )
+    {
+      $join_sel = lib::create( 'database\select' );
+      $join_sel->from( 'word' );
+      $join_sel->add_column( 'id', 'word_id' );
+      $join_sel->add_column( 'IF( aft_data.id IS NULL, 0, COUNT(*) )', 'aft_count', false );
+
+      $join_mod = lib::create( 'database\modifier' );
+      $join_mod->left_join( 'aft_data', 'word.id', 'aft_data.word_id' );
+      $join_mod->group( 'word.id' );
+
+      $db->execute( sprintf(
+        'CREATE TEMPORARY TABLE word_join_aft ( '.
+          'INDEX dk_word_id( word_id ) '.
+        ') %s %s',
+        $join_sel->get_sql(),
+        $join_mod->get_sql()
+      ) );
+
+      $modifier->join( 'word_join_aft', 'word.id', 'word_join_aft.word_id' );
+      $select->add_column( 'IFNULL( aft_count, 0 )', 'aft_count', false );
+    }
+
+    if( $select->has_column( 'fas_count' ) )
+    {
+      $join_sel = lib::create( 'database\select' );
+      $join_sel->from( 'word' );
+      $join_sel->add_column( 'id', 'word_id' );
+      $join_sel->add_column( 'IF( fas_data.id IS NULL, 0, COUNT(*) )', 'fas_count', false );
+
+      $join_mod = lib::create( 'database\modifier' );
+      $join_mod->left_join( 'fas_data', 'word.id', 'fas_data.word_id' );
+      $join_mod->group( 'word.id' );
+
+      $db->execute( sprintf(
+        'CREATE TEMPORARY TABLE word_join_fas ( '.
+          'INDEX dk_word_id( word_id ) '.
+        ') %s %s',
+        $join_sel->get_sql(),
+        $join_mod->get_sql()
+      ) );
+
+      $modifier->join( 'word_join_fas', 'word.id', 'word_join_fas.word_id' );
+      $select->add_column( 'IFNULL( fas_count, 0 )', 'fas_count', false );
+    }
+
+    if( $select->has_column( 'rey_count' ) )
+    {
+      $join_sel = lib::create( 'database\select' );
+      $join_sel->from( 'word' );
+      $join_sel->add_column( 'id', 'word_id' );
+      $join_sel->add_column( 'IF( rey_data_has_word.rey_data_id IS NULL, 0, COUNT(*) )', 'rey_count', false );
+
+      $join_mod = lib::create( 'database\modifier' );
+      $join_mod->left_join( 'rey_data_has_word', 'word.id', 'rey_data_has_word.word_id' );
+      $join_mod->group( 'word.id' );
+
+      $db->execute( sprintf(
+        'CREATE TEMPORARY TABLE word_join_rey ( '.
+          'INDEX dk_word_id( word_id ) '.
+        ') %s %s',
+        $join_sel->get_sql(),
+        $join_mod->get_sql()
+      ) );
+
+      $modifier->join( 'word_join_rey', 'word.id', 'word_join_rey.word_id' );
+      $select->add_column( 'IFNULL( rey_count, 0 )', 'rey_count', false );
     }
   }
 }
