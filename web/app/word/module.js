@@ -220,8 +220,10 @@ define( function() {
                     data.note = response;
                     return self.$$onPatch( data ).then( function() {
                       // setting misspelled to true means aft and fas must be invalid
-                      self.record.aft = 'invalid';
-                      self.record.fas = 'invalid';
+                      if( true == data.misspelled ) {
+                        self.record.aft = 'invalid';
+                        self.record.fas = 'invalid';
+                      }
                       
                       // if a note was added then the test-entry list may have changed
                       if( angular.isDefined( self.testEntryModel ) ) self.testEntryModel.listModel.onList( true );
