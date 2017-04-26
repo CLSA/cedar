@@ -476,9 +476,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                     console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
                   } else return CnModalMessageFactory.httpError( response );
                 }
-              } ).patch().then( function() {
-                self.isWorking = false;
-              } );
+              } ).patch().finally( function() { self.isWorking = false; } );
             }
           },
           viewTranscription: function() {
