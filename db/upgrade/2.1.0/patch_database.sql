@@ -53,6 +53,6 @@ SOURCE column_character_sets.sql
 
 SOURCE update_version_number.sql
 
-SELECT "TO COMPLETE THE INSTALLATION: you must now run the 'load_word_associations.php' script, then the 'rescore_test_entries.sql' script" AS "";
+SELECT "TO COMPLETE THE INSTALLATION: you must now run the 'load_word_associations.php' script" AS "";
 
 COMMIT;
