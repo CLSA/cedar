@@ -103,6 +103,26 @@ define( function() {
     }
   } );
 
+  module.addExtraOperation( 'list', {
+    title: 'Rescore All',
+    isIncluded: function( $state, model ) { return model.canRescoreTestEntries(); },
+    operation: function( $state, model ) {
+      model.listModel.rescoreTestEntries().then( function( response ) {
+        if( angular.isDefined( response ) ) model.listModel.onList( true );
+      } );
+    }
+  } );
+
+  module.addExtraOperation( 'view', {
+    title: 'Rescore',
+    isIncluded: function( $state, model ) { return model.canRescoreTestEntries(); },
+    operation: function( $state, model ) {
+      model.viewModel.rescoreTestEntries().then( function( response ) {
+        if( angular.isDefined( response ) ) model.viewModel.testEntryModel.listModel.onList( true );
+      } );
+    }
+  } );
+
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTranscriptionAdd', [
     'CnTranscriptionModelFactory',
@@ -181,17 +201,32 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTranscriptionListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
+    'CnBaseListFactory', 'CnModalConfirmFactory', 'CnHttpFactory',
+    function( CnBaseListFactory, CnModalConfirmFactory, CnHttpFactory ) {
+      var object = function( parentModel ) {
+        var self = this;
+        CnBaseListFactory.construct( this, parentModel );
+
+        this.rescoreTestEntries = function() {
+          return CnModalConfirmFactory.instance( {
+            title: 'Re-Score All Test Entries',
+            message: 'Are you sure you wish to re-score all test entries?\n\n' +
+                     'This process is processor-intensive and may slow down the application for all ' +
+                     'users while scores are being re-calculated.  You should only continue if it is ' +
+                     'necessary for tests to be re-scored immediately.'
+          } ).show().then( function( response ) {
+            if( response ) return CnHttpFactory.instance( { path: 'transcription?rescore=1' } ).count();
+          } );
+        };
+      };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
   ] );
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTranscriptionViewFactory', [
-    'CnBaseViewFactory',
-    function( CnBaseViewFactory ) {
+    'CnBaseViewFactory', 'CnHttpFactory',
+    function( CnBaseViewFactory, CnHttpFactory ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
@@ -209,6 +244,10 @@ define( function() {
           return this.$$onView().then( function() {
             return self.parentModel.updateUserList( 'uid=' + self.record.uid );
           } );
+        };
+
+        this.rescoreTestEntries = function() {
+          return CnHttpFactory.instance( { path: 'transcription/' + self.record.id + '?rescore=1' } ).get();
         };
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
@@ -231,6 +270,7 @@ define( function() {
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
 
         this.isTypist = function() { return 'typist' == CnSession.role.name; };
+        this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
 
         if( !this.isTypist() ) {
           var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;

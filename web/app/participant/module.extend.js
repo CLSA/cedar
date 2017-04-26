@@ -35,8 +35,8 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
     title: 'Update Sound Files',
     isIncluded: function( $state, model ) { return model.listModel.canUpdateSoundFiles(); },
     operation: function( $state, model ) {
-      model.listModel.updateSoundFiles().then( function() {
-        model.listModel.onList( true );
+      model.listModel.updateSoundFiles().then( function( response ) {
+        if( angular.isDefined( response ) ) model.listModel.onList( true );
       } );
     }
   } );

@@ -100,4 +100,24 @@ class transcription extends \cenozo\database\record
 
     return parent::get_unique_record( $column, $value );
   }
+
+  /**
+   * Re-calculates this transcription's test-entry scores
+   * 
+   * NOTE: to rescore all test-types use test_type::rescore_all()
+   *       to rescore a single test-type only use test_type::rescore()
+   *       to rescore a single test-entry use test_entry::rescore()
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @access public
+   */
+  public function rescore()
+  {
+    $test_type_class_name = lib::get_class_name( 'database\test_type' );
+
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
+    $modifier->where( 'transcription.id', '=', $this->id );
+
+    $test_type_class_name::rescore_all( $modifier );
+  }
 }
