@@ -45,7 +45,7 @@ class test_type extends \cenozo\database\record
   public static function rescore_all( $modifier = NULL )
   {
     static::db()->execute(
-      'CREATE TEMPORARY TABLE IF NOT EXISTS temp_rescore ('."\n".
+      'CREATE TEMPORARY TABLE temp_rescore ('."\n".
       '  id INT UNSIGNED NOT NULL,'."\n".
       '  score INT UNSIGNED DEFAULT NULL,'."\n".
       '  alt_score INT UNSIGNED DEFAULT NULL,'."\n".
@@ -65,7 +65,107 @@ class test_type extends \cenozo\database\record
     $modifier->where( 'COALESCE( test_entry.participant_status, "" )', '!=', 'refused' );
 
     // AFT /////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: implement
+    for( $method = 1; $method <= 2; $method++ )
+    {
+      $animal_code_table_name = sprintf( 'animal_code%d', $method );
+      $wildcard_code_table_name = sprintf( 'wildcard_code%d', $method );
+
+      $pre_aft_sel1 = clone $select;
+      $pre_aft_sel1->set_distinct( true );
+      if( 1 == $method ) $pre_aft_sel1->add_table_column( 'word', 'animal_code' );
+      else $pre_aft_sel1->add_column( 'SUBSTRING_INDEX( animal_code, ".", 6 )', 'animal_code', false );
+
+      $pre_aft_mod1 = clone $modifier;
+      $pre_aft_mod1->join( 'aft_data', 'test_entry.id', 'aft_data.test_entry_id' );
+      $pre_aft_mod1->join( 'word', 'aft_data.word_id', 'word.id' );
+      $pre_aft_mod1->where( 'test_type.data_type', '=', 'aft' );
+      $pre_aft_mod1->where( 'word.aft', '=', 'primary' );
+      $pre_aft_mod1->where( 'word.animal_code', '!=', NULL );
+
+      static::db()->execute( sprintf(
+        'CREATE TEMPORARY TABLE %s ('."\n".
+        '  id INT UNSIGNED NOT NULL,'."\n".
+        '  animal_code VARCHAR(45) NOT NULL,'."\n".
+        '  INDEX dk_id( id ),'."\n".
+        '  INDEX dk_animal_code( animal_code ),'."\n".
+        '  UNIQUE INDEX uq_id_animal_code( id, animal_code )'."\n".
+        ') %s %s',
+        $animal_code_table_name,
+        $pre_aft_sel1->get_sql(),
+        $pre_aft_mod1->get_sql()
+      ) );
+
+      $pre_aft_sel2 = lib::create( 'database\select' );
+      $pre_aft_sel2->from( $animal_code_table_name );
+      $pre_aft_sel2->add_column( 'id' );
+      $pre_aft_sel2->add_column( 'animal_code' );
+      $pre_aft_sel2->add_column( 'REPLACE( animal_code, ".0", ".[^.]+" )', 'wildcard_code', false );
+
+      $pre_aft_mod2 = lib::create( 'database\modifier' );
+      $pre_aft_mod2->where( 'animal_code', 'RLIKE', '(\\.0\\.)|(\\.0$)' );
+      static::db()->execute( sprintf(
+        'CREATE TEMPORARY TABLE %s ('."\n".
+        '  id INT UNSIGNED NOT NULL,'."\n".
+        '  animal_code VARCHAR(45) NOT NULL,'."\n".
+        '  wildcard_code VARCHAR(45) NOT NULL,'."\n".
+        '  INDEX dk_id( id ),'."\n".
+        '  INDEX dk_animal_code( animal_code ),'."\n".
+        '  INDEX dk_wildcard_code( wildcard_code ),'."\n".
+        '  UNIQUE INDEX uq_id_animal_code( id, animal_code ),'."\n".
+        '  UNIQUE INDEX uq_id_wildcard_code( id, wildcard_code )'."\n".
+        ') %s %s',
+        $wildcard_code_table_name,
+        $pre_aft_sel2->get_sql(),
+        $pre_aft_mod2->get_sql()
+      ) );
+
+      // first count the codes without any wildcards (zeros)
+      $aft_sel1 = lib::create( 'database\select' );
+      $aft_sel1->from( $animal_code_table_name );
+      $aft_sel1->add_column( 'id' );
+      if( 1 == $method ) $aft_sel1->add_column( 'COUNT(*)', 'score', false );
+      else $aft_sel1->add_constant( NULL, 'score' );
+      if( 2 == $method ) $aft_sel1->add_column( 'COUNT(*)', 'alt_score', false );
+      else $aft_sel1->add_constant( NULL, 'alt_score' );
+      $aft_mod1 = lib::create( 'database\modifier' );
+      $aft_mod1->where( 'animal_code', 'NOT RLIKE', '(\\.0\\.)|(\\.0$)' );
+      $aft_mod1->group( 'id' );
+
+      static::db()->execute( sprintf(
+        "INSERT INTO temp_rescore\n%s %s\n".
+        "ON DUPLICATE KEY UPDATE\n".
+          "score = IFNULL( VALUES( score ), score ),\n".
+          "alt_score = IFNULL( VALUES( alt_score ), alt_score )\n",
+        $aft_sel1->get_sql(),
+        $aft_mod1->get_sql()
+      ) );
+
+      // now add to the base score the number of unmatched woldcard codes
+      $aft_sel2 = lib::create( 'database\select' );
+      $aft_sel2->from( $wildcard_code_table_name, 'w' );
+      $aft_sel2->add_column( 'id' );
+      if( 1 == $method ) $aft_sel2->add_column( 'COUNT(*)', 'score', false );
+      else $aft_sel2->add_constant( NULL, 'score' );
+      if( 2 == $method ) $aft_sel2->add_column( 'COUNT(*)', 'alt_score', false );
+      else $aft_sel2->add_constant( NULL, 'alt_score' );
+      $aft_mod2 = lib::create( 'database\modifier' );
+      $join_mod = lib::create( 'database\modifier' );
+      $join_mod->where( 'w.id', '=', 'a.id', false );
+      $join_mod->where( 'a.animal_code', '!=', 'w.animal_code', false );
+      $join_mod->where( 'a.animal_code', 'RLIKE', 'w.wildcard_code', false );
+      $aft_mod2->join_modifier( $animal_code_table_name, $join_mod, 'left', 'a' );
+      $aft_mod2->where( 'a.id', '=', NULL );
+      $aft_mod2->group( 'id' );
+
+      static::db()->execute( sprintf(
+        "INSERT INTO temp_rescore\n%s %s\n".
+        "ON DUPLICATE KEY UPDATE\n".
+          "score = IFNULL( VALUES( score ), 0 ) + score,\n".
+          "alt_score = IFNULL( VALUES( alt_score ), 0 ) + alt_score\n",
+        $aft_sel2->get_sql(),
+        $aft_mod2->get_sql()
+      ) );
+    }
 
     // FAS /////////////////////////////////////////////////////////////////////////////////////////
     $fas_sel = clone $select;
