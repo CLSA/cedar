@@ -32,7 +32,7 @@ class patch extends \cenozo\service\patch
       $select->add_column( 'id' );
       $language_list = array();
       foreach( $db_test_entry->get_language_list( $select ) as $row ) $language_list[] = $row['id'];
-      if( !is_array( $data['language_id'], $language_list ) )
+      if( !in_array( $data['language_id'], $language_list ) )
       {
         // replace if only 1 language is in the list, otherwise add
         if( 1 == count( $language_list ) ) $db_test_entry->replace_language( $data['language_id'] );
