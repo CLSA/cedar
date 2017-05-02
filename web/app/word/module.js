@@ -60,16 +60,15 @@ define( function() {
   } );
 
   module.addInputGroup( '', {
-    language: {
-      column: 'language.name',
+    language_id: {
       title: 'Language',
-      type: 'string',
-      constant: true
+      type: 'enum',
+      constant: 'view'
     },
     word: {
       title: 'Word',
       type: 'string',
-      constant: true
+      constant: 'view'
     },
     animal_code: {
       title: 'Animal Code',
@@ -97,8 +96,7 @@ define( function() {
     fas: {
       title: 'FAS Type',
       type: 'enum'
-    },
-    language_id: { type: 'hidden' }
+    }
   } );
 
   /* ######################################################################################################## */
@@ -278,6 +276,24 @@ define( function() {
         this.addModel = CnWordAddFactory.instance( this );
         this.listModel = CnWordListFactory.instance( this );
         this.viewModel = CnWordViewFactory.instance( this, root );
+
+        // extend getMetadata
+        this.getMetadata = function() {
+          return this.$$getMetadata().then( function() {
+            return CnHttpFactory.instance( {
+              path: 'language',
+              data: {
+                select: { column: [ 'id', 'name' ] },
+                modifier: { where: { column: 'active', operator: '=', value: true }, order: { name: false } }
+              }
+            } ).query().then( function success( response ) {
+              self.metadata.columnList.language_id.enumList = [];
+              response.data.forEach( function( item ) {
+                self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
+              } );
+            } );
+          } );
+        };
       };
 
       return {
