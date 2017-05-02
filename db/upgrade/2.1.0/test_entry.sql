@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS test_entry (
   create_timestamp TIMESTAMP NOT NULL,
   transcription_id INT UNSIGNED NOT NULL,
   test_type_id INT UNSIGNED NOT NULL,
-  audio_status ENUM('salvable', 'unusable', 'unavailable') NULL DEFAULT NULL,
+  audio_status ENUM('salvable', 'unusable', 'unavailable', 'crf') NULL DEFAULT NULL,
   participant_status ENUM('suspected prompt', 'prompted', 'prompt middle', 'prompt end', 'refused') NULL DEFAULT NULL,
   state ENUM('assigned', 'deferred', 'submitted') NOT NULL DEFAULT 'assigned',
   score INT UNSIGNED NULL DEFAULT NULL,
