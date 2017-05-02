@@ -100,6 +100,9 @@ class ui extends \cenozo\ui\ui
    */
   protected function get_utility_items()
   {
-    return 'typist' == lib::create( 'business\session' )->get_role()->name ? array() : parent::get_utility_items();
+    $db_role = lib::create( 'business\session' )->get_role();
+    $list = 'typist' == $db_role->name ? array() : parent::get_utility_items();
+    if( 2 < $db_role->tier ) $list['Participant CRF'] = array( 'subject' => 'participant', 'action' => 'crf' );
+    return $list;
   }
 }

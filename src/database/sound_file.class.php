@@ -106,4 +106,21 @@ class sound_file extends \cenozo\database\record
 
     touch( $last_sync_file );
   }
+
+  /**
+   * TODO: document
+   */
+  public static function force_add_participant_list( $modifier )
+  {
+    $select = lib::create( 'database\select' );
+    $select->from( 'participant' );
+    $select->add_column( 'id' );
+    $select->add_constant( 0 );
+    $select->add_constant( 'UTC_TIMESTAMP()' );
+    static::db()->execute( sprintf(
+      'INSERT IGNORE INTO participant_sound_file_total( participant_id, total, datetime ) %s %s',
+      $select->get_sql(),
+      $modifier->get_sql()
+    ) );
+  }
 }

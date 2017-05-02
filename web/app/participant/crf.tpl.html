@@ -1,0 +1,57 @@
+<div class="utility-view rounded">
+  <div class="container-fluid bg-primary rounded-top">
+    <h4>Participant CRF</h4>
+  </div>
+  <div class="container-fluid">
+    <cn-loading ng-if="isLoading"></cn-loading>
+    <div class="spacer" ng-if="!isLoading">
+      <p class="text-info" style="margin-top: 1em;">
+        This utility can be used to complete change-request forms (CRFs) on participants who have no sound-files.
+        You may enter the unique identifiers (eg: A123456) of all participants you wish to make available to the
+        application, then confirm that list to ensure each of the identifiers can be linked to a participant.
+      </p>
+      <p class="text-info">
+        Note that only those participants who are not available to the application (those who have no sound-files)
+        will be accepted by this utility.
+      </p>
+      <hr />
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <span class="allow-select">
+            <strong>Participant selection</strong>
+          </span>
+          <span class="pull-right">
+            <span ng-if="model.confirmInProgress">working, please wait...</span>
+            <span ng-if="!model.confirmInProgress">
+              {{ model.confirmedCount ?
+                 model.confirmedCount + ' participants confirmed' :
+                 'no confirmed participants' }}
+              <i class="glyphicon" ng-class="model.confirmedCount ? 'glyphicon-ok' : 'glyphicon-remove'"></i>
+            </span>
+          </span>
+        </div>
+        <textarea id="uidListString"
+                  name="uidListString"
+                  cn-elastic
+                  ng-change="model.uidListStringChanged()"
+                  ng-model="model.uidListString"
+                  ng-disabled="model.confirmInProgress"
+                  class="form-control no-rounding"></textarea>
+        <div class="form-footer text-right rounded-bottom bg-info">
+          <button type="button"
+                  class="btn btn-primary"
+                  ng-if="!model.confirmedCount"
+                  ng-disabled="model.confirmInProgress"
+                  ng-click="confirm()">Confirm List</button>
+          <button type="button"
+                  class="btn btn-primary"
+                  ng-if="model.confirmedCount"
+                  ng-click="model.processList()">Proceed With CRF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-footer text-right rounded-bottom bg-info">
+    <a href="#" ui-sref="participant.list" class="btn btn-default">View Participant List</a>
+  </div>
+</div>
