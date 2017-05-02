@@ -105,7 +105,9 @@ define( function() {
 
   module.addExtraOperation( 'list', {
     title: 'Rescore All',
-    isIncluded: function( $state, model ) { return model.canRescoreTestEntries(); },
+    isIncluded: function( $state, model ) {
+      return 'transcription.list' == $state.current.name && model.canRescoreTestEntries();
+    },
     operation: function( $state, model ) {
       model.listModel.rescoreTestEntries().then( function( response ) {
         if( angular.isDefined( response ) ) model.listModel.onList( true );
