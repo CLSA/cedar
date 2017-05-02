@@ -177,6 +177,20 @@ class test_type extends \cenozo\database\record
     ) );
 
     // FAS /////////////////////////////////////////////////////////////////////////////////////////
+    // first convert homophones
+    $homophone_mod = clone $modifier;
+    $homophone_mod->join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
+    $homophone_mod->join( 'homophone', 'fas_data.word_id', 'homophone.word_id' );
+    $homophone_mod->where( 'homophone.rank', '>', 1 );
+
+    static::db()->execute( sprintf(
+      "UPDATE test_entry %s\n".
+      "SET fas_data.word_id = homophone.first_word_id\n".
+      "WHERE %s",
+      $homophone_mod->get_join(),
+      $homophone_mod->get_where()
+    ) );
+
     $fas_sel = clone $select;
     $fas_sel->add_column(
       'IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( sister_word_id, word_id ) ) )',
@@ -271,6 +285,22 @@ class test_type extends \cenozo\database\record
     ) );
 
     // REY1 ////////////////////////////////////////////////////////////////////////////////////////
+    // first convert homophones
+    $homophone_mod = clone $modifier;
+    $homophone_mod->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
+    $homophone_mod->join( 'rey_data_has_word', 'rey_data.id', 'rey_data_has_word.rey_data_id' );
+    $homophone_mod->join( 'homophone', 'rey_data_has_word.word_id', 'homophone.word_id' );
+    $homophone_mod->where( 'homophone.rank', '>', 1 );
+    $homophone_mod->where( 'test_type.name', 'LIKE', '%(REY1)' );
+
+    static::db()->execute( sprintf(
+      "UPDATE test_entry %s\n".
+      "SET rey_data_has_word.word_id = homophone.first_word_id\n".
+      "WHERE %s",
+      $homophone_mod->get_join(),
+      $homophone_mod->get_where()
+    ) );
+
     $rey1_sel = clone $select;
     $rey1_sel->add_column(
       'IF( drum OR drum_rey_data_variant_id IS NOT NULL, 1, 0 ) +'."\n".
@@ -304,6 +334,22 @@ class test_type extends \cenozo\database\record
     ) );
 
     // REY2 ////////////////////////////////////////////////////////////////////////////////////////
+    // first convert homophones
+    $homophone_mod = clone $modifier;
+    $homophone_mod->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
+    $homophone_mod->join( 'rey_data_has_word', 'rey_data.id', 'rey_data_has_word.rey_data_id' );
+    $homophone_mod->join( 'homophone', 'rey_data_has_word.word_id', 'homophone.word_id' );
+    $homophone_mod->where( 'homophone.rank', '>', 1 );
+    $homophone_mod->where( 'test_type.name', 'LIKE', '%(REY2)' );
+
+    static::db()->execute( sprintf(
+      "UPDATE test_entry %s\n".
+      "SET rey_data_has_word.word_id = homophone.first_word_id\n".
+      "WHERE %s",
+      $homophone_mod->get_join(),
+      $homophone_mod->get_where()
+    ) );
+
     $rey2_sel = clone $select;
     $rey2_sel->add_column(
       'IF( ( rey_data.drum AND first_rey_data.drum_rey_data_variant_id IS NULL ) OR'."\n".
