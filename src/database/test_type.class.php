@@ -72,7 +72,7 @@ class test_type extends \cenozo\database\record
 
       $pre_aft_sel1 = clone $select;
       $pre_aft_sel1->set_distinct( true );
-      if( 1 == $method ) $pre_aft_sel1->add_table_column( 'word', 'animal_code' );
+      if( 2 == $method ) $pre_aft_sel1->add_table_column( 'word', 'animal_code' );
       else $pre_aft_sel1->add_column( 'SUBSTRING_INDEX( animal_code, ".", 6 )', 'animal_code', false );
 
       $pre_aft_mod1 = clone $modifier;
