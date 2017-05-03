@@ -22,12 +22,14 @@ define( [ cenozoApp.module( 'participant' ).getFileUrl( 'module.js' ) ], functio
     start_datetime: {
       column: 'transcription.start_datetime',
       title: 'Start',
-      type: 'datetime'
+      type: 'datetime',
+      help: 'When the participant\'s transaction began.'
     },
     end_datetime: {
       column: 'transcription.end_datetime',
       title: 'End',
-      type: 'datetime'
+      type: 'datetime',
+      help: 'When the participant\'s transaction ended.'
     }
   } )
 
