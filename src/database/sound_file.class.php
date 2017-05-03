@@ -25,6 +25,7 @@ class sound_file extends \cenozo\database\record
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $setting_manager = lib::create( 'business\setting_manager' );
     $last_sync_file = $setting_manager->get_setting( 'general', 'last_sync_file' );
+    $result = 0;
 
     // create a temporary table to put raw data into
     static::db()->execute(
@@ -38,10 +39,10 @@ class sound_file extends \cenozo\database\record
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f -printf "%s" %s | grep -v "\-in."',
+      'find -L %s -type f %s -printf "%s" | grep -v "\-in."',
       RECORDINGS_PATH,
-      '%p\t%TY-%Tm-%Td %TT\n',
-      file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : ''
+      file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : '',
+      '%p\t%TY-%Tm-%Td %TT\n'
     );
     $file_list = array();
     exec( $command, $file_list );
@@ -82,21 +83,22 @@ class sound_file extends \cenozo\database\record
     {
       static::db()->execute(
         sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
-    }
 
-    // now convert from temporary records into the sound_file table
-    static::db()->execute(
-      'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
-      'SELECT participant.id, test_type.id, filename, datetime '.
-      'FROM temp_sound_file '.
-      'JOIN participant ON temp_sound_file.uid = participant.uid '.
-      'LEFT JOIN test_type ON filename RLIKE ( '.
-        'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
-        'FROM filename_format '.
-        'WHERE test_type_id = test_type.id '.
-      ')'
-    );
-    static::db()->execute( 'DROP TABLE temp_sound_file' );
+      // now convert from temporary records into the sound_file table
+      var_dump( static::db()->get_one( 'SELECT COUNT(*) FROM temp_sound_file' ) );
+      $result = static::db()->execute(
+        'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
+        'SELECT participant.id, test_type.id, filename, datetime '.
+        'FROM temp_sound_file '.
+        'JOIN participant ON temp_sound_file.uid = participant.uid '.
+        'LEFT JOIN test_type ON filename RLIKE ( '.
+          'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
+          'FROM filename_format '.
+          'WHERE test_type_id = test_type.id '.
+        ')'
+      );
+      static::db()->execute( 'DROP TABLE temp_sound_file' );
+    }
 
     // now update the sync file to track when the last sync was done
     if( !file_exists( $last_sync_file ) )
@@ -105,6 +107,8 @@ class sound_file extends \cenozo\database\record
         'This file is used to track which sound files have been read into the database, DO NOT REMOVE.' );
 
     touch( $last_sync_file );
+
+    return $result;
   }
 
   /**

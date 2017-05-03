@@ -24,7 +24,7 @@ class query extends \cenozo\service\query
     if( $this->get_argument( 'update', false ) )
     {
       $sound_file_class_name = lib::get_class_name( 'database\sound_file' );
-      $sound_file_class_name::update_sound_file_list();
+      $this->set_data( $sound_file_class_name::update_sound_file_list() );
     }
   }
 }
