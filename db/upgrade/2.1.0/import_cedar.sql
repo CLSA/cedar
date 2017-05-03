@@ -320,6 +320,23 @@ CREATE PROCEDURE import_cedar()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
+    SELECT "Importing participant preferred sites from v1" AS "";
+
+    SET @sql = CONCAT(
+      "REPLACE INTO ", @cenozo, ".application_has_participant( ",
+        "update_timestamp, create_timestamp, application_id, participant_id, preferred_site_id ) ",
+      "SELECT v1_service_has_participant.update_timestamp, v1_service_has_participant.create_timestamp, "
+        "application.id, participant_id, site.id ",
+      "FROM ", @v1_cenozo, ".service_has_participant v1_service_has_participant ",
+      "JOIN ", @v1_cenozo, ".service v1_service ON v1_service_has_participant.service_id = v1_service.id ",
+      "JOIN ", @cenozo, ".application ON v1_service.name = application.name ",
+      "JOIN ", @v1_cenozo, ".site v1_site ON v1_service_has_participant.preferred_site_id = v1_site.id ",
+      "JOIN ", @cenozo, ".site ON CONCAT( v1_site.name, ' REC' ) = site.name ",
+      "WHERE application.name = '", @application, "'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
     SELECT "Importing access from v1" AS "";
 
     SET @sql = CONCAT(
