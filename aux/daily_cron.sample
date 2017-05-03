@@ -68,3 +68,40 @@ else
   }
 }
 curl_close( $curl );
+
+/**
+ * Update the sound files
+ */
+write_log( 'Loading new sound files' );
+
+$curl = curl_init();
+curl_setopt( $curl, CURLOPT_URL, URL.'sound_file?update=1&count=true' );
+curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, false );
+curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+curl_setopt( $curl, CURLOPT_HTTPHEADER, array( AUTH ) );
+
+$count = curl_exec( $curl );
+if( curl_errno( $curl ) )
+{
+  write_log( sprintf(
+    "Returned error code %s when trying to update sound files\nMessage: %s",
+    curl_errno( $curl ),
+    curl_error( $curl )
+  ) );
+}
+else
+{
+  $code = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+  if( 200 != $code )
+  {
+    write_log( sprintf( 'Failed to update sound files (response code: %s)', $code ) );
+  }
+  else
+  {
+    write_log( sprintf(
+      'Sound files have been successfully updated, %s added.',
+      0 == $count ? 'no new files' : ( 1 == $count ? '1 new file' : $count.' new files' )
+    ) );
+  }
+}
+curl_close( $curl );
