@@ -103,6 +103,13 @@ define( function() {
     }
   } );
 
+  if( angular.isDefined( module.actions.multiedit ) ) {
+    module.addExtraOperation( 'list', {
+      title: 'Multiedit',
+      operation: function( $state, model ) { $state.go( 'transcription.multiedit' ); }
+    } );
+  }
+
   module.addExtraOperation( 'list', {
     title: 'Rescore All',
     isIncluded: function( $state, model ) {
@@ -150,6 +157,35 @@ define( function() {
         scope: { model: '=?' },
         controller: function( $scope ) {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
+        }
+      };
+    }
+  ] );
+
+  /* ######################################################################################################## */
+  cenozo.providers.directive( 'cnTranscriptionMultiedit', [
+    'CnTranscriptionMultieditFactory', 'CnSession', '$state', '$timeout',
+    function( CnTranscriptionMultieditFactory, CnSession, $state, $timeout ) {
+      return {
+        templateUrl: module.getFileUrl( 'multiedit.tpl.html' ),
+        restrict: 'E',
+        controller: function( $scope ) {
+          $scope.model = CnTranscriptionMultieditFactory.instance();
+          $scope.tab = 'transcription';
+          CnSession.setBreadcrumbTrail(
+            [ {
+              title: 'Participants',
+              go: function() { $state.go( 'transcription.list' ); }
+            }, {
+              title: 'Multi-Edit'
+            } ]
+          );
+
+          // trigger the elastic directive when confirming the transcription selection
+          $scope.confirm = function() {
+            $scope.model.confirm()
+            $timeout( function() { angular.element( '#uidListString' ).trigger( 'change' ) }, 100 );
+          };
         }
       };
     }
@@ -222,6 +258,124 @@ define( function() {
         };
       };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
+    }
+  ] );
+
+  /* ######################################################################################################## */
+  cenozo.providers.factory( 'CnTranscriptionMultieditFactory', [
+    'CnSession', 'CnHttpFactory', 'CnModalMessageFactory',
+    function( CnSession, CnHttpFactory, CnModalMessageFactory ) {
+      var object = function() {
+        var self = this;
+        this.module = module;
+        this.confirmInProgress = false;
+        this.confirmedCount = null;
+        this.importRestriction = 'no-import';
+        this.uidListString = '';
+        this.userList = [];
+        this.user_id = undefined;
+
+        this.selectionChanged = function() {
+          this.confirmedCount = null;
+          this.userList = [];
+          this.user_id = undefined;
+        };
+
+        this.confirm = function() {
+          this.confirmInProgress = true;
+          this.confirmedCount = null;
+
+          // clean up the uid list
+          var fixedList =
+            this.uidListString.toUpperCase() // convert to uppercase
+                        .replace( /[\s,;|\/]/g, ' ' ) // replace whitespace and separation chars with a space
+                        .replace( /[^a-zA-Z0-9 ]/g, '' ) // remove anything that isn't a letter, number of space
+                        .split( ' ' ) // delimite string by spaces and create array from result
+                        .filter( function( uid ) { // match UIDs (eg: A123456)
+                          return null != uid.match( /^[A-Z][0-9]{6}$/ );
+                        } )
+                        .filter( function( uid, index, array ) { // make array unique
+                          return index <= array.indexOf( uid );
+                        } )
+                        .sort(); // sort the array
+
+          // now confirm UID list with server
+          if( 0 == fixedList.length ) {
+            self.uidListString = '';
+            self.confirmInProgress = false;
+          } else {
+            CnHttpFactory.instance( {
+              path: 'transcription',
+              data: { uid_list: fixedList, import_restriction: self.importRestriction }
+            } ).post().then( function( response ) {
+              self.confirmedCount = response.data.length;
+              self.uidListString = response.data.join( ' ' );
+              self.confirmInProgress = false;
+
+              // get the user list (typists only)
+              var name = 'no-import' == self.importRestriction ? '(Select Typist)' : '(empty)';
+              self.userList = [ { name: name, value: undefined } ];
+              return CnHttpFactory.instance( {
+                path: 'user',
+                data: {
+                  select: { distinct: true, column: [ 'id', 'name', 'first_name', 'last_name' ] },
+                  modifier: {
+                    join: [ {
+                      table: 'access',
+                      onleft: 'user.id',
+                      onright: 'access.user_id'
+                    }, {
+                      table: 'role',
+                      onleft: 'access.role_id',
+                      onright: 'role.id'
+                    } ],
+                    where: [ {
+                      column: 'role.name',
+                      operator: '=',
+                      value: 'typist'
+                    } ],
+                    order: 'name'
+                  }
+                }
+              } ).query().then( function( response ) {
+                response.data.forEach( function( item ) {
+                  self.userList.push( {
+                    value: item.id,
+                    name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')',
+                    user: item.name
+                  } );
+                } );
+              } );
+            } );
+          }
+        };
+
+        this.processList = function( type ) {
+          // test the formats of all columns
+          var uidList = this.uidListString.split( ' ' );
+
+          CnHttpFactory.instance( {
+            path: 'transcription',
+            data: { uid_list: uidList, user_id: self.user_id, process: true },
+            onError: CnModalMessageFactory.httpError
+          } ).post().then( function() {
+            var userString = angular.isDefined( self.user_id )
+                           ? ' and assigned to user "' +
+                             self.userList.findByProperty( 'value', self.user_id ).user + '".'
+                           : '.'
+            CnModalMessageFactory.instance( {
+              title: 'Transcription(s) Processed',
+              message: 'A total of ' + uidList.length + ' transcription' +
+                       ( 1 != uidList.length ? 's have ' : ' has ' ) +
+                       'been processed' + userString
+            } ).show().then( function() {
+              self.uidListString = '';
+            } );
+          } );
+        };
+      };
+
+      return { instance: function() { return new object( false ); } };
     }
   ] );
 

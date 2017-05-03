@@ -1,0 +1,117 @@
+<div class="utility-view rounded">
+  <div class="container-fluid bg-primary rounded-top">
+    <h4>Transcription Multi-Edit</h4>
+  </div>
+  <div class="container-fluid">
+    <cn-loading ng-if="isLoading"></cn-loading>
+    <div class="spacer" ng-if="!isLoading">
+      <p class="text-info" style="margin-top: 1em;">
+        In order to edit multiple transcriptions at once you must first select them by participant UID.
+        You may enter the unique identifiers (eg: A123456) of all transcriptions you wish to affect, then
+        confirm that list to ensure each of the identifiers can be linked to a participant.
+      </p>
+      <p class="text-info">
+        This utility allows you to affect transcriptions in one of two ways:
+        <ol class="text-info">
+          <li>Reassigning multiple transcriptions to a typist</li>
+          <li>Import participants who do not have any recordings (and alternatively assign them to a typist)</li>
+        </ol>
+      </p>
+      <hr />
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <span class="allow-select">
+            <strong>Participant selection</strong>
+          </span>
+          <span class="pull-right">
+            <span ng-if="model.confirmInProgress">working, please wait...</span>
+            <span ng-if="!model.confirmInProgress">
+              {{ model.confirmedCount ?
+                 model.confirmedCount + ' participants confirmed' :
+                 'no confirmed participants' }}
+              <i class="glyphicon" ng-class="model.confirmedCount ? 'glyphicon-ok' : 'glyphicon-remove'"></i>
+            </span>
+          </span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label for="importRestriction"
+                   class="col-sm-3 control-label text-right">Restrict to:</label>
+            <div class="col-sm-9">
+              <select id="importRestriction"
+                      ng-model="model.importRestriction"
+                      ng-change="model.selectionChanged()"
+                      class="form-control">
+                <option value="no-import">
+                  NO-IMPORT: Participants already available to the application
+                </option>
+                <option value="import">
+                  IMPORT-ONLY: Participants who are not available to the application (all will be imported)
+                </option>
+                <option value="any">
+                  ANY: Do not restrict participants (unavailable participants will be imported)
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="uidListString"
+                   class="col-sm-3 control-label text-right">UID List:</label>
+            <div class="col-sm-9">
+              <textarea id="uidListString"
+                        name="uidListString"
+                        cn-elastic
+                        ng-change="model.selectionChanged()"
+                        ng-model="model.uidListString"
+                        ng-disabled="model.confirmInProgress"
+                        class="form-control no-rounding"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="form-footer text-right rounded-bottom bg-info">
+          <button type="button"
+                  class="btn btn-primary"
+                  ng-if="!model.confirmedCount"
+                  ng-disabled="model.confirmInProgress"
+                  ng-click="confirm()">Confirm List</button>
+        </div>
+      </div>
+      <div ng-if="model.confirmedCount">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <span class="allow-select">
+              <strong>Transcription Assignment</strong>
+            </span>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="user_id" class="col-sm-3 control-label text-right">Assign to:</label>
+              <div class="col-sm-9">
+                <select id="user_id"
+                        ng-model="model.user_id"
+                        ng-options="item.value as item.name for item in model.userList"
+                        class="form-control"></select>
+                <div ng-show="'any' == model.importRestriction || 'import' == model.importRestriction"
+                      class="text-info">
+                  Note that if you leave this empty then imported participants will become available in the
+                  application's participant list without being assigned a transcription (they will be
+                  available for new transcription requests).
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-footer text-right rounded-bottom bg-info">
+            <button type="button"
+                    class="btn btn-primary"
+                    ng-if="model.confirmedCount"
+                    ng-disabled="'no-import' == model.importRestriction && !model.user_id"
+                    ng-click="model.processList()">Proceed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-footer text-right rounded-bottom bg-info">
+    <a href="#" ui-sref="participant.list" class="btn btn-default">View Transcription List</a>
+  </div>
+</div>

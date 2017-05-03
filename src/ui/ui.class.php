@@ -102,7 +102,8 @@ class ui extends \cenozo\ui\ui
   {
     $db_role = lib::create( 'business\session' )->get_role();
     $list = 'typist' == $db_role->name ? array() : parent::get_utility_items();
-    if( 2 < $db_role->tier ) $list['Participant CRF'] = array( 'subject' => 'participant', 'action' => 'crf' );
+    if( 2 < $db_role->tier )
+      $list['Transcription Multiedit'] = array( 'subject' => 'transcription', 'action' => 'multiedit' );
     return $list;
   }
 }
