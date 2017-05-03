@@ -32,7 +32,7 @@ define( function() {
       },
       site: {
         column: 'site.name',
-        title: 'Site',
+        title: 'Credited Site',
         isIncluded: function( $state, model ) { return !model.isTypist(); }
       },
       state: {
@@ -72,12 +72,10 @@ define( function() {
       type: 'hidden',
       help: 'Which user the transcription is assigned to'
     },
-    site: {
-      column: 'site.name',
-      title: 'Site',
+    site_id: {
+      title: 'Credited Site',
       type: 'hidden',
-      exclude: 'add',
-      constant: true
+      exclude: 'add'
     },
     state: {
       title: 'State',
@@ -425,13 +423,32 @@ define( function() {
         this.listModel = CnTranscriptionListFactory.instance( this );
         this.viewModel = CnTranscriptionViewFactory.instance( this, root );
 
+        // extend getMetadata
+        this.getMetadata = function() {
+          return this.$$getMetadata().then( function() {
+            return CnHttpFactory.instance( {
+              path: 'site',
+              data: {
+                select: { column: [ 'id', 'name' ] },
+                modifier: { order: 'name' }
+              }
+            } ).query().then( function( response ) {
+              self.metadata.columnList.site_id = { enumList: [] };
+              response.data.forEach( function( item ) {
+                self.metadata.columnList.site_id.enumList.push( { value: item.id, name: item.name } );
+              } );
+            } );
+          } );
+        };
+
         this.isTypist = function() { return 'typist' == CnSession.role.name; };
         this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
 
         if( !this.isTypist() ) {
           var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;
           inputList.user_id.type = 'enum';
-          inputList.site.type = 'string';
+          inputList.site_id.type = 'enum';
+          inputList.site_id.constant = 3 > CnSession.role.tier;
           inputList.state.type = 'string';
         }
 
@@ -501,31 +518,38 @@ define( function() {
               } ).show().then( function() { self.transitionToLastState(); } );
             }
 
+            var modifier = {
+              join: [ {
+                table: 'access',
+                onleft: 'user.id',
+                onright: 'access.user_id'
+              }, {
+                table: 'role',
+                onleft: 'access.role_id',
+                onright: 'role.id'
+              } ],
+              where: [ {
+                column: 'role.name',
+                operator: '=',
+                value: 'typist'
+              } ],
+              order: 'name'
+            };
+
+            // restrict non all-site roles to the participant's site
+            if( !CnSession.role.allSites ) {
+              modifier.where.push( {
+                column: 'access.site_id',
+                operator: '=',
+                value: response.data.site_id
+              } );
+            }
+
             return CnHttpFactory.instance( {
               path: 'user',
               data: {
                 select: { column: [ 'id', 'name', 'first_name', 'last_name' ] },
-                modifier: {
-                  join: [ {
-                    table: 'access',
-                    onleft: 'user.id',
-                    onright: 'access.user_id'
-                  }, {
-                    table: 'role',
-                    onleft: 'access.role_id',
-                    onright: 'role.id'
-                  } ],
-                  where: [ {
-                    column: 'role.name',
-                    operator: '=',
-                    value: 'typist'
-                  }, {
-                    column: 'access.site_id',
-                    operator: '=',
-                    value: response.data.site_id
-                  } ],
-                  order: 'name'
-                }
+                modifier: modifier
               }
             } ).query().then( function( response ) {
               self.metadata.columnList.user_id.enumList = [];
