@@ -873,9 +873,12 @@ CREATE PROCEDURE import_cedar()
         "INSERT IGNORE INTO transcription( ",
           "update_timestamp, create_timestamp, ",
           "user_id, participant_id, site_id, start_datetime, end_datetime ) ",
-        "SELECT update_timestamp, create_timestamp, ",
-          "IF( end_datetime IS NULL, user_id, NULL ), participant_id, site_id, start_datetime, end_datetime ",
-        "FROM ", @v1_cedar, ".assignment AS v1_assignment" );
+        "SELECT v1_assignment.update_timestamp, v1_assignment.create_timestamp, ",
+          "IF( v1_assignment.end_datetime IS NULL, user_id, NULL ), ",
+          "participant_id, site.id, v1_assignment.start_datetime, v1_assignment.end_datetime ",
+        "FROM ", @v1_cedar, ".assignment AS v1_assignment ",
+        "JOIN ", @v1_cenozo, ".site v1_site ON v1_assignment.site_id = v1_site.id ",
+        "JOIN ", @cenozo, ".site ON CONCAT( v1_site.name, ' REC' ) = site.name" );
       PREPARE statement FROM @sql;
       EXECUTE statement;
       DEALLOCATE PREPARE statement;
