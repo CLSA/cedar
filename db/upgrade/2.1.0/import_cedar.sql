@@ -1285,6 +1285,17 @@ CREATE PROCEDURE import_cedar()
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
+    -- remove unused words
+    INSERT IGNORE INTO delete_word
+    SELECT word.id FROM word
+    LEFT JOIN aft_data on word.id = aft_data.word_id
+    LEFT JOIN fas_data on word.id = fas_data.word_id
+    LEFT JOIN rey_data_has_word on word.id = rey_data_has_word.word_id
+    WHERE word.misspelled IS NULL
+    AND aft_data.id IS NULL
+    AND fas_data.id IS NULL
+    AND rey_data_has_word.rey_data_id IS NULL;
+
     ALTER TABLE delete_word ADD PRIMARY KEY (id);
 
     DELETE FROM aft_data
