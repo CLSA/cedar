@@ -209,7 +209,7 @@ class post extends \cenozo\service\post
               $db_transcription->start_datetime = util::get_datetime_object();
             }
 
-            $db_transcription->user_id = $user_id
+            $db_transcription->user_id = $user_id;
             $db_transcription->save();
           }
         }
