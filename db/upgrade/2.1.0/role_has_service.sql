@@ -96,7 +96,6 @@ CREATE PROCEDURE patch_role_has_service()
         "OR ( subject = 'report_type' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'setting' AND method = 'GET' ) ",
         "OR ( subject = 'site' AND method IN ( 'DELETE', 'POST' ) ) ",
-        "OR ( subject = 'transcription' AND method = 'PATCH' ) ",
       ")" );
     PREPARE statement FROM @sql;
     EXECUTE statement;

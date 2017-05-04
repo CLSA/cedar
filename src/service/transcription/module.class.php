@@ -34,6 +34,15 @@ class module extends \cenozo\service\site_restricted_participant_module
       {
         $this->get_status()->set_code( 403 );
       }
+
+      // restrict by site
+      $db_restrict_site = $this->get_restricted_site();
+      if( !is_null( $db_transcription ) && !is_null( $db_restrict_site ) )
+      {
+        $db_effective_site = $db_transcription->get_participant()->get_effective_site();
+        if( is_null( $db_effective_site ) || $db_restrict_site->id != $db_effective_site->id )
+          $this->get_status()->set_code( 403 );
+      }
     }
   }
 
@@ -47,13 +56,11 @@ class module extends \cenozo\service\site_restricted_participant_module
     $session = lib::create( 'business\session' );
     $db_role = $session->get_role();
     $db_user = $session->get_user();
+    $db_application = $session->get_application();
     $db = $session->get_database();
 
-    if( $select->has_column( 'uid' ) )
-    {
-      $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
-      $select->add_column( 'participant.uid', 'uid', false );
-    }
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+    if( $select->has_column( 'uid' ) ) $select->add_column( 'participant.uid', 'uid', false );
 
     if( $select->has_table_columns( 'user' ) )
       $modifier->left_join( 'user', 'transcription.user_id', 'user.id' );
@@ -64,6 +71,17 @@ class module extends \cenozo\service\site_restricted_participant_module
       $modifier->where( 'transcription.user_id', '=', $db_user->id );
       // don't show in typist list, but allow direct access
       if( is_null( $this->get_resource() ) ) $modifier->where( 'transcription.assigned_count', '>', 0 );
+    }
+
+    // restrict by site
+    $db_restrict_site = $this->get_restricted_site();
+    if( !is_null( $db_restrict_site ) )
+    {
+      $sub_mod = lib::create( 'database\modifier' );
+      $sub_mod->where( 'participant.id', '=', 'participant_site.participant_id', false );
+      $sub_mod->where( 'participant_site.application_id', '=', $db_application->id );
+      $sub_mod->where( 'participant_site.site_id', '=', $db_restrict_site->id );
+      $modifier->join_modifier( 'participant_site', $sub_mod );
     }
 
     if( $select->has_column( 'user_list' ) )
