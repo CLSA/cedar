@@ -198,7 +198,7 @@ class post extends \cenozo\service\post
           $participant_sel->add_column( 'id' );
           $participant_mod = lib::create( 'database\modifier' );
           $participant_mod->where( 'uid', 'IN', $uid_list );
-          for( $participant_class_name::select( $participant_sel, $participant_mod ) as $participant )
+          foreach( $participant_class_name::select( $participant_sel, $participant_mod ) as $participant )
           {
             $db_transcription =
               $transcription_class_name::get_unique_record( 'participant_id', $participant['id'] );
