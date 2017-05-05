@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS mat_data (
   test_entry_id INT UNSIGNED NOT NULL,
   rank INT UNSIGNED NOT NULL,
   value VARCHAR(5) NOT NULL,
+  sequence_rank INT UNSIGNED NULL DEFAULT NULL COMMENT 'Used for scoring only',
   PRIMARY KEY (id),
   INDEX fk_test_entry_id (test_entry_id ASC),
   UNIQUE INDEX uq_test_entry_id_rank (test_entry_id ASC, rank ASC),
