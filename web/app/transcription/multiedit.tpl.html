@@ -16,6 +16,8 @@
           <li>Reassigning multiple transcriptions to a typist</li>
           <li>Import participants who do not have any recordings (and alternatively assign them to a typist)</li>
         </ol>
+        Any existing transcriptions which are complete will be refused (you must return at least one test-entry
+        to the typist before it can be re-assigned.
       </p>
       <hr />
       <div class="panel panel-default">
@@ -91,9 +93,8 @@
                         ng-model="model.user_id"
                         ng-options="item.value as item.name for item in model.userList"
                         class="form-control"></select>
-                <div ng-show="'any' == model.importRestriction || 'import' == model.importRestriction"
-                      class="text-info">
-                  Note that if you leave this empty then imported participants will become available in the
+                <div ng-show="'no-import' != model.importRestriction" class="text-info">
+                  Please note that if you leave this empty then imported participants will become available in the
                   application's participant list without being assigned a transcription (they will be
                   available for new transcription requests).
                 </div>
@@ -105,6 +106,8 @@
                     class="btn btn-primary"
                     ng-if="model.confirmedCount"
                     ng-disabled="'no-import' == model.importRestriction && !model.user_id"
+                    uib-tooltip="{{ 'no-import' == model.importRestriction && !model.user_id ?
+                      'You must select which typist to assign the selected transcriptions to' : '' }}"
                     ng-click="model.processList()">Proceed</button>
           </div>
         </div>

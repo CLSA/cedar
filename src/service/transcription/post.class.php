@@ -151,6 +151,7 @@ class post extends \cenozo\service\post
   {
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $sound_file_class_name = lib::get_class_name( 'database\sound_file' );
+    $transcription_class_name = lib::get_class_name( 'database\transcription' );
     $file = $this->get_file_as_array();
 
     if( array_key_exists( 'uid_list', $file ) )
@@ -171,7 +172,15 @@ class post extends \cenozo\service\post
           'participant_sound_file_total', 'participant.id', 'participant_sound_file_total.participant_id' );
         $modifier->where( 'participant_sound_file_total.total', '=', NULL );
       }
-      else if( 'no-import' == $import_restriction )
+      else
+      {
+        // do not include participants whose transcription is complete
+        // note that participants with no transcriptions will not be restricted by this modification
+        $modifier->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
+        $modifier->where( 'transcription.end_datetime', '=', NULL );
+      }
+
+      if( 'no-import' == $import_restriction )
       {
         // restrict to participants who have a sound file count
         $modifier->join(

@@ -367,7 +367,11 @@ define( function() {
                        ( 1 != uidList.length ? 's have ' : ' has ' ) +
                        'been processed' + userString
             } ).show().then( function() {
+              self.confirmedCount = null;
+              self.importRestriction = 'no-import';
               self.uidListString = '';
+              self.userList = [];
+              self.user_id = undefined;
             } );
           } );
         };
