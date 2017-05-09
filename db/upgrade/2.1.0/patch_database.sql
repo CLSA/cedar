@@ -31,6 +31,10 @@ SOURCE rey_data.sql
 SOURCE rey_data_has_word.sql
 SOURCE user_has_cohort.sql
 SOURCE user_has_language.sql
+SOURCE report_type.sql
+SOURCE report_restriction.sql
+SOURCE application_type_has_report_type.sql
+SOURCE role_has_report_type.sql
 
 SOURCE participant_sound_file_total.sql
 SOURCE word_test_entry_total.sql
