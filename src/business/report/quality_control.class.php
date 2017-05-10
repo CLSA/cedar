@@ -30,6 +30,7 @@ class quality_control extends \cenozo\business\report\base_report
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
     $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
+    $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'test_entry_note', 'test_entry.id', 'test_entry_note.test_entry_id' );
     $modifier->join( 'user', 'test_entry_note.user_id', 'user.id' );
     $modifier->where_bracket( true );
@@ -91,7 +92,7 @@ class quality_control extends \cenozo\business\report\base_report
     );
     $select->add_column(
       'GROUP_CONCAT('."\n".
-      '  CONCAT( user.name, ": ", test_entry_note.note )'."\n".
+      '  CONCAT( "[", user.name, "] for ", test_type.name, ": ", test_entry_note.note )'."\n".
       '  ORDER BY test_entry_note.datetime'."\n".
       '  SEPARATOR "\\n"'."\n".
       ')',
