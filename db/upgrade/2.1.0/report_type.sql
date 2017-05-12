@@ -25,6 +25,11 @@ DROP PROCEDURE IF EXISTS patch_report_type;
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
+
+    SET @sql = CONCAT( "UPDATE ", @cenozo, ".report_type SET description = 'Lists user productivity.'" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
   END //
 DELIMITER ;
 
