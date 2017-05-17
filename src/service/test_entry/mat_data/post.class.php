@@ -24,10 +24,10 @@ class post extends \cenozo\service\post
     // replace the data with the full record
     $record = $this->get_leaf_record();
     $db_test_type = $record->get_test_entry()->get_test_type();
-    $this->set_data( util::json_encode( array (
+    $this->set_data( array(
       'id' => $record->id,
       'rank' => $record->rank,
       'word' => $record->value
-    ) ) );
+    ) );
   }
 }

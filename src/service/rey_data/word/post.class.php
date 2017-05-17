@@ -110,14 +110,14 @@ class post extends \cenozo\service\post
     }
     else parent::execute();
 
-    $this->set_data( util::json_encode( array (
+    $this->set_data( array(
       'id' => $this->db_word->id,
       'language_id' => $this->db_word->language_id,
       'word' => $this->db_word->word,
       'code' => $this->db_word->get_language()->code,
       'word_type' => is_null( $this->db_word->misspelled ) ? 'variant' : (
         $this->db_word->misspelled ? 'misspelled' : 'intrusion' )
-    ) ) );
+    ) );
   }
 
   /**
