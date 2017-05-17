@@ -94,8 +94,8 @@ class post extends \cenozo\service\post
               $participant_mod->where( 'user_has_language.user_id', '=', $db_user->id );
             }
 
-            // order by sound file datetime so we get older recordings first
-            $participant_mod->order( 'participant_sound_file_total.datetime' );
+            // order by sound file datetime so we get newer recordings first
+            $participant_mod->order_desc( 'participant_sound_file_total.datetime' );
 
             // join to the transcription table to make sure the participant doesn't have an existing transcription
             $participant_mod->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
