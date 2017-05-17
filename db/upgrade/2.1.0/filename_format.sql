@@ -43,7 +43,9 @@ INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
 FROM test_type, (
   SELECT "Counting to 20-out" AS name UNION
-  SELECT "Alphabet-out" AS name
+  SELECT "Alphabet-out" AS name UNION
+  SELECT "COG_CNTTMEREC_COF1" AS name UNION
+  SELECT "COG_ALPTME_REC2_COF1" AS name
 ) AS format
 WHERE test_type.name = "Pre Mental Alternation (pre-MAT)";
 
@@ -51,7 +53,8 @@ INSERT IGNORE INTO filename_format( test_type_id, format )
 SELECT test_type.id, format.name
 FROM test_type, (
   SELECT "MAT Alternation-out" AS name UNION
-  SELECT "COG_CNTTMEREC_COF1" AS name
+  SELECT "COG_CNTTMEREC_COF1" AS name UNION
+  SELECT "COG_ALTTME_REC_COF1" AS name
 ) AS format
 WHERE test_type.name = "Mental Alternation (MAT)";
 
