@@ -145,12 +145,10 @@ class productivity extends \cenozo\business\report\base_report
         if( 0 == $sum ) unset( $user_list[$user] );
         else
         {
-          $user_list[$user]['Completes/Hour'] =
-            0 == $user_list[$user]['Total Time'] ? 'n/a' :
-            sprintf(
-              '%0.2f',
-              $user_list[$user]['Completed Transcriptions'] / $user_list[$user]['Total Time'] * 60
-            );
+          // total time is currently in seconds, so convert to hours
+          $user_list[$user]['Completes/Hour'] = 0 == $user_list[$user]['Total Time'] ?
+            'n/a' : sprintf( '%0.2f', $user_list[$user]['Completed Transcriptions'] /
+                                      ( $user_list[$user]['Total Time'] / 3600 ) );
         }
       }
 
@@ -179,12 +177,29 @@ class productivity extends \cenozo\business\report\base_report
       $overall['Completes/Hour'] = '';
 
       foreach( $user_list as $user_data ) foreach( $user_data as $key => $value ) $overall[$key] += $value;
+      $overall['Completes/Hour'] = 0 == $overall['Total Time'] ?
+        'n/a' : sprintf( '%0.2f', $overall['Completed Transcriptions'] /
+                                  ( $overall['Total Time'] / 3600 ) );
       foreach( $overall as $key => $value )
-        $contents[$key][] = 'Completed Transcriptions' == $key ? $value : sprintf( '%0.2f', $value / 60 );
+      {
+        // convert seconds to minutes
+        if( !in_array( $key, array( 'Completed Transcriptions', 'Completes/Hour' ) ) ) $value /= 60;
+        // round floating point values
+        if( 'Completed Transcriptions' != $key ) $value = sprintf( '%0.2f', $value );
+        $contents[$key][] = $value;
+      }
 
       foreach( $user_list as $user => $user_data )
+      {
         foreach( $user_data as $key => $value )
-          $contents[$key][] = 'Completed Transcriptions' == $key ? $value : sprintf( '%0.2f', $value / 60 );
+        {
+          // convert seconds to minutes
+          if( !in_array( $key, array( 'Completed Transcriptions', 'Completes/Hour' ) ) ) $value /= 60;
+          // round floating point values
+          if( 'Completed Transcriptions' != $key ) $value = sprintf( '%0.2f', $value );
+          $contents[$key][] = $value;
+        }
+      }
       $this->add_table( $site['name'], $header, $contents );
     }
   }
