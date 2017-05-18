@@ -149,7 +149,7 @@ class productivity extends \cenozo\business\report\base_report
             0 == $user_list[$user]['Total Time'] ? 'n/a' :
             sprintf(
               '%0.2f',
-              $user_list[$user]['Completed Transcriptions'] / $user_list[$user]['Total Time'] / 60
+              $user_list[$user]['Completed Transcriptions'] / $user_list[$user]['Total Time'] * 60
             );
         }
       }
