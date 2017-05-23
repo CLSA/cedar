@@ -39,7 +39,7 @@ class sound_file extends \cenozo\database\record
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f %s -printf "%s" | grep -v "\-in."',
+      'find -L %s -type f %s -printf "%s" | grep "/[A-Z][0-9]\\{6\\}/" | grep -v "\-in."',
       RECORDINGS_PATH,
       file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : '',
       '%p\t%TY-%Tm-%Td %TT\n'
