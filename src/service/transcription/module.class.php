@@ -62,6 +62,9 @@ class module extends \cenozo\service\site_restricted_participant_module
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
     if( $select->has_column( 'uid' ) ) $select->add_column( 'participant.uid', 'uid', false );
 
+    if( $select->has_table_columns( 'cohort' ) )
+      $modifier->left_join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+
     if( $select->has_table_columns( 'user' ) )
       $modifier->left_join( 'user', 'transcription.user_id', 'user.id' );
 

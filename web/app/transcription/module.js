@@ -15,6 +15,10 @@ define( function() {
         column: 'participant.uid',
         title: 'Participant'
       },
+      cohort: {
+        column: 'cohort.name',
+        title: 'Cohort'
+      },
       user: {
         column: 'user.name',
         title: 'Assigned',
