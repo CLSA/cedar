@@ -90,7 +90,7 @@ CREATE PROCEDURE patch_role_has_service()
         "WHERE subject IN( ",
           "'address', 'alternate', 'application', 'availability_type', 'collection', 'consent', 'consent_type', ",
           "'event', 'event_type', 'export', 'export_file', 'export_column', 'export_restriction', ",
-          "'filename_format', 'language', 'report_schedule', 'state', 'test_type', 'word' ) ",
+          "'failed_login', 'filename_format', 'language', 'report_schedule', 'state', 'test_type', 'word' ) ",
         "OR subject LIKE '%_data' ",
         "OR ( subject = 'report_restriction' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",
         "OR ( subject = 'report_type' AND method IN( 'DELETE', 'PATCH', 'POST' ) ) ",

@@ -84,6 +84,7 @@ INSERT INTO service ( subject, method, resource, restricted ) VALUES
 ( 'export_restriction', 'GET', 1, 1 ),
 ( 'export_restriction', 'PATCH', 1, 1 ),
 ( 'export_restriction', 'POST', 0, 1 ),
+( 'failed_login', 'GET', 0, 1 ),
 ( 'language', 'GET', 0, 0 ),
 ( 'language', 'GET', 1, 0 ),
 ( 'language', 'PATCH', 1, 1 ),
