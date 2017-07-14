@@ -48,6 +48,7 @@ class patch
       error( $this->db->connect_error );
       die();
     }
+    $this->db->set_charset( 'utf8' );
   }
 
   /**
