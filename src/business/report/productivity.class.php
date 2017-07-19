@@ -21,10 +21,21 @@ class productivity extends \cenozo\business\report\base_report
    */
   protected function build()
   {
+    $cohort_class_name = lib::get_class_name( 'database\cohort' );
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $test_type_class_name = lib::get_class_name( 'database\test_type' );
     $transcription_class_name = lib::get_class_name( 'database\transcription' );
     $test_entry_activity_class_name = lib::get_class_name( 'database\test_entry_activity' );
+
+    // create a list of all complete types (each cohorts and a total)
+    $cohort_sel = lib::create( 'database\select' );
+    $cohort_sel->add_column( 'name' );
+    $cohort_mod = lib::create( 'database\modifier' );
+    $cohort_mod->order( 'name' );
+    $completed_type_list = array();
+    foreach( $cohort_class_name::select( $cohort_sel, $cohort_mod ) as $cohort )
+      $completed_type_list[] = sprintf( 'Completed Transcriptions (%s)', ucwords( $cohort['name'] ) );
+    $completed_type_list[] = 'Completed Transcriptions (Total)';
 
     // create a list of all test types
     $test_type_mod = lib::create( 'database\modifier' );
@@ -36,6 +47,7 @@ class productivity extends \cenozo\business\report\base_report
     $select = lib::create( 'database\select' );
     $select->from( 'transcription' );
     $select->add_column( 'id' );
+    $select->add_table_column( 'cohort', 'name', 'cohort' );
     $select->add_table_column( 'user', 'name', 'user' );
     $select->add_table_column( 'test_type', 'name', 'type' );
     $select->add_column(
@@ -45,6 +57,8 @@ class productivity extends \cenozo\business\report\base_report
     );
 
     $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'test_entry_activity', 'test_entry.id', 'test_entry_activity.test_entry_id' );
@@ -113,13 +127,16 @@ class productivity extends \cenozo\business\report\base_report
             $user_list[$row['user']] = array();
             foreach( $test_type_list as $db_test_type ) $user_list[$row['user']][$db_test_type->name] = 0;
             $user_list[$row['user']]['Total Time'] = 0;
-            $user_list[$row['user']]['Completed Transcriptions'] = 0;
+            foreach( $completed_type_list as $completed_type ) $user_list[$row['user']][$completed_type] = 0;
           }
 
           if( is_null( $row['type'] ) )
           {
             // store how long this user spent on the transcription
-            $transcription_list[$row['id']][$row['user']] = $row['time'];
+            $transcription_list[$row['id']][$row['user']] = array(
+              'cohort' => $row['cohort'],
+              'time' => $row['time']
+            );
             // add to the user's total time for all test types
             $user_list[$row['user']]['Total Time'] += $row['time'];
           }
@@ -133,8 +150,13 @@ class productivity extends \cenozo\business\report\base_report
       {
         $award_user = NULL;
         $max = -1;
-        foreach( $possible_user_list as $user => $time ) if( $time > $max ) $award_user = $user;
-        if( !is_null( $award_user ) ) $user_list[$award_user]['Completed Transcriptions']++;
+        foreach( $possible_user_list as $user => $data ) if( $data['time'] > $max ) $award_user = $user;
+        if( !is_null( $award_user ) )
+        {
+          $title = sprintf( 'Completed Transcriptions (%s)', ucwords( $data['cohort'] ) );
+          $user_list[$award_user][$title]++;
+          $user_list[$award_user]['Completed Transcriptions (Total)']++;
+        }
       }
 
       // remove any users with no completes and no time and calculate completes per hour
@@ -147,7 +169,7 @@ class productivity extends \cenozo\business\report\base_report
         {
           // total time is currently in seconds, so convert to hours
           $user_list[$user]['Completes/Hour'] = 0 == $user_list[$user]['Total Time'] ?
-            'n/a' : sprintf( '%0.2f', $user_list[$user]['Completed Transcriptions'] /
+            'n/a' : sprintf( '%0.2f', $user_list[$user]['Completed Transcriptions (Total)'] /
                                       ( $user_list[$user]['Total Time'] / 3600 ) );
         }
       }
@@ -166,26 +188,26 @@ class productivity extends \cenozo\business\report\base_report
         $contents[$key] = array( $key );
       }
       $contents['Total Time'] = array( 'Total Time' );
-      $contents['Completed Transcriptions'] = array( 'Completed Transcriptions' );
+      foreach( $completed_type_list as $completed_type ) $contents[$completed_type] = array( $completed_type );
       $contents['Completes/Hour'] = array( 'Completes/Hour' );
 
       // second column is overall data
       $overall = array();
       foreach( $test_type_list as $db_test_type ) $overall[$db_test_type->name] = 0;
       $overall['Total Time'] = 0;
-      $overall['Completed Transcriptions'] = 0;
+      foreach( $completed_type_list as $completed_type ) $overall[$completed_type] = 0;
       $overall['Completes/Hour'] = '';
 
       foreach( $user_list as $user_data ) foreach( $user_data as $key => $value ) $overall[$key] += $value;
       $overall['Completes/Hour'] = 0 == $overall['Total Time'] ?
-        'n/a' : sprintf( '%0.2f', $overall['Completed Transcriptions'] /
+        'n/a' : sprintf( '%0.2f', $overall['Completed Transcriptions (Total)'] /
                                   ( $overall['Total Time'] / 3600 ) );
       foreach( $overall as $key => $value )
       {
         // convert seconds to minutes
-        if( !in_array( $key, array( 'Completed Transcriptions', 'Completes/Hour' ) ) ) $value /= 60;
+        if( 'Completes/Hour' != $key && false === strpos( $key, 'Completed Transcriptions' ) ) $value /= 60;
         // round floating point values
-        if( 'Completed Transcriptions' != $key ) $value = sprintf( '%0.2f', $value );
+        if( false === strpos( $key, 'Completed Transcriptions' ) ) $value = sprintf( '%0.2f', $value );
         $contents[$key][] = $value;
       }
 
@@ -194,9 +216,9 @@ class productivity extends \cenozo\business\report\base_report
         foreach( $user_data as $key => $value )
         {
           // convert seconds to minutes
-          if( !in_array( $key, array( 'Completed Transcriptions', 'Completes/Hour' ) ) ) $value /= 60;
+          if( 'Completes/Hour' != $key && false === strpos( $key, 'Completed Transcriptions' ) ) $value /= 60;
           // round floating point values
-          if( 'Completed Transcriptions' != $key ) $value = sprintf( '%0.2f', $value );
+          if( false === strpos( $key, 'Completed Transcriptions' ) ) $value = sprintf( '%0.2f', $value );
           $contents[$key][] = $value;
         }
       }
