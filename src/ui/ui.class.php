@@ -83,7 +83,7 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Sources' );
       if( 2 < $db_role->tier ) $this->add_listitem( 'REY Variant', 'rey_data_variant' );
       $this->add_listitem( 'Test Types', 'test_type' );
-      $this->add_listitem( 'Word List', 'word' );
+      $this->add_listitem( 'Words', 'word' );
     }
 
     // add application-specific states to the base list
