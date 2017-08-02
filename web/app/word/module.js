@@ -96,6 +96,10 @@ define( function() {
     fas: {
       title: 'FAS Type',
       type: 'enum'
+    },
+    description: {
+      title: 'Description',
+      type: 'text'
     }
   } );
 

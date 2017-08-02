@@ -24,6 +24,7 @@ DROP PROCEDURE IF EXISTS patch_word;
         "misspelled TINYINT(1) NULL DEFAULT NULL, ",
         "aft ENUM('invalid', 'intrusion', 'primary') NULL DEFAULT NULL, ",
         "fas ENUM('invalid', 'intrusion', 'primary') NULL DEFAULT NULL, ",
+        "description TEXT NULL DEFAULT NULL, ",
         "PRIMARY KEY (id), ",
         "INDEX fk_language_id (language_id ASC), ",
         "UNIQUE INDEX uq_language_id_word (language_id ASC, word ASC), ",
