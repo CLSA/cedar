@@ -64,11 +64,17 @@ else
   if aft_valid
     show animal word list
   if fas_valid
+    show compound word list
     show homophone word list
     show sister word list
 fi
 
 DATABASE
+
+word 1-to-N compound words
+  set in stone
+  language dependent
+  "master" word may have multiple compounds
 
 word 1-to-N homophone words
   set in stone
@@ -89,6 +95,7 @@ animal group 1-to-N word
 if misspelled is changed to true
   set aft/fas valid to false
   delete all animal word list entries
+  delete all compound word list entries
   delete all homophone word list entries
   delete all sister word list entries
 fi

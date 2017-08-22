@@ -68,14 +68,26 @@ class test_type extends \cenozo\database\record
     // alt-score is simply all unique animal codes
     $aft_sel = clone $select;
     $aft_sel->add_constant( NULL, 'score' );
-    $aft_sel->add_column( 'COUNT( DISTINCT animal_code )', 'alt_score', false );
+    $aft_sel->add_column(
+      'COUNT( DISTINCT IF( sub_word.id IS NOT NULL, sub_word.animal_code, word.animal_code ) )',
+      'alt_score',
+      false
+    );
 
     $aft_mod = clone $modifier;
     $aft_mod->join( 'aft_data', 'test_entry.id', 'aft_data.test_entry_id' );
     $aft_mod->join( 'word', 'aft_data.word_id', 'word.id' );
     $aft_mod->where( 'test_type.data_type', '=', 'aft' );
-    $aft_mod->where( 'word.aft', '=', 'primary' );
-    $aft_mod->where( 'word.animal_code', '!=', NULL );
+
+    // join to the compond table to replace compound words with their sub-words instead
+    $aft_mod->left_join( 'compound', 'word.id', 'compound.word_id' );
+    $aft_mod->left_join( 'word', 'compound.sub_word_id', 'sub_word.id', 'sub_word' );
+    $aft_mod->where( 'IF( sub_word.id IS NOT NULL, sub_word.aft, word.aft )', '=', 'primary' );
+    $aft_mod->where( 'IF( sub_word.id IS NOT NULL, sub_word.animal_code, word.animal_code )', '!=', NULL );
+
+    // the pre-aft modifier #1 is identical to the aft_mod, just without the group
+    $pre_aft_mod1 = clone $aft_mod;
+
     $aft_mod->group( 'test_entry.id' );
 
     static::db()->execute( sprintf(
@@ -89,14 +101,11 @@ class test_type extends \cenozo\database\record
     // standard score involves searching for wildcards (zeros)
     $pre_aft_sel1 = clone $select;
     $pre_aft_sel1->set_distinct( true );
-    $pre_aft_sel1->add_column( 'SUBSTRING_INDEX( animal_code, ".", 6 )', 'animal_code', false );
-
-    $pre_aft_mod1 = clone $modifier;
-    $pre_aft_mod1->join( 'aft_data', 'test_entry.id', 'aft_data.test_entry_id' );
-    $pre_aft_mod1->join( 'word', 'aft_data.word_id', 'word.id' );
-    $pre_aft_mod1->where( 'test_type.data_type', '=', 'aft' );
-    $pre_aft_mod1->where( 'word.aft', '=', 'primary' );
-    $pre_aft_mod1->where( 'word.animal_code', '!=', NULL );
+    $pre_aft_sel1->add_column(
+      'SUBSTRING_INDEX( IF( sub_word.id IS NOT NULL, sub_word.animal_code, word.animal_code ), ".", 6 )',
+      'animal_code',
+      false
+    );
 
     static::db()->execute( sprintf(
       'CREATE TEMPORARY TABLE animal_code ('."\n".
@@ -193,7 +202,15 @@ class test_type extends \cenozo\database\record
 
     $fas_sel = clone $select;
     $fas_sel->add_column(
-      'IF( word_id IS NULL, 0, COUNT( DISTINCT IFNULL( sister_word_id, word_id ) ) )',
+      'IF( fas_data.word_id IS NULL, '.
+          '0, '.
+          'COUNT( '.
+            'DISTINCT IFNULL( '.
+              'IF( sub_word.id IS NOT NULL, sub_word.sister_word_id, word.sister_word_id ), '.
+              'fas_data.word_id '.
+            ') '.
+          ') '.
+      ')',
       'score',
       false
     );
@@ -203,11 +220,23 @@ class test_type extends \cenozo\database\record
     $fas_mod->left_join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
     $fas_mod->left_join( 'word', 'fas_data.word_id', 'word.id' );
     $fas_mod->where( 'test_type.data_type', '=', 'fas' );
-    $fas_mod->where( 'IFNULL( word.fas, "primary" )', '=', 'primary' );
+
+    // join to the compond table to replace compound words with their sub-words instead
+    $fas_mod->left_join( 'compound', 'word.id', 'compound.word_id' );
+    $fas_mod->left_join( 'word', 'compound.sub_word_id', 'sub_word.id', 'sub_word' );
+    $fas_mod->where(
+      'IFNULL( IF( sub_word.id IS NOT NULL, sub_word.fas, word.fas ), "primary" )',
+      '=',
+      'primary'
+    );
     $fas_mod->where_bracket( true );
-    $fas_mod->where( 'word.id', '=', NULL );
+    $fas_mod->where( 'IF( sub_word.id IS NOT NULL, sub_word.id, word.id )', '=', NULL );
     $fas_mod->or_where(
-      'SUBSTRING( word.word, 1, 1 )', '=', 'LOWER( SUBSTRING( test_type.name, 1, 1 ) )', false );
+      'SUBSTRING( IF( sub_word.id IS NOT NULL, sub_word.word, word.word ), 1, 1 )',
+      '=',
+      'LOWER( SUBSTRING( test_type.name, 1, 1 ) )',
+      false
+    );
     $fas_mod->where_bracket( false );
     $fas_mod->group( 'test_entry.id' );
 

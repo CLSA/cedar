@@ -59,6 +59,7 @@ class ui extends \cenozo\ui\ui
     $module = $this->get_module( 'word' );
     if( !is_null( $module ) )
     {
+      $module->add_child( 'compound' );
       $module->add_child( 'homophone' );
       $module->add_choose( 'test_entry' );
     }
