@@ -40,15 +40,18 @@ define( function() {
         column: 'word.fas',
         title: 'FAS Type'
       },
-      aft_count: {
+      aft_total: {
+        column: 'word_test_type_total.aft_total',
         title: '#AFT',
         type: 'number'
       },
-      fas_count: {
+      fas_total: {
+        column: 'word_test_type_total.fas_total',
         title: '#FAS',
         type: 'number'
       },
-      rey_count: {
+      rey_total: {
+        column: 'word_test_type_total.rey_total',
         title: '#REY',
         type: 'number'
       }
