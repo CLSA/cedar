@@ -34,7 +34,8 @@ define( function() {
         table: 'word',
         select: 'CONCAT( word.word, " [", language.code, "]" )',
         where: 'word.word',
-        forceEmptyOnNew: true
+        forceEmptyOnNew: true,
+        minLength: 1
       }
     },
     rank: {
