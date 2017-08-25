@@ -104,6 +104,9 @@ class ui extends \cenozo\ui\ui
     $list = 'typist' == $db_role->name ? array() : parent::get_utility_items();
     if( 2 < $db_role->tier )
       $list['Transcription Multiedit'] = array( 'subject' => 'transcription', 'action' => 'multiedit' );
+
+    // remove export
+    if( array_key_exists( 'Participant Export', $list ) ) unset( $list['Participant Export'] );
     return $list;
   }
 }
