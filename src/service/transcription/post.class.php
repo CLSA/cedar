@@ -161,6 +161,7 @@ class post extends \cenozo\service\post
       $import_restriction = array_key_exists( 'import_restriction', $file )
                           ? $file['import_restriction']
                           : 'no-import';
+      $site_id = array_key_exists( 'site_id', $file ) ? $file['site_id'] : NULL;
       $user_id = array_key_exists( 'user_id', $file ) ? $file['user_id'] : NULL;
       $process = array_key_exists( 'process', $file ) && $file['process'];
 
@@ -200,7 +201,7 @@ class post extends \cenozo\service\post
         }
 
         // assign transcriptions to the user if requested
-        if( !is_null( $user_id ) )
+        if( !is_null( $site_id ) && !is_null( $user_id ) )
         {
           $participant_sel = lib::create( 'database\select' );
           $participant_sel->from( 'participant' );
@@ -218,6 +219,7 @@ class post extends \cenozo\service\post
               $db_transcription->start_datetime = util::get_datetime_object();
             }
 
+            $db_transcription->site_id = $site_id;
             $db_transcription->user_id = $user_id;
             $db_transcription->save();
           }

@@ -87,7 +87,22 @@
           </div>
           <div class="panel-body">
             <div class="form-group">
-              <label for="user_id" class="col-sm-3 control-label text-right">Assign to:</label>
+              <label for="site_id" class="col-sm-3 control-label text-right">Assign to site:</label>
+              <div class="col-sm-9">
+                <select id="site_id"
+                        ng-model="model.site_id"
+                        ng-options="item.value as item.name for item in model.siteList"
+                        ng-change="model.selectSite()"
+                        class="form-control"></select>
+                <div ng-show="'no-import' != model.importRestriction" class="text-info">
+                  Please note that if you leave this empty then imported participants will become available in the
+                  application's participant list without being assigned a transcription (they will be
+                  available for new transcription requests).
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="user_id" class="col-sm-3 control-label text-right">Assign to user:</label>
               <div class="col-sm-9">
                 <select id="user_id"
                         ng-model="model.user_id"
