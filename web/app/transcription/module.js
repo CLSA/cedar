@@ -274,13 +274,25 @@ define( function() {
         this.confirmedCount = null;
         this.importRestriction = 'no-import';
         this.uidListString = '';
+        this.siteList = [];
         this.userList = [];
+        this.site_id = undefined;
         this.user_id = undefined;
 
         this.selectionChanged = function() {
           this.confirmedCount = null;
-          this.userList = [];
+          this.site_id = undefined;
           this.user_id = undefined;
+          this.siteList = [];
+          this.userList = [];
+        };
+
+        this.selectSite = function() {
+          if( angular.isDefined( this.site_id ) ) {
+            this.user_id = undefined;
+            var siteObject = this.siteList.findByProperty( 'value', this.site_id );
+            if( siteObject ) this.userList = siteObject.userList;
+          }
         };
 
         this.confirm = function() {
@@ -315,37 +327,69 @@ define( function() {
               self.confirmInProgress = false;
 
               // get the user list (typists only)
-              var name = 'no-import' == self.importRestriction ? '(Select Typist)' : '(empty)';
-              self.userList = [ { name: name, value: undefined } ];
+              self.siteList = [ {
+                name: 'no-import' == self.importRestriction ? '(Select Site)' : '(empty)',
+                value: undefined,
+                siteList: []
+              } ];
+              self.userList = [ {
+                name: 'no-import' == self.importRestriction ? '(Select Typist)' : '(empty)',
+                value: undefined
+              } ];
               return CnHttpFactory.instance( {
-                path: 'user',
+                path: 'site',
                 data: {
-                  select: { distinct: true, column: [ 'id', 'name', 'first_name', 'last_name' ] },
-                  modifier: {
-                    join: [ {
-                      table: 'access',
-                      onleft: 'user.id',
-                      onright: 'access.user_id'
-                    }, {
-                      table: 'role',
-                      onleft: 'access.role_id',
-                      onright: 'role.id'
-                    } ],
-                    where: [ {
-                      column: 'role.name',
-                      operator: '=',
-                      value: 'typist'
-                    } ],
-                    order: 'name'
-                  }
+                  select: { column: [ 'id', 'name' ] },
+                  modifier: { order: 'site.name' }
                 }
               } ).query().then( function( response ) {
                 response.data.forEach( function( item ) {
-                  self.userList.push( {
+                  var currentSiteId = item.id;
+                  self.siteList.push( {
+                    name: item.name,
                     value: item.id,
-                    name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')',
-                    user: item.name
+                    userList: [ {
+                      name: 'no-import' == self.importRestriction ? '(Select Typist)' : '(empty)',
+                      value: undefined
+                    } ]
                   } );
+
+                  return CnHttpFactory.instance( {
+                    path: 'user',
+                    data: {
+                      select: { distinct: true, column: [ 'id', 'name', 'first_name', 'last_name' ] },
+                      modifier: {
+                        join: [ {
+                          table: 'access',
+                          onleft: 'user.id',
+                          onright: 'access.user_id'
+                        }, {
+                          table: 'role',
+                          onleft: 'access.role_id',
+                          onright: 'role.id'
+                        } ],
+                        where: [ {
+                          column: 'role.name',
+                          operator: '=',
+                          value: 'typist'
+                        }, {
+                          column: 'access.site_id',
+                          operator: '=',
+                          value: currentSiteId
+                        } ],
+                        order: 'user.name'
+                      }
+                    }
+                  } ).query().then( function( response ) {
+                    response.data.forEach( function( item ) {
+                      self.siteList.findByProperty( 'value', currentSiteId ).userList.push( {
+                        value: item.id,
+                        name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')',
+                        user: item.name
+                      } );
+                    } );
+                  } );
+
                 } );
               } );
             } );
@@ -358,13 +402,21 @@ define( function() {
 
           CnHttpFactory.instance( {
             path: 'transcription',
-            data: { uid_list: uidList, user_id: self.user_id, process: true },
+            data: { uid_list: uidList, user_id: self.user_id, site_id: self.site_id, process: true },
             onError: CnModalMessageFactory.httpError
           } ).post().then( function() {
-            var userString = angular.isDefined( self.user_id )
-                           ? ' and assigned to user "' +
-                             self.userList.findByProperty( 'value', self.user_id ).user + '".'
-                           : '.'
+            var userString = '';
+            if( angular.isDefined( self.user_id ) ) {
+              userString += ' and assigned to user "' +
+                            self.userList.findByProperty( 'value', self.user_id ).user + '"';
+
+              if( angular.isDefined( self.site_id ) ) {
+                userString += ' at site "' +
+                              self.siteList.findByProperty( 'value', self.site_id ).name + '"';
+              }
+            }
+            userString += '.';
+
             CnModalMessageFactory.instance( {
               title: 'Transcription(s) Processed',
               message: 'A total of ' + uidList.length + ' transcription' +
