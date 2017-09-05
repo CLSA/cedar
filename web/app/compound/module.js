@@ -75,25 +75,33 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnCompoundView', [
-    'CnCompoundModelFactory',
-    function( CnCompoundModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnCompoundModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnCompoundAddFactory', [
-    'CnBaseAddFactory',
-    function( CnBaseAddFactory ) {
-      var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
+    'CnBaseAddFactory', 'CnHttpFactory',
+    function( CnBaseAddFactory, CnHttpFactory ) {
+      var object = function( parentModel ) {
+        var self = this;
+        CnBaseAddFactory.construct( this, parentModel );
+
+        // extend the onNew method to store the parent word's language for use by the word lookup-typeahead
+        this.onNew = function( record ) {
+          return self.$$onNew( record ).then( function() {
+            self.currentParentId = undefined;
+            self.currentParentLanguageId = undefined;
+
+            var parentIdentifier = parentModel.getParentIdentifier();
+            if( 'word' == parentIdentifier.subject ) {
+              var identifier = parentIdentifier.identifier;
+              return CnHttpFactory.instance( {
+                path: 'word/' + identifier,
+                data: { select: { column: [ 'language_id' ] } }
+              } ).get().then( function( response ) {
+                self.currentParentId = identifier;
+                self.currentParentLanguageId = response.data.language_id;
+              } );
+            }
+          } );
+        };
+      };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
   ] );
@@ -108,24 +116,68 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnCompoundViewFactory', [
-    'CnBaseViewFactory',
-    function( CnBaseViewFactory ) {
-      var object = function( parentModel, root ) { CnBaseViewFactory.construct( this, parentModel, root ); }
-      return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnCompoundModelFactory', [
-    'CnBaseModelFactory', 'CnCompoundAddFactory', 'CnCompoundListFactory', 'CnCompoundViewFactory', '$state',
-    function( CnBaseModelFactory, CnCompoundAddFactory, CnCompoundListFactory, CnCompoundViewFactory, $state ) {
+    'CnBaseModelFactory', 'CnCompoundAddFactory', 'CnCompoundListFactory', '$state',
+    function( CnBaseModelFactory, CnCompoundAddFactory, CnCompoundListFactory, $state ) {
       var object = function( root ) {
         var self = this;
         CnBaseModelFactory.construct( this, module );
         this.addModel = CnCompoundAddFactory.instance( this );
         this.listModel = CnCompoundListFactory.instance( this );
-        this.viewModel = CnCompoundViewFactory.instance( this, root );
+
+        // restrict the subword lookup-typeahead values
+        this.getTypeaheadData = function( input, viewValue ) {
+          var data = self.$$getTypeaheadData( input, viewValue );
+          if( angular.isUndefined( data.modifier.where ) ) data.modifier.where = [];
+
+          // put parentheses around the existing where statement
+          if( 0 < data.modifier.where.length ) {
+            data.modifier.where.unshift( {
+              bracket: true,
+              open: true
+            } );
+            data.modifier.where.push( {
+              bracket: true,
+              open: false
+            } );
+          }
+
+          // restrict by language and don't reference the base word
+          if( angular.isDefined( self.addModel.currentParentId ) ) {
+            data.modifier.where.push( {
+              column: 'word.id',
+              operator: '!=',
+              value: self.addModel.currentParentId
+            } );
+            data.modifier.where.push( {
+              column: 'language_id',
+              operator: '=',
+              value: self.addModel.currentParentLanguageId
+            } );
+          }
+
+          // only get words which are not invalid and not misspelled
+          data.modifier.where.push( {
+            column: 'misspelled',
+            operator: '=',
+            value: false
+          } );
+          data.modifier.where.push( {
+            column: 'aft',
+            operator: '!=',
+            value: 'invalid'
+          } );
+          data.modifier.where.push( {
+            column: 'fas',
+            operator: '!=',
+            value: 'invalid'
+          } );
+
+          // and sort by word
+          data.modifier.order = { word: false };
+
+          return data;
+        };
 
         // go directly to the word when clicking on a compound
         this.transitionToViewState = function( record ) {
