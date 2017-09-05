@@ -234,7 +234,7 @@ class test_type extends \cenozo\database\record
     $fas_mod->or_where(
       'SUBSTRING( IF( sub_word.id IS NOT NULL, sub_word.word, word.word ), 1, 1 )',
       '=',
-      'LOWER( SUBSTRING( test_type.name, 1, 1 ) )',
+      'LOWER( SUBSTRING( test_type.name, 1, 1 ) ) COLLATE utf8_general_ci',
       false
     );
     $fas_mod->where_bracket( false );
