@@ -207,7 +207,11 @@ class test_type extends \cenozo\database\record
     $fas_mod->where_bracket( true );
     $fas_mod->where( 'word.id', '=', NULL );
     $fas_mod->or_where(
-      'SUBSTRING( word.word, 1, 1 )', '=', 'LOWER( SUBSTRING( test_type.name, 1, 1 ) )', false );
+      'SUBSTRING( word.word, 1, 1 )',
+      '=',
+      'LOWER( SUBSTRING( test_type.name, 1, 1 ) ) COLLATE utf8_general_ci',
+      false
+    );
     $fas_mod->where_bracket( false );
     $fas_mod->group( 'test_entry.id' );
 

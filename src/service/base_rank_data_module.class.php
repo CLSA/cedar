@@ -36,7 +36,9 @@ abstract class base_rank_data_module extends \cedar\service\base_data_module
           '    IF( test_type.name NOT LIKE "_-Word%%", word.%s,'."\n".
           '      IF( word.%s != "primary", word.%s,'."\n".
           '        IF('."\n".
-          '          LOWER( SUBSTRING( word.word, 1, 1 ) ) = LOWER( SUBSTRING( test_type.name, 1, 1 ) ),'."\n".
+          '          LOWER( SUBSTRING( word.word, 1, 1 ) ) = '."\n".
+          '            LOWER( SUBSTRING( test_type.name, 1, 1 ) )'."\n".
+          '            COLLATE utf8_general_ci,'."\n".
           '          "primary",'."\n".
           '          "intrusion"'."\n".
           '        )'."\n".
