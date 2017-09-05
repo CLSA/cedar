@@ -178,24 +178,52 @@ class patch
         if( false === $this->db->query( $sql ) ) error( $this->db->error );
 
         out( 'Change all base word FAS values based on their compound words' );
-        $sql = sprintf(
-          'UPDATE word'."\n".
-          'JOIN compound ON word.id = compound.word_id'."\n".
-          'JOIN word cword ON compound.sub_word_id = cword.id'."\n".
-          'SET word.fas = "primary"'."\n".
-          'WHERE cword.fas = "primary"'
-        );
+        $sql = 'CREATE TEMPORARY TABLE change_fas'."\n".
+               'SELECT word.id, IF('."\n".
+               '  GROUP_CONCAT( cword.fas ) LIKE "%primary%",'."\n".
+               '  "primary",'."\n".
+               '  IF('."\n".
+               '    GROUP_CONCAT( cword.fas ) LIKE "%intrusion%",'."\n".
+               '    "intrusion",'."\n".
+               '    "invalid"'."\n".
+               '  )'."\n".
+               ') AS fas'."\n".
+               'FROM word'."\n".
+               'JOIN compound ON word.id = compound.word_id'."\n".
+               'JOIN word AS cword ON compound.sub_word_id = cword.id'."\n".
+               'GROUP BY word.id';
         if( false === $this->db->query( $sql ) ) error( $this->db->error );
+        else
+        {
+          $sql = 'UPDATE word'."\n".
+                 'JOIN change_fas USING( id )'."\n".
+                 'SET word.fas = change_fas.fas';
+          if( false === $this->db->query( $sql ) ) error( $this->db->error );
+        }
 
         out( 'Change all base word AFT values based on their compound words' );
-        $sql = sprintf(
-          'UPDATE word'."\n".
-          'JOIN compound ON word.id = compound.word_id'."\n".
-          'JOIN word cword ON compound.sub_word_id = cword.id'."\n".
-          'SET word.aft = "primary"'."\n".
-          'WHERE cword.aft = "primary"'
-        );
+        $sql = 'CREATE TEMPORARY TABLE change_aft'."\n".
+               'SELECT word.id, IF('."\n".
+               '  GROUP_CONCAT( cword.aft ) LIKE "%primary%",'."\n".
+               '  "primary",'."\n".
+               '  IF('."\n".
+               '    GROUP_CONCAT( cword.aft ) LIKE "%intrusion%",'."\n".
+               '    "intrusion",'."\n".
+               '    "invalid"'."\n".
+               '  )'."\n".
+               ') AS aft'."\n".
+               'FROM word'."\n".
+               'JOIN compound ON word.id = compound.word_id'."\n".
+               'JOIN word AS cword ON compound.sub_word_id = cword.id'."\n".
+               'GROUP BY word.id';
         if( false === $this->db->query( $sql ) ) error( $this->db->error );
+        else
+        {
+          $sql = 'UPDATE word'."\n".
+                 'JOIN change_aft USING( id )'."\n".
+                 'SET word.aft = change_aft.aft';
+          if( false === $this->db->query( $sql ) ) error( $this->db->error );
+        }
       }
       catch( Exception $e )
       {
