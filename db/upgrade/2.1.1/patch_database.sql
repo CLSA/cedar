@@ -9,6 +9,7 @@ SOURCE word_test_entry_total.sql
 SOURCE update_word_test_type_total.sql
 SOURCE word_test_type_total.sql
 SOURCE test_entry_has_word.sql
+SOURCE word.sql
 
 SOURCE compound.sql
 
