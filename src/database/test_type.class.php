@@ -202,14 +202,16 @@ class test_type extends \cenozo\database\record
 
     $fas_sel = clone $select;
     $fas_sel->add_column(
-      'IF( fas_data.word_id IS NULL, '.
-          '0, '.
-          'COUNT( '.
-            'DISTINCT IFNULL( '.
-              'IF( sub_word.id IS NOT NULL, sub_word.sister_word_id, word.sister_word_id ), '.
-              'fas_data.word_id '.
-            ') '.
+      'IF( '.
+        'fas_data.word_id IS NULL, '.
+        '0, '.
+        'COUNT( '.
+          'DISTINCT IF( '.
+            'sub_word.id IS NOT NULL, '.
+            'IFNULL( sub_word.sister_word_id, sub_word.id ), '.
+            'IFNULL( word.sister_word_id, word.id ) '.
           ') '.
+        ') '.
       ')',
       'score',
       false
@@ -225,7 +227,7 @@ class test_type extends \cenozo\database\record
     $fas_mod->left_join( 'compound', 'word.id', 'compound.word_id' );
     $fas_mod->left_join( 'word', 'compound.sub_word_id', 'sub_word.id', 'sub_word' );
     $fas_mod->where(
-      'IFNULL( IF( sub_word.id IS NOT NULL, sub_word.fas, word.fas ), "primary" )',
+      'IF( sub_word.id IS NOT NULL, sub_word.fas, word.fas )',
       '=',
       'primary'
     );
