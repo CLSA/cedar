@@ -149,18 +149,6 @@ define( function() {
           var data = self.$$getTypeaheadData( input, viewValue );
           if( angular.isUndefined( data.modifier.where ) ) data.modifier.where = [];
 
-          // put parentheses around the existing where statement
-          if( 0 < data.modifier.where.length ) {
-            data.modifier.where.unshift( {
-              bracket: true,
-              open: true
-            } );
-            data.modifier.where.push( {
-              bracket: true,
-              open: false
-            } );
-          }
-
           // restrict by language and don't reference the base word
           if( angular.isDefined( self.addModel.currentParentId ) ) {
             data.modifier.where.push( {
@@ -182,12 +170,12 @@ define( function() {
             value: false
           } );
           data.modifier.where.push( {
-            column: 'aft',
+            column: 'IFNULL( aft, "" )', // also accept null
             operator: '!=',
             value: 'invalid'
           } );
           data.modifier.where.push( {
-            column: 'fas',
+            column: 'IFNULL( fas, "" )', // also accept null
             operator: '!=',
             value: 'invalid'
           } );
