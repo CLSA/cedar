@@ -72,7 +72,7 @@ class patch
     ) );
     if( false === $result )
     {
-      error( $this->db_error );
+      error( $this->db->error );
       die();
     }
 

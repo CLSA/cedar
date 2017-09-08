@@ -15,6 +15,6 @@ SOURCE compound.sql
 
 SOURCE update_version_number.sql
 
-SELECT "TO COMPLETE THE INSTALLATION: you must now run the 'load_word_associations.php' script" AS "";
+SELECT "TO COMPLETE THE INSTALLATION: you must now run the 'load_word_associations.php' and 'correct_non_compound_words.php' scripts" AS "";
 
 COMMIT;
