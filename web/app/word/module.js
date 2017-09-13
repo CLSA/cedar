@@ -27,6 +27,10 @@ define( function() {
         column: 'sister_word.word',
         title: 'Parent Sister'
       },
+      compound_count: {
+        title: 'Compounds',
+        type: 'number'
+      },
       misspelled: {
         column: 'word.misspelled',
         title: 'Misspelled',

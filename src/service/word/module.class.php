@@ -29,6 +29,25 @@ class module extends \cenozo\service\module
     // we must always join to the word_test_type_total table (for test type usage totals)
     $modifier->join( 'word_test_type_total', 'word.id', 'word_test_type_total.word_id' );
 
+    // add the total number of participants
+    if( $select->has_column( 'compound_count' ) )
+    {
+      $join_sel = lib::create( 'database\select' );
+      $join_sel->from( 'word' );
+      $join_sel->add_column( 'id', 'word_id' );
+      $join_sel->add_column( 'IF( compound.id IS NULL, 0, COUNT(*) )', 'compound_count', false );
+
+      $join_mod = lib::create( 'database\modifier' );
+      $join_mod->left_join( 'compound', 'word.id', 'compound.word_id' );
+      $join_mod->group( 'word.id' );
+
+      $modifier->join(
+        sprintf( '( %s %s ) AS word_join_compound', $join_sel->get_sql(), $join_mod->get_sql() ),
+        'word.id',
+        'word_join_compound.word_id' );
+      $select->add_column( 'compound_count', 'compound_count', false );
+    }
+
     if( $select->has_table_columns( 'sister_word' ) || !is_null( $this->get_resource() ) )
     {
       $modifier->left_join( 'word', 'word.sister_word_id', 'sister_word.id', 'sister_word' );
