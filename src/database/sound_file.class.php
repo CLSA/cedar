@@ -120,7 +120,11 @@ class sound_file extends \cenozo\database\record
   }
 
   /**
-   * TODO: document
+   * Forces a list of participants to be added to the sound_file table (with no recordings)
+   * @author Patrick Emond <emondpd@mcmaster.ca>
+   * @param database\modifier $modifier
+   * @access public
+   * @static
    */
   public static function force_add_participant_list( $modifier )
   {

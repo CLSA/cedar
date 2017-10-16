@@ -402,7 +402,13 @@ define( function() {
 
           CnHttpFactory.instance( {
             path: 'transcription',
-            data: { uid_list: uidList, user_id: self.user_id, site_id: self.site_id, process: true },
+            data: {
+              uid_list: uidList,
+              user_id: self.user_id,
+              site_id: self.site_id,
+              import_restriction: self.importRestriction,
+              process: true
+            },
             onError: CnModalMessageFactory.httpError
           } ).post().then( function() {
             var userString = '';

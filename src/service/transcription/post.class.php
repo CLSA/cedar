@@ -197,7 +197,7 @@ class post extends \cenozo\service\post
         {
           $modifier = lib::create( 'database\modifier' );
           $modifier->where( 'uid', 'IN', $uid_list );
-          $sound_file_class_name::force_add_paticipant_list( $modifier );
+          $sound_file_class_name::force_add_participant_list( $modifier );
         }
 
         // assign transcriptions to the user if requested
