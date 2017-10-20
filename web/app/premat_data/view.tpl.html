@@ -9,12 +9,11 @@
       <select id="counting"
               name="counting"
               ng-model="model.viewModel.record.counting"
+              ng-options="item.value as item.name for item in
+                [{value:'',name:'(empty)'},{value:1,name:'Yes'},{value:0,name:'No'}]"
               ng-change="patch( 'counting' )"
               ng-disabled="!isComplete || !editEnabled"
               class="form-control">
-        <option value="">(empty)</option>
-        <option value="1">Yes</option>
-        <option value="0">No</option>
       </select>
     </div>
   </div>
@@ -27,12 +26,11 @@
       <select id="alphabet"
               name="alphabet"
               ng-model="model.viewModel.record.alphabet"
+              ng-options="item.value as item.name for item in
+                [{value:'',name:'(empty)'},{value:1,name:'Yes'},{value:0,name:'No'}]"
               ng-change="patch( 'alphabet' )"
               ng-disabled="!isComplete || !editEnabled"
               class="form-control">
-        <option value="">(empty)</option>
-        <option value="1">Yes</option>
-        <option value="0">No</option>
       </select>
     </div>
   </div>
