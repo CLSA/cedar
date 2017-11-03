@@ -195,42 +195,58 @@ define( function() {
               } );
             }
 
-            // remove case and double quotes if they are found at the start/end
-            if( angular.isString( word ) ) word = word.replace( /^"|"$/g, '' ).toLowerCase();
+            var quoteEnclosed = false;
+            if( angular.isString( word ) ) {
+              // convert to lower case
+              word = word.toLowerCase();
 
-            // split the word up by spaces
-            var text = angular.isString( word ) ? word : word.word;
-            var tempWordList = text.split( / +/ ).getUnique();
-            var newWordList = [];
-
-            // for each sub-word look for REY words and parse them out
-            tempWordList.forEach( function( text ) {
-              // get unique list of all primary/variant words that match
-              var matchList = text.match( self.parentModel.wordRegExp );
-              if( null == matchList ) {
-                newWordList.push( text );
-              } else {
-                matchList = matchList.getUnique();
-
-                // convert sister words
-                matchList.forEach( function( matchWord, index, array ) {
-                  self.parentModel.sisterList.some( function( sisterWord ) {
-                    if( 0 <= sisterWord.sisterWordList.indexOf( matchWord ) ) {
-                      array[index] = sisterWord.word;
-                      return true;
-                    }
-                  } );
-                } );
-
-                // get unique list of all remaining words (removing empty strings)
-                newWordList = newWordList.concat(
-                  matchList,
-                  text.split( self.parentModel.wordOrSpaceRegExp ).filter( function( string ) {
-                    return 2 < string.length;
-                  } ).getUnique()
-                );
+              // words enclosed in double-quotes are never modified
+              var quoteMatch = word.match( /^"(.*)"$/ );
+              if( null != quoteMatch ) {
+                word = quoteMatch[1];
+                quoteEnclosed = true;
               }
-            } );
+            }
+
+            var newWordList = [];
+            if( quoteEnclosed ) { 
+              // do not modify input that was enclosed by double-quotes
+              console.log( word );
+              newWordList.push( word );
+            } else {
+              // split the word up by spaces
+              var text = angular.isString( word ) ? word : word.word;
+              var tempWordList = text.split( / +/ ).getUnique();
+
+              // for each sub-word look for REY words and parse them out
+              tempWordList.forEach( function( text ) {
+                // get unique list of all primary/variant words that match
+                var matchList = text.match( self.parentModel.wordRegExp );
+                if( null == matchList ) {
+                  newWordList.push( text );
+                } else {
+                  matchList = matchList.getUnique();
+
+                  // convert sister words
+                  matchList.forEach( function( matchWord, index, array ) {
+                    self.parentModel.sisterList.some( function( sisterWord ) {
+                      if( 0 <= sisterWord.sisterWordList.indexOf( matchWord ) ) {
+                        array[index] = sisterWord.word;
+                        return true;
+                      }
+                    } );
+                  } );
+
+                  // get unique list of all remaining words (removing empty strings)
+                  newWordList = newWordList.concat(
+                    matchList,
+                    text.split( self.parentModel.wordOrSpaceRegExp ).filter( function( string ) {
+                      return 2 < string.length;
+                    } ).getUnique()
+                  );
+                }
+              } );
+            }
 
             // if the input was an object, there is only one word in the new list and it matches that object then
             // replace the list with the input word object

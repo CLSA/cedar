@@ -52,7 +52,8 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
         },
         isWordValid: function( word ) {
           // valid words start with a letter, may have [-' ] in the middle and ends with a letter,
-          // and must be 2+ characters long
+          // must be 2+ characters long and may be enclosed by double-quotes (")
+          word = word.replace( /^"([^"]+)"$/, '$1' ); // remove double quotes at front/end
           var validLetters = this.getValidLetters();
           var re = new RegExp(
             "^[a-z" + validLetters + "]" +
