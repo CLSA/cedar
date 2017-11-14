@@ -295,7 +295,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
             // start by confirming whether or not this is the correct test type for the test entry
             return parentModel.testEntryModel.viewModel.onViewPromise.then( function() {
               if( parentModel.getDataType() == parentModel.testEntryModel.viewModel.record.data_type ) {
-                return object.$$onView().then( function() {
+                return object.$$onView( true ).then( function() {
                   delete object.record.getIdentifier; // we don't need the identifier function
 
                   // convert boolean to integer
