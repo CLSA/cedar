@@ -3,7 +3,6 @@
  * test_type.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -20,7 +19,6 @@ class test_type extends \cenozo\database\record
    * NOTE: to rescore all test-types use test_type::rescore_all()
    *       to rescore a single test-entry use test_entry::rescore()
    *       to rescore the test-entries in a transcription use transcription::rescore()
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\modifier $modifier Can be used to restrict which records to affect
    * @access public
    */
@@ -37,7 +35,6 @@ class test_type extends \cenozo\database\record
    * NOTE: to rescore a single test-type only use test_type::rescore()
    *       to rescore a single test-entry use test_entry::rescore()
    *       to rescore the test-entries in a transcription use transcription::rescore()
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\modifier $modifier Can be used to restrict which records to affect
    * @access public
    * @static

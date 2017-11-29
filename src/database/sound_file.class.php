@@ -3,7 +3,6 @@
  * sound_file.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -17,7 +16,6 @@ class sound_file extends \cenozo\database\record
   /**
    * Adds any sound files found in the recordings path which are newer than the last time this method was called
    * 
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
   public static function update_sound_file_list()
@@ -121,7 +119,6 @@ class sound_file extends \cenozo\database\record
 
   /**
    * Forces a list of participants to be added to the sound_file table (with no recordings)
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\modifier $modifier
    * @access public
    * @static

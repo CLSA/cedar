@@ -3,7 +3,6 @@
  * word.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -49,7 +48,6 @@ class word extends \cenozo\database\record
    * Updates the word's data (AFT, FAS, misspelled) based on any compound words the base word may have.
    * 
    * If the word has no compound words this method does nothing
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
   public function update_based_on_compound_words()
@@ -81,7 +79,6 @@ class word extends \cenozo\database\record
    * Returns the qualified value for the fas column based on the test type
    * 
    * This is necessary since the f-test has only f-words primary, a-test a-words and s-test s-words
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\test_type $db_test_type
    * @return string
    * @access public

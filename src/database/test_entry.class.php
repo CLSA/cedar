@@ -3,7 +3,6 @@
  * test_entry.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -18,7 +17,6 @@ class test_entry extends \cenozo\database\record
    * Determines whether the test-entry has a status that prevents it from being fully entered
    * 
    * This is done based on the audio and participant status columns
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @return boolean
    * @access public
    */
@@ -128,7 +126,6 @@ class test_entry extends \cenozo\database\record
 
   /**
    * Resets the test-entry by initializing the data associated with it (deleting any existing data)
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
   public function reset()
@@ -251,7 +248,6 @@ class test_entry extends \cenozo\database\record
    * NOTE: to rescore all test-types use test_type::rescore_all()
    *       to rescore a single test-type only use test_type::rescore()
    *       to rescore the test-entries in a transcription use transcription::rescore()
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
   public function rescore()

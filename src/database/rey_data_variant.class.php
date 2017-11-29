@@ -3,7 +3,6 @@
  * rey_data_variant.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
