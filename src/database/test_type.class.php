@@ -190,15 +190,36 @@ class test_type extends \cenozo\database\record
     $homophone_mod = clone $modifier;
     $homophone_mod->join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
     $homophone_mod->join( 'homophone', 'fas_data.word_id', 'homophone.word_id' );
-    $homophone_mod->where( 'homophone.rank', '>', 1 );
 
+    static::db()->execute( 'SET @rank = 1' );
+    static::db()->execute( 'SET @first_word_id = 0' );
+    static::db()->execute( 'DROP TABLE IF EXISTS update_fas_data' );
     static::db()->execute( sprintf(
-      "UPDATE test_entry %s\n".
-      "SET fas_data.word_id = homophone.first_word_id\n".
-      "WHERE %s",
-      $homophone_mod->get_join(),
-      $homophone_mod->get_where()
+      "CREATE TEMPORARY TABLE update_fas_data\n".
+      "SELECT\n".
+      "  fas_data.id,\n".
+      "  @rank:=IF( @first_word_id = homophone.first_word_id, @rank+1, 1 ) AS rank,\n".
+      "  @first_word_id:=homophone.first_word_id AS first_word_id,\n".
+      "  fas_data.word_id,\n".
+      "  homophone.word_id AS homophone_word_id\n".
+      "FROM test_entry\n".
+      "%s",
+      $homophone_mod->get_sql()
     ) );
+
+    static::db()->execute(
+      "UPDATE update_fas_data\n".
+      "JOIN homophone USING( first_word_id, rank )\n".
+      "SET update_fas_data.homophone_word_id = homophone.word_id"
+    );
+
+    static::db()->execute( 'DELETE FROM update_fas_data WHERE word_id = homophone_word_id' );
+
+    static::db()->execute(
+      "UPDATE fas_data\n".
+      "JOIN update_fas_data ON fas_data.id = update_fas_data.id\n".
+      "SET fas_data.word_id = update_fas_data.homophone_word_id"
+    );
 
     $fas_sel = clone $select;
     $fas_sel->add_column(
