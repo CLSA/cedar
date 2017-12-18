@@ -84,10 +84,6 @@ class sound_file extends \cenozo\database\record
       static::db()->execute(
         sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
 
-      // turn off unique and foreign key checks
-      static::db()->execute( 'SET @OLD_UNIQUE_CHECKS = @@UNIQUE_CHECKS, UNIQUE_CHECKS = 0' );
-      static::db()->execute( 'SET @OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS = 0' );
-
       // now convert from temporary records into the sound_file table
       $result = static::db()->execute(
         'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
@@ -100,10 +96,6 @@ class sound_file extends \cenozo\database\record
           'WHERE test_type_id = test_type.id '.
         ')'
       );
-
-      // turn unique and foreign key checks back on
-      static::db()->execute( 'SET FOREIGN_KEY_CHECKS = @OLD_FOREIGN_KEY_CHECKS' );
-      static::db()->execute( 'SET UNIQUE_CHECKS = @OLD_UNIQUE_CHECKS' );
 
       static::db()->execute( 'DROP TABLE temp_sound_file' );
     }
