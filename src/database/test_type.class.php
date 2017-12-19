@@ -190,36 +190,57 @@ class test_type extends \cenozo\database\record
     $homophone_mod = clone $modifier;
     $homophone_mod->join( 'fas_data', 'test_entry.id', 'fas_data.test_entry_id' );
     $homophone_mod->join( 'homophone', 'fas_data.word_id', 'homophone.word_id' );
+    $homophone_mod->join(
+      'homophone', 'homophone.first_word_id', 'homophone_count.first_word_id', '', 'homophone_count' );
+    $homophone_mod->group( 'fas_data.id' );
+    $homophone_mod->order( 'fas_data.test_entry_id' );
+    $homophone_mod->order( 'fas_data.rank' );
 
-    static::db()->execute( 'SET @rank = 1' );
-    static::db()->execute( 'SET @first_word_id = 0' );
-    static::db()->execute( 'DROP TABLE IF EXISTS update_fas_data' );
+    // create an ordered list of all fas data that has a homophone
+    static::db()->execute( 'DROP TABLE IF EXISTS temp_data' );
     static::db()->execute( sprintf(
-      "CREATE TEMPORARY TABLE update_fas_data\n".
+      "CREATE TEMPORARY TABLE temp_data\n".
       "SELECT\n".
       "  fas_data.id,\n".
-      "  @rank:=IF( @first_word_id = homophone.first_word_id, @rank+1, 1 ) AS rank,\n".
-      "  @first_word_id:=homophone.first_word_id AS first_word_id,\n".
+      "  homophone.first_word_id,\n".
       "  fas_data.word_id,\n".
-      "  homophone.word_id AS homophone_word_id\n".
-      "FROM test_entry\n".
-      "%s",
+      "  homophone.word_id AS homophone_word_id,\n".
+      "  COUNT(*) AS max_rank\n".
+      "FROM test_entry%s",
       $homophone_mod->get_sql()
     ) );
 
+    // write the order that words with the same homophone were used
+    static::db()->execute( 'SET @rank = 1' );
+    static::db()->execute( 'SET @last_first_word_id = 0' );
+    static::db()->execute( 'DROP TABLE IF EXISTS update_fas_data' );
+    static::db()->execute(
+      "CREATE TEMPORARY TABLE update_fas_data\n".
+      "SELECT\n".
+      "  temp_data.*,\n".
+      "  @rank:=IF( @last_first_word_id = first_word_id AND @rank < max_rank, @rank+1, 1 ) AS rank,\n".
+      "  @last_first_word_id:=first_word_id AS last_first_word_id\n".
+      "FROM temp_data"
+    );
+
+    // restart the rank if it goes over the maximum number of homophones
+
+
+    // set the new word value based on the homophone and rank and remove all which are already correct
     static::db()->execute(
       "UPDATE update_fas_data\n".
       "JOIN homophone USING( first_word_id, rank )\n".
       "SET update_fas_data.homophone_word_id = homophone.word_id"
     );
-
     static::db()->execute( 'DELETE FROM update_fas_data WHERE word_id = homophone_word_id' );
 
+    // update all fas_data with the new words
     static::db()->execute(
       "UPDATE fas_data\n".
       "JOIN update_fas_data ON fas_data.id = update_fas_data.id\n".
       "SET fas_data.word_id = update_fas_data.homophone_word_id"
     );
+
 
     $fas_sel = clone $select;
     $fas_sel->add_column(
