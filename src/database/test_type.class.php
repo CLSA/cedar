@@ -194,13 +194,14 @@ class test_type extends \cenozo\database\record
       'homophone', 'homophone.first_word_id', 'homophone_count.first_word_id', '', 'homophone_count' );
     $homophone_mod->group( 'fas_data.id' );
     $homophone_mod->order( 'fas_data.test_entry_id' );
-    $homophone_mod->order( 'fas_data.rank' );
+    $homophone_mod->order( 'homophone.first_word_id' );
 
     // create an ordered list of all fas data that has a homophone
     static::db()->execute( 'DROP TABLE IF EXISTS temp_data' );
     static::db()->execute( sprintf(
       "CREATE TEMPORARY TABLE temp_data\n".
       "SELECT\n".
+      "  fas_data.test_entry_id,\n".
       "  fas_data.id,\n".
       "  homophone.first_word_id,\n".
       "  fas_data.word_id,\n".
@@ -212,19 +213,23 @@ class test_type extends \cenozo\database\record
 
     // write the order that words with the same homophone were used
     static::db()->execute( 'SET @rank = 1' );
+    static::db()->execute( 'SET @last_test_entry_id = 0' );
     static::db()->execute( 'SET @last_first_word_id = 0' );
     static::db()->execute( 'DROP TABLE IF EXISTS update_fas_data' );
     static::db()->execute(
       "CREATE TEMPORARY TABLE update_fas_data\n".
       "SELECT\n".
       "  temp_data.*,\n".
-      "  @rank:=IF( @last_first_word_id = first_word_id AND @rank < max_rank, @rank+1, 1 ) AS rank,\n".
+      "  @rank:=IF(\n".
+      "    @last_test_entry_id = test_entry_id AND\n".
+      "    @last_first_word_id = first_word_id AND\n".
+      "    @rank < max_rank, @rank+1,\n".  // restart the rank if it goes over the maximum number of homophones
+      "    1\n".
+      "  ) AS rank,\n".
+      "  @last_test_entry_id:=test_entry_id AS last_test_entry_id,\n".
       "  @last_first_word_id:=first_word_id AS last_first_word_id\n".
       "FROM temp_data"
     );
-
-    // restart the rank if it goes over the maximum number of homophones
-
 
     // set the new word value based on the homophone and rank and remove all which are already correct
     static::db()->execute(
@@ -240,7 +245,6 @@ class test_type extends \cenozo\database\record
       "JOIN update_fas_data ON fas_data.id = update_fas_data.id\n".
       "SET fas_data.word_id = update_fas_data.homophone_word_id"
     );
-
 
     $fas_sel = clone $select;
     $fas_sel->add_column(
