@@ -18,9 +18,6 @@ $SETTINGS['general']['build'] = '7823940';
 // the location of cedar internal path
 $SETTINGS['path']['APPLICATION'] = str_replace( '/settings.ini.php', '', __FILE__ );
 
-// always leave as false when running as production server
-$SETTINGS['general']['development_mode'] = false;
-
 // the default number of classification test entry inputs
 $SETTINGS['interface']['classification_max_rank'] = 40;
 
