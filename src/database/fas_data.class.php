@@ -3,7 +3,6 @@
  * fas_data.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -18,7 +17,6 @@ class fas_data extends base_rank_data
    * Replace all uses of a word with another
    * 
    * This is used when correcting spelling errors
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\word $db_old_word
    * @param database\word $db_new_word
    * @access public

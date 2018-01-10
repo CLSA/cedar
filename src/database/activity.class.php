@@ -3,7 +3,6 @@
  * activity.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -19,7 +18,6 @@ class activity extends \cenozo\database\activity
    * 
    * If a user is provided then this method will only close the user's activity (whether timed
    * out or not).
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\user $db_user Which user to close all activity
    * @return Returns the number of rows closed
    * @access public

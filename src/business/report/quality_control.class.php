@@ -3,7 +3,6 @@
  * quality_control.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\business\report;
@@ -16,7 +15,6 @@ class quality_control extends \cenozo\business\report\base_report
 {
   /**
    * Build the report
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access protected
    */
   protected function build()

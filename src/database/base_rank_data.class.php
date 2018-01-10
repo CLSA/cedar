@@ -3,7 +3,6 @@
  * base_data.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -18,7 +17,6 @@ abstract class base_rank_data extends \cenozo\database\has_rank
    * Initializes new data for the given test entry
    * 
    * Note, this should only ever be called once, immediately after the test entry is created (saved)
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @param database\test_entry $db_test_entry
    * @access public
    * @static

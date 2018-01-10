@@ -12,14 +12,11 @@ global $SETTINGS;
 // tagged version
 $SETTINGS['general']['application_name'] = 'cedar';
 $SETTINGS['general']['instance_name'] = $SETTINGS['general']['application_name'];
-$SETTINGS['general']['version'] = '2.1.1';
-$SETTINGS['general']['build'] = '785b161';
+$SETTINGS['general']['version'] = '2.2';
+$SETTINGS['general']['build'] = '7398849';
 
 // the location of cedar internal path
 $SETTINGS['path']['APPLICATION'] = str_replace( '/settings.ini.php', '', __FILE__ );
-
-// always leave as false when running as production server
-$SETTINGS['general']['development_mode'] = false;
 
 // the default number of classification test entry inputs
 $SETTINGS['interface']['classification_max_rank'] = 40;

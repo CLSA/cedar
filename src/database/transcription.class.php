@@ -3,7 +3,6 @@
  * transcription.class.php
  * 
  * @author Patrick Emond <emondpd@mcmaster.ca>
- * @filesource
  */
 
 namespace cedar\database;
@@ -107,7 +106,6 @@ class transcription extends \cenozo\database\record
    * NOTE: to rescore all test-types use test_type::rescore_all()
    *       to rescore a single test-type only use test_type::rescore()
    *       to rescore a single test-entry use test_entry::rescore()
-   * @author Patrick Emond <emondpd@mcmaster.ca>
    * @access public
    */
   public function rescore()
