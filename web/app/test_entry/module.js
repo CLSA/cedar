@@ -445,10 +445,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               data: { select: { column: 'id' } },
               onError: function( response ) {
                 // 403 means the user no longer has access to the transcription, so go back to the list instead
-                if( 403 == response.status ) {
-                  console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
-                  return self.parentModel.transitionToParentListState( 'transcription' );
-                } else return CnModalMessageFactory.httpError( response );
+                return 403 == response.status ?
+                  self.parentModel.transitionToParentListState( 'transcription' ) :
+                  CnModalMessageFactory.httpError( response );
               }
             } ).get().then( function() {
               // we still have access to the transcription so go to the next test-entry or parent transcription
@@ -472,9 +471,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 path: self.parentModel.getServiceResourcePath() + '?close=1',
                 onError: function( response ) {
                   // ignore 403 errors since records may automatically be unassigned
-                  if( 403 == response.status ) {
-                    console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
-                  } else return CnModalMessageFactory.httpError( response );
+                  if( 403 != response.status ) return CnModalMessageFactory.httpError( response );
                 }
               } ).patch().finally( function() { self.isWorking = false; } );
             }
@@ -516,10 +513,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             data: { select: { column: [ 'id' ] } },
             onError: function( response ) {
               // redirect to the transcription list if we get a 404
-              if( 403 == response.status ) {
-                console.info( 'The "403 (Forbidden)" error found above is normal and can be ignored.' );
-                return self.transitionToParentListState( subject );
-              } else return CnModalMessageFactory.httpError( response );
+              return 403 == response.status ?
+                self.transitionToParentListState( subject ) :
+                CnModalMessageFactory.httpError( response );
             }
           } ).get().then( function() {
             return self.$$transitionToParentViewState( subject, identifier );
