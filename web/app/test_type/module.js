@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'test type',
       plural: 'test types',
-      possessive: 'test type\'s',
-      pluralPossessive: 'test types\''
+      possessive: 'test type\'s'
     },
     columnList: {
       rank: { title: 'Rank' },

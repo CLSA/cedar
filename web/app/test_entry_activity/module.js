@@ -12,8 +12,7 @@ define( function() {
     name: {
       singular: 'test entry activity',
       plural: 'test entry activities',
-      possessive: 'test entry activity\'s',
-      pluralPossessive: 'test entry activities\''
+      possessive: 'test entry activity\'s'
     },
     columnList: {
       user: {

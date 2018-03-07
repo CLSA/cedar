@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'word',
       plural: 'words',
-      possessive: 'word\'s',
-      pluralPossessive: 'words\''
+      possessive: 'word\'s'
     },
     columnList: {
       language: {

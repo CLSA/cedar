@@ -15,7 +15,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       singular: 'test entry',
       plural: 'test entries',
       possessive: 'test entry\'s',
-      pluralPossessive: 'test entries\'',
       friendlyColumn: 'test_type_name'
     },
     columnList: {

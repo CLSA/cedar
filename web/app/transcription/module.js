@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'transcription',
       plural: 'transcriptions',
-      possessive: 'transcription\'s',
-      pluralPossessive: 'transcriptions\''
+      possessive: 'transcription\'s'
     },
     columnList: {
       uid: {

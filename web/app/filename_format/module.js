@@ -12,8 +12,7 @@ define( function() {
     name: {
       singular: 'filename format',
       plural: 'filename formats',
-      possessive: 'filename format\'s',
-      pluralPossessive: 'filename formats\''
+      possessive: 'filename format\'s'
     },
     columnList: {
       format: { title: 'Format' },

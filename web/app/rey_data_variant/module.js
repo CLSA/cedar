@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'REY data variant',
       plural: 'REY data variants',
-      possessive: 'REY data variant\'s',
-      pluralPossessive: 'REY data variants\''
+      possessive: 'REY data variant\'s'
     },
     columnList: {
       word: { title: 'Word' },

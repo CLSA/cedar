@@ -12,8 +12,7 @@ define( function() {
     name: {
       singular: 'compound subword',
       plural: 'compound subwords',
-      possessive: 'compound subword\'s',
-      pluralPossessive: 'compound subwords\''
+      possessive: 'compound subword\'s'
     },
     columnList: {
       rank: { title: 'Rank', type: 'rank' },

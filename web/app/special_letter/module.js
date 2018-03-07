@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'special letter',
       plural: 'special letters',
-      possessive: 'special letter\'s',
-      pluralPossessive: 'special letters\''
+      possessive: 'special letter\'s'
     },
     columnList: {
       language: {

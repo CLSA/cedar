@@ -7,8 +7,7 @@ define( function() {
     name: {
       singular: 'homophone',
       plural: 'homophones',
-      possessive: 'homophone\'s',
-      pluralPossessive: 'homophones\''
+      possessive: 'homophone\'s'
     },
     columnList: {
       rank: { title: 'Rank' },
