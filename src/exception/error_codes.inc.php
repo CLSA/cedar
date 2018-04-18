@@ -16,7 +16,6 @@ define( 'NOTICE_CEDAR_BASE_ERRNO',     470000 );
 define( 'PERMISSION_CEDAR_BASE_ERRNO', 570000 );
 define( 'RUNTIME_CEDAR_BASE_ERRNO',    670000 );
 define( 'SYSTEM_CEDAR_BASE_ERRNO',     770000 );
-define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
 
 /**
  * "argument" error codes
@@ -78,9 +77,5 @@ define( 'RUNTIME__CEDAR_DATABASE_TRANSCRIPTION__SAVE__ERRNO',
  *    256: user error,
  *    512: user warning,
  *   1024: user notice
- */
-
-/**
- * "voip" error codes
  */
 

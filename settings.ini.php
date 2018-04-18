@@ -33,6 +33,3 @@ $SETTINGS['url']['RECORDINGS'] = NULL;
 
 // where to store the file which tracks when the last sync was performed
 $SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/last_sync';
-
-// Cedar does not use VOIP
-$SETTINGS['voip']['enabled'] = false;

@@ -138,7 +138,6 @@ define( 'NOTICE_CEDAR_BASE_ERRNO',     470000 );
 define( 'PERMISSION_CEDAR_BASE_ERRNO', 570000 );
 define( 'RUNTIME_CEDAR_BASE_ERRNO',    670000 );
 define( 'SYSTEM_CEDAR_BASE_ERRNO',     770000 );
-define( 'VOIP_CEDAR_BASE_ERRNO',       970000 );
 
 /**
  * "argument" error codes
@@ -213,17 +212,6 @@ $output .= <<<OUTPUT
  *    512: user warning,
  *   1024: user notice
  */
-
-/**
- * "voip" error codes
- */
-
-OUTPUT;
-
-// now print all voip exceptions
-$output .= exception_block( $error_codes, 'voip' );
-
-$output .= <<<OUTPUT
 
 
 OUTPUT;
