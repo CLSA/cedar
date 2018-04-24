@@ -93,6 +93,7 @@ class progress extends \cenozo\business\overview\base_overview
 
     $modifier = lib::create( 'database\modifier' );
     $modifier->join( 'site', 'transcription.site_id', 'site.id' );
+    if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
     $modifier->group( 'site.name' );
     $modifier->group( 'end_datetime IS NOT NULL' );
     $modifier->group( 'assigned_count > 0' );
