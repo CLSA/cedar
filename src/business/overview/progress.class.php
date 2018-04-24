@@ -54,7 +54,7 @@ class progress extends \cenozo\business\overview\base_overview
       $node_list[$site] = array(
         'assigned' => array( 'transcription' => $this->add_item( $assigned_node, 'Any', 0 ) ),
         'deferred' => array( 'transcription' => $this->add_item( $deferred_node, 'Any', 0 ) ),
-        'submitted' => array( 'transcription' => $this->add_item( $submitted_node, 'Any', 0 ) )
+        'submitted' => array( 'transcription' => $this->add_item( $submitted_node, 'All', 0 ) )
       );
       foreach( $test_type_list as $test_type )
       {
