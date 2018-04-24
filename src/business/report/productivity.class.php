@@ -48,6 +48,7 @@ class productivity extends \cenozo\business\report\base_report
     $select->add_table_column( 'cohort', 'name', 'cohort' );
     $select->add_table_column( 'user', 'name', 'user' );
     $select->add_table_column( 'test_type', 'name', 'type' );
+    $select->add_column( 'transcription.end_datetime IS NOT NULL', 'completed', false );
     $select->add_column(
       'SUM( TIMESTAMPDIFF( SECOND, test_entry_activity.start_datetime, test_entry_activity.end_datetime ) )',
       'time',
@@ -117,7 +118,8 @@ class productivity extends \cenozo\business\report\base_report
         if( !is_null( $row['user'] ) )
         {
           // create the transcription's entry if it doesn't exist yet
-          if( !array_key_exists( $row['id'], $transcription_list ) ) $transcription_list[$row['id']] = array();
+          if( !array_key_exists( $row['id'], $transcription_list ) && $row['completed'] )
+            $transcription_list[$row['id']] = array();
 
           // create the user's entry if it doesn't exist yet
           if( !array_key_exists( $row['user'], $user_list ) )
@@ -131,10 +133,14 @@ class productivity extends \cenozo\business\report\base_report
           if( is_null( $row['type'] ) )
           {
             // store how long this user spent on the transcription
-            $transcription_list[$row['id']][$row['user']] = array(
-              'cohort' => $row['cohort'],
-              'time' => $row['time']
-            );
+            if( $row['completed'] )
+            {
+              $transcription_list[$row['id']][$row['user']] = array(
+                'cohort' => $row['cohort'],
+                'time' => $row['time']
+              );
+            }
+
             // add to the user's total time for all test types
             $user_list[$row['user']]['Total Time'] += $row['time'];
           }
