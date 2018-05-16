@@ -184,8 +184,8 @@ define( function() {
 
           // trigger the elastic directive when confirming the transcription selection
           $scope.confirm = function() {
-            $scope.model.confirm()
-            $timeout( function() { angular.element( '#uidListString' ).trigger( 'change' ) }, 100 );
+            $scope.model.confirm();
+            $timeout( function() { angular.element( '#uidListString' ).trigger( 'blur' ) }, 100 );
           };
         }
       };
