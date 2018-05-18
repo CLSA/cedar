@@ -65,7 +65,7 @@ class progress extends \cenozo\business\overview\base_overview
       $node_list[$site] = array();
       foreach( $cohort_list as $cohort )
       {
-        $cohort_node = $this->add_item( $site_node, $cohort['name'] );
+        $cohort_node = $this->add_item( $site_node, ucwords( $cohort['name' ] ) );
         $assigned_node = $this->add_item( $cohort_node, 'Assigned' );
         $deferred_node = $this->add_item( $cohort_node, 'Deferred' );
         $submitted_node = $this->add_item( $cohort_node, 'Submitted' );
