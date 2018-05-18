@@ -27,13 +27,6 @@ class progress extends \cenozo\business\overview\base_overview
     $db_site = $session->get_site();
     $db_role = $session->get_role();
 
-    // get a list of all test types
-    $test_type_mod = lib::create( 'database\modifier' );
-    $test_type_mod->order( 'rank' );
-    $test_type_list = array();
-    foreach( $test_type_class_name::select_objects( $test_type_mod ) as $db_test_type )
-      $test_type_list[] = $db_test_type->name;
-
     // get a list of all sites
     $site_sel = lib::create( 'database\select' );
     $site_sel->add_column( 'name' );
@@ -43,49 +36,83 @@ class progress extends \cenozo\business\overview\base_overview
     $site_list = array();
     foreach( $db_application->get_site_list( $site_sel, $site_mod ) as $site ) $site_list[] = $site['name'];
 
+    // get a list of all cohorts
+    $cohort_sel = lib::create( 'database\select' );
+    $cohort_sel->add_column( 'id' );
+    $cohort_sel->add_column( 'name' );
+    $cohort_mod = lib::create( 'database\modifier' );
+    $cohort_mod->order( 'name' );
+    $cohort_list = array();
+    foreach( $db_application->get_cohort_list( $cohort_sel, $cohort_mod ) as $cohort )
+    {
+      // get a list of all test types
+      $test_type_mod = lib::create( 'database\modifier' );
+      $test_type_mod->join( 'test_type_has_cohort', 'test_type.id', 'test_type_has_cohort.test_type_id' );
+      $test_type_mod->where( 'test_type_has_cohort.cohort_id', '=', $cohort['id'] );
+      $test_type_mod->order( 'rank' );
+      $test_type_list = array();
+      foreach( $test_type_class_name::select_objects( $test_type_mod ) as $db_test_type )
+        $test_type_list[] = $db_test_type->name;
+
+      $cohort_list[] = array( 'name' => $cohort['name'], 'test_type_list' => $test_type_list );
+    }
+
     // setup the entries for all sites and test-types
     $node_list = array();
     foreach( $site_list as $site )
     {
       $site_node = $this->add_root_item( $site );
-      $assigned_node = $this->add_item( $site_node, 'Assigned' );
-      $deferred_node = $this->add_item( $site_node, 'Deferred' );
-      $submitted_node = $this->add_item( $site_node, 'Submitted' );
-      $node_list[$site] = array(
-        'assigned' => array( 'transcription' => $this->add_item( $assigned_node, 'Any', 0 ) ),
-        'deferred' => array( 'transcription' => $this->add_item( $deferred_node, 'Any', 0 ) ),
-        'submitted' => array( 'transcription' => $this->add_item( $submitted_node, 'All', 0 ) )
-      );
-      foreach( $test_type_list as $test_type )
+      $node_list[$site] = array();
+      foreach( $cohort_list as $cohort )
       {
-        $node_list[$site]['assigned'][$test_type] = $this->add_item( $assigned_node, $test_type, 0 );
-        $node_list[$site]['deferred'][$test_type] = $this->add_item( $deferred_node, $test_type, 0 );
-        $node_list[$site]['submitted'][$test_type] = $this->add_item( $submitted_node, $test_type, 0 );
+        $cohort_node = $this->add_item( $site_node, $cohort['name'] );
+        $assigned_node = $this->add_item( $cohort_node, 'Assigned' );
+        $deferred_node = $this->add_item( $cohort_node, 'Deferred' );
+        $submitted_node = $this->add_item( $cohort_node, 'Submitted' );
+        $node_list[$site][$cohort['name']] = array(
+          'assigned' => array( 'transcription' => $this->add_item( $assigned_node, 'Any', 0 ) ),
+          'deferred' => array( 'transcription' => $this->add_item( $deferred_node, 'Any', 0 ) ),
+          'submitted' => array( 'transcription' => $this->add_item( $submitted_node, 'All', 0 ) )
+        );
+        foreach( $cohort['test_type_list'] as $test_type )
+        {
+          $node_list[$site][$cohort['name']]['assigned'][$test_type] =
+            $this->add_item( $assigned_node, $test_type, 0 );
+          $node_list[$site][$cohort['name']]['deferred'][$test_type] =
+            $this->add_item( $deferred_node, $test_type, 0 );
+          $node_list[$site][$cohort['name']]['submitted'][$test_type] =
+            $this->add_item( $submitted_node, $test_type, 0 );
+        }
       }
     }
 
     // fill in the test-type data
     $select = lib::create( 'database\select' );
     $select->add_table_column( 'site', 'name', 'site' );
+    $select->add_table_column( 'cohort', 'name', 'cohort' );
     $select->add_table_column( 'test_entry', 'state' );
     $select->add_table_column( 'test_type', 'name', 'type' );
     $select->add_column( 'COUNT(*)', 'total', false );
 
     $modifier = lib::create( 'database\modifier' );
     $modifier->join( 'site', 'transcription.site_id', 'site.id' );
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
     $modifier->group( 'site.name' );
+    $modifier->group( 'cohort.name' );
     $modifier->group( 'test_entry.state' );
     $modifier->group( 'test_type.name' );
 
     foreach( $transcription_class_name::select( $select, $modifier ) as $row )
-      $node_list[$row['site']][$row['state']][$row['type']]->set_value( $row['total'] );
+      $node_list[$row['site']][$row['cohort']][$row['state']][$row['type']]->set_value( $row['total'] );
 
     // fill in the completed transcription data
     $select = lib::create( 'database\select' );
     $select->add_table_column( 'site', 'name', 'site' );
+    $select->add_table_column( 'cohort', 'name', 'cohort' );
     $select->add_column( 'end_datetime IS NOT NULL', 'completed' );
     $select->add_column( 'assigned_count > 0', 'assigned' );
     $select->add_column( 'deferred_count > 0', 'deferred' );
@@ -93,8 +120,11 @@ class progress extends \cenozo\business\overview\base_overview
 
     $modifier = lib::create( 'database\modifier' );
     $modifier->join( 'site', 'transcription.site_id', 'site.id' );
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
     $modifier->group( 'site.name' );
+    $modifier->group( 'cohort.name' );
     $modifier->group( 'end_datetime IS NOT NULL' );
     $modifier->group( 'assigned_count > 0' );
     $modifier->group( 'deferred_count > 0' );
@@ -103,20 +133,20 @@ class progress extends \cenozo\business\overview\base_overview
     {
       if( $row['completed'] )
       {
-        $node_list[$row['site']]['submitted']['transcription']->set_value( $row['total'] );
+        $node_list[$row['site']][$row['cohort']]['submitted']['transcription']->set_value( $row['total'] );
       }
       else
       {
         if( $row['assigned'] )
         {
-          $node_list[$row['site']]['assigned']['transcription']->set_value(
-            $node_list[$row['site']]['assigned']['transcription']->get_value() + $row['total']
+          $node_list[$row['site']][$row['cohort']]['assigned']['transcription']->set_value(
+            $node_list[$row['site']][$row['cohort']]['assigned']['transcription']->get_value() + $row['total']
           );
         }
         if( $row['deferred'] )
         {
-          $node_list[$row['site']]['deferred']['transcription']->set_value(
-            $node_list[$row['site']]['deferred']['transcription']->get_value() + $row['total']
+          $node_list[$row['site']][$row['cohort']]['deferred']['transcription']->set_value(
+            $node_list[$row['site']][$row['cohort']]['deferred']['transcription']->get_value() + $row['total']
           );
         }
       }
