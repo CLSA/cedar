@@ -18,6 +18,7 @@ class progress extends \cenozo\business\overview\base_overview
    */
   protected function build()
   {
+    $participant_class_name = lib::get_class_name( 'database\participant' );
     $transcription_class_name = lib::get_class_name( 'database\transcription' );
     $test_type_class_name = lib::get_class_name( 'database\test_type' );
 
@@ -66,10 +67,17 @@ class progress extends \cenozo\business\overview\base_overview
       foreach( $cohort_list as $cohort )
       {
         $cohort_node = $this->add_item( $site_node, ucwords( $cohort['name' ] ) );
+        $overview_node = $this->add_item( $cohort_node, 'Overview' );
         $assigned_node = $this->add_item( $cohort_node, 'Assigned' );
         $deferred_node = $this->add_item( $cohort_node, 'Deferred' );
         $submitted_node = $this->add_item( $cohort_node, 'Submitted' );
         $node_list[$site][$cohort['name']] = array(
+          'overview' => array(
+            'assigned' => $this->add_item( $overview_node, 'Assigned', 0 ),
+            'deferred' => $this->add_item( $overview_node, 'Deferred', 0 ),
+            'submitted' => $this->add_item( $overview_node, 'Submitted', 0 ),
+            'total' => $this->add_item( $overview_node, 'Total', 0 )
+          ),
           'assigned' => array( 'transcription' => $this->add_item( $assigned_node, 'Any', 0 ) ),
           'deferred' => array( 'transcription' => $this->add_item( $deferred_node, 'Any', 0 ) ),
           'submitted' => array( 'transcription' => $this->add_item( $submitted_node, 'All', 0 ) )
@@ -85,6 +93,33 @@ class progress extends \cenozo\business\overview\base_overview
         }
       }
     }
+
+    // fill in the total participant counts
+    $select = lib::create( 'database\select' );
+    $select->add_table_column( 'site', 'name', 'site' );
+    $select->add_table_column( 'cohort', 'name', 'cohort' );
+    $select->add_column( 'COUNT(*)', 'total', false );
+
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
+    $modifier->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
+    $modifier->join( 'site', 'IFNULL( transcription.site_id, participant_site.site_id )', 'site.id' );
+    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    $modifier->where( 'participant_site.application_id', '=', $db_application->id );
+
+    // restrict to those participants who have a sound file
+    $modifier->join(
+      'participant_sound_file_total',
+      'participant.id',
+      'participant_sound_file_total.participant_id'
+    );
+
+    if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
+    $modifier->group( 'site.name' );
+    $modifier->group( 'cohort.name' );
+
+    foreach( $participant_class_name::select( $select, $modifier ) as $row )
+      $node_list[$row['site']][$row['cohort']]['overview']['total']->set_value( $row['total'] );
 
     // fill in the test-type data
     $select = lib::create( 'database\select' );
@@ -133,18 +168,25 @@ class progress extends \cenozo\business\overview\base_overview
     {
       if( $row['completed'] )
       {
+        $node_list[$row['site']][$row['cohort']]['overview']['submitted']->set_value( $row['total'] );
         $node_list[$row['site']][$row['cohort']]['submitted']['transcription']->set_value( $row['total'] );
       }
       else
       {
         if( $row['assigned'] )
         {
+          $node_list[$row['site']][$row['cohort']]['overview']['assigned']->set_value(
+            $node_list[$row['site']][$row['cohort']]['overview']['assigned']->get_value() + $row['total']
+          );
           $node_list[$row['site']][$row['cohort']]['assigned']['transcription']->set_value(
             $node_list[$row['site']][$row['cohort']]['assigned']['transcription']->get_value() + $row['total']
           );
         }
         if( $row['deferred'] )
         {
+          $node_list[$row['site']][$row['cohort']]['overview']['deferred']->set_value(
+            $node_list[$row['site']][$row['cohort']]['overview']['deferred']->get_value() + $row['total']
+          );
           $node_list[$row['site']][$row['cohort']]['deferred']['transcription']->set_value(
             $node_list[$row['site']][$row['cohort']]['deferred']['transcription']->get_value() + $row['total']
           );
