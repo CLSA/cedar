@@ -68,21 +68,14 @@ class productivity extends \cenozo\business\report\base_report
     $modifier->group( 'test_type.name' );
     $modifier->set_rollup( true );
 
-    $start_date = NULL;
-    $end_date = NULL;
     $restrict_site_id = NULL;
     foreach( $this->get_restriction_list() as $restriction )
     {
       if( 'date' == $restriction['restriction_type'] )
       {
         $date = preg_replace( '/T.*/', '', $restriction['value'] );
-
-        // keep track of the start/end date in case they match
-        if( 'start_date' == $restriction['name'] ) $start_date = $date;
-        else $end_date = $date;
-
         $modifier->where(
-          sprintf( 'DATE( CONVERT_TZ( transcription.start_datetime, "UTC", "%s" ) )', $this->db_user->timezone ),
+          sprintf( 'DATE( CONVERT_TZ( transcription.end_datetime, "UTC", "%s" ) )', $this->db_user->timezone ),
           'start_date' == $restriction['name'] ? '>=' : '<=',
           $date
         );
