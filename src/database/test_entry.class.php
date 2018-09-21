@@ -173,7 +173,7 @@ class test_entry extends \cenozo\database\record
   }
 
   /**
-   * TODO: document
+   * Get the test-entry's data table name
    */
   public function get_data_table_name()
   {
@@ -191,7 +191,7 @@ class test_entry extends \cenozo\database\record
   }
 
   /**
-   * TODO: document
+   * Opens the test-entry's activity
    */
   public function open_activity()
   {
@@ -218,7 +218,7 @@ class test_entry extends \cenozo\database\record
   }
 
   /**
-   * TODO: document
+   * Closes the test-entry's activity
    */
   public function close_activity()
   {

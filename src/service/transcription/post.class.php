@@ -233,7 +233,8 @@ class post extends \cenozo\service\post
   }
 
   /**
-   * TODO: document
+   * A caching variable
+   * @var integer
    */
   protected $participant_id = NULL;
 }
