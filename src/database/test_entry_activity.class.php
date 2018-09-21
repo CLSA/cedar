@@ -14,7 +14,9 @@ use cenozo\lib, cenozo\log, cedar\util;
 class test_entry_activity extends \cenozo\database\record
 {
   /**
-   * TODO: document
+   * Closes lapsed activity
+   * 
+   * @param database\user $db_user Focus on a particular user
    */
   public static function close_lapsed( $db_user = NULL )
   {
