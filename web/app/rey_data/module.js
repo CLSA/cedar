@@ -211,7 +211,6 @@ define( function() {
             var newWordList = [];
             if( quoteEnclosed ) { 
               // do not modify input that was enclosed by double-quotes
-              console.log( word );
               newWordList.push( word );
             } else {
               // split the word up by spaces
