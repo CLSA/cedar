@@ -12,8 +12,8 @@ global $SETTINGS;
 // tagged version
 $SETTINGS['general']['application_name'] = 'cedar';
 $SETTINGS['general']['instance_name'] = $SETTINGS['general']['application_name'];
-$SETTINGS['general']['version'] = '2.2';
-$SETTINGS['general']['build'] = '326bc93';
+$SETTINGS['general']['version'] = '2.3';
+$SETTINGS['general']['build'] = '5693789';
 
 // the location of cedar internal path
 $SETTINGS['path']['APPLICATION'] = str_replace( '/settings.ini.php', '', __FILE__ );
