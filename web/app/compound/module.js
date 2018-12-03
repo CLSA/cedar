@@ -169,14 +169,23 @@ define( function() {
             value: false
           } );
           data.modifier.where.push( {
+            bracket: true,
+            open: true
+          } );
+          data.modifier.where.push( {
             column: 'IFNULL( aft, "" )', // also accept null
             operator: '!=',
             value: 'invalid'
           } );
           data.modifier.where.push( {
+            or: true,
             column: 'IFNULL( fas, "" )', // also accept null
             operator: '!=',
             value: 'invalid'
+          } );
+          data.modifier.where.push( {
+            bracket: true,
+            open: false
           } );
 
           // and sort by word
