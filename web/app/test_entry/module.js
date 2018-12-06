@@ -392,7 +392,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 onError: function( response ) {
                   // don't show error message for missing recordings (too disruptive)
                   if( 404 == response.status ) {
-                    console.warning(
+                    console.warn(
                       'Problem loading sound files for ' + self.parentModel.getServiceResourcePath() );
                   } else return CnModalMessageFactory.httpError( response );
                 }

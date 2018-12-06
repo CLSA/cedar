@@ -154,7 +154,7 @@ define( function() {
                     self.record.splice( index, 0, response.data );
                   }
                 } else {
-                  console.warning(
+                  console.warn(
                     'Tried inserting word at rank "' + rank + '", which was not found in the list'
                   );
                 }

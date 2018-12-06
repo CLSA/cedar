@@ -351,7 +351,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                         object.record.splice( index, 0, response.data );
                       }
                     } else {
-                      console.warning(
+                      console.warn(
                         'Tried inserting word at rank "' + rank + '", which was not found in the list'
                       );
                     }
@@ -386,7 +386,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                   object.record.splice( index, 1 );
                   object.record.forEach( function( word ) { if( word.rank > wordRecord.rank ) word.rank--; } );
                 } else {
-                  console.warning( 'Tried removing word which was not found in the list' );
+                  console.warn( 'Tried removing word which was not found in the list' );
                 }
               } );
             }
