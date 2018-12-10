@@ -24,6 +24,7 @@ class post extends \cenozo\service\post
     {
       $participant_class_name = lib::get_class_name( 'database\participant' );
       $session = lib::create( 'business\session' );
+      $db_application = $session->get_application();
       $db_user = $session->get_user();
       $db_role = $session->get_role();
       $db_site = $session->get_site();
@@ -92,6 +93,11 @@ class post extends \cenozo\service\post
                 'user_has_language', 'participant.language_id', 'user_has_language.language_id' );
               $participant_mod->where( 'user_has_language.user_id', '=', $db_user->id );
             }
+
+            // the participant's site must match the user's site
+            $participant_mod->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
+            $participant_mod->where( 'participant_site.application_id', '=', $db_application->id );
+            $participant_mod->where( 'participant_site.site_id', '=', $db_site->id );
 
             // order by sound file datetime so we get newer recordings first
             $participant_mod->order_desc( 'participant_sound_file_total.datetime' );
