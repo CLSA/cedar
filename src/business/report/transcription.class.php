@@ -40,8 +40,6 @@ class transcription extends \cenozo\business\report\base_report
     $modifier->group( 'transcription.id' );
     $modifier->order( 'participant.uid' );
       
-    \cenozo\database\database::$debug = true;
     $this->add_table_from_select( NULL, $transcription_class_name::select( $select, $modifier ) );
-    \cenozo\database\database::$debug = false;
   }
 }
