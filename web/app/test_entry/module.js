@@ -366,6 +366,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           onViewPromise: null,
           languageIdList: [],
           soundFileList: [],
+          soundFileEnumList: [
+            { value: null, name: '(select identifying)' },
+            { value: true, name: 'Identifying' },
+            { value: false, name: 'Not Identifying' },
+          ],
 
           // add the test entry's data models
           aftDataModel: CnAftDataModelFactory.instance( parentModel ),
@@ -388,7 +393,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               // get the sound file list for this test-entry
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '/sound_file',
-                data: { select: { column: [ 'id', 'name', 'url' ] } },
+                data: { select: { column: [ 'id', 'name', 'url', 'identifying' ] } },
                 onError: function( response ) {
                   // don't show error message for missing recordings (too disruptive)
                   if( 404 == response.status ) {
@@ -477,6 +482,12 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           },
           viewTranscription: function() {
             return $state.go( 'transcription.view', { identifier: 'uid=' + self.record.transcription_uid } );
+          },
+          setIdentifying: function( soundFile ) {
+            return CnHttpFactory.instance( {
+              path: 'sound_file/' + soundFile.id,
+              data: { identifying: soundFile.identifying }
+            } ).patch();
           }
         } );
       }

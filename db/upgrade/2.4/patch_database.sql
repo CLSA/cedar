@@ -3,6 +3,7 @@
 SET AUTOCOMMIT=0;
 
 SOURCE service.sql
+SOURCE sound_file.sql
 
 SOURCE update_version_number.sql
 
