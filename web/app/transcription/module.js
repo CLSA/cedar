@@ -459,8 +459,8 @@ define( function() {
         } );
 
         // extend onView
-        this.onView = function() {
-          return this.$$onView().then( function() {
+        this.onView = function( force ) {
+          return this.$$onView( force ).then( function() {
             return self.parentModel.updateUserList( 'uid=' + self.record.uid );
           } );
         };
