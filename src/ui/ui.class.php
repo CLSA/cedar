@@ -92,7 +92,9 @@ class ui extends \cenozo\ui\ui
     // remove list items that aren't necessary
     $this->remove_listitem( 'Consent Types' );
     $this->remove_listitem( 'Event Types' );
+    $this->remove_listitem( 'Hold Types' );
     $this->remove_listitem( 'States' );
+    $this->remove_listitem( 'Proxy Types' );
   }
 
   /**
