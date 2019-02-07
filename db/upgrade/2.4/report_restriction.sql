@@ -15,8 +15,8 @@ CREATE PROCEDURE patch_report_restriction()
     SET @sql = CONCAT(
       "INSERT IGNORE INTO ", @cenozo, ".report_restriction ( ",
         "report_type_id, rank, name, title, mandatory, null_allowed, ",
-        "restriction_type, subject, operator, enum_list, description ) ",
-      "SELECT id, 1, 'language', 'Language', 0, 0, 'table', 'language', NULL, NULL, 'Restrict to a particular language.' ",
+        "restriction_type, custom, subject, operator, enum_list, description ) ",
+      "SELECT id, 1, 'language', 'Language', 0, 0, 'table', 1, 'language', NULL, NULL, 'Restrict to a particular language.' ",
       "FROM ", @cenozo, ".report_type ",
       "WHERE name = 'compound_word'" );
     PREPARE statement FROM @sql;
