@@ -4,7 +4,7 @@ DELETE FROM service WHERE subject = "report_restriction" and method != "GET";
 
 SELECT "Adding PATCH access to sound_file so that they can be marked as identifying" AS "";
 
-INSERT INTO service SET
+INSERT IGNORE INTO service SET
 method = "PATCH",
 subject = "sound_file",
 resource = 1,
