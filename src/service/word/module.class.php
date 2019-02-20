@@ -29,7 +29,8 @@ class module extends \cenozo\service\module
     $modifier->join( 'word_test_type_total', 'word.id', 'word_test_type_total.word_id' );
 
     // add the total number of participants
-    if( $select->has_column( 'compound_count' ) ) $this->add_count_column( 'compound', $select, $modifier );
+    if( $select->has_column( 'compound_count' ) )
+      $this->add_count_column( 'compound_count', 'compound', $select, $modifier );
 
     if( $select->has_table_columns( 'sister_word' ) || !is_null( $this->get_resource() ) )
     {
