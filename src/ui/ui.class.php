@@ -34,11 +34,15 @@ class ui extends \cenozo\ui\ui
       $module->add_action( 'notes', '/{identifier}?{search}' );
     }
 
+    $module = $this->get_module( 'status_type' );
+    if( !is_null( $module ) ) $module->add_choose( 'test_type' );
+
     $module = $this->get_module( 'test_type' );
     if( !is_null( $module ) )
     {
       $module->add_child( 'cohort' );
       $module->add_child( 'filename_format' );
+      $module->add_choose( 'status_type' );
     }
 
     $module = $this->get_module( 'transcription' );
@@ -81,7 +85,11 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Form Types' );
       $this->remove_listitem( 'Quotas' );
       $this->remove_listitem( 'Sources' );
-      if( 2 < $db_role->tier ) $this->add_listitem( 'REY Variant', 'rey_data_variant' );
+      if( 2 < $db_role->tier )
+      {
+        $this->add_listitem( 'REY Variant', 'rey_data_variant' );
+        $this->add_listitem( 'Status Types', 'status_type' );
+      }
       $this->add_listitem( 'Test Types', 'test_type' );
       $this->add_listitem( 'Words', 'word' );
     }

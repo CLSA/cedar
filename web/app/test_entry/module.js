@@ -51,11 +51,19 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
 
   module.addInputGroup( '', {
     user_id: { column: 'transcription.user_id', type: 'hidden' },
+    test_type_id: { column: 'test_type.id', type: 'hidden' },
     test_type_name: { column: 'test_type.name', type: 'hidden' },
     data_type: { column: 'test_type.data_type', type: 'hidden' },
     state: { type: 'enum' },
-    audio_status: { type: 'enum' },
-    participant_status: { type: 'enum' },
+    audio_status_type_id: { type: 'enum' },
+    audio_status_type: { column: 'audio_status_type.name', type: 'string' },
+    audio_status_type_other: { type: 'string' },
+    participant_status_type_id: { type: 'enum' },
+    participant_status_type: { column: 'participant_status_type.name', type: 'string' },
+    participant_status_type_other: { type: 'string' },
+    admin_status_type_id: { type: 'enum' },
+    admin_status_type: { column: 'admin_status_type.name', type: 'string' },
+    admin_status_type_other: { type: 'string' },
     participant_site_id: { column: 'site.id', type: 'hidden' },
     participant_language_id: { column: 'participant.language_id', type: 'hidden' },
     prev_test_entry_id: { type: 'hidden' },
@@ -170,37 +178,12 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               $scope.model.viewModel.soundFileList.forEach( function( soundFile ) {
                 soundFile.active = id == soundFile.id;
               } );
-            },
-            getParticipantStatusList: function() {
-              return $scope.participantStatusList.filter( function( status ) {
-                if( '' == status.value || 'refused' == status.value ) return true;
-
-                if( 'rey' == $scope.model.viewModel.record.data_type ) {
-                  return 'prompt middle' == status.value || 'prompt end' == status.value;
-                } else if( 'aft' == $scope.model.viewModel.record.data_type ) {
-                  return 'suspected prompt' == status.value || 'prompted' == status.value;
-                } else if( 'premat' == $scope.model.viewModel.record.data_type ) {
-                  return false;
-                } else {
-                  return 'prompted' == status.value;
-                }
-              } );
             }
           } );
         },
         link: function( scope, element ) {
           // close the test entry activity
           scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close(); } );
-
-          scope.model.metadata.getPromise().then( function() {
-            var audioStatus = scope.model.metadata.columnList.audio_status;
-            scope.audioStatusList = angular.copy( audioStatus.enumList );
-            if( !audioStatus.required ) scope.audioStatusList.unshift( { value: '', name: '(empty)' } );
-            var participantStatus = scope.model.metadata.columnList.participant_status;
-            scope.participantStatusList = angular.copy( participantStatus.enumList );
-            if( !participantStatus.required )
-              scope.participantStatusList.unshift( { value: '', name: '(empty)' } );
-          } );
 
           // attach the sound file elements to the view model's list of sound files
           scope.model.viewModel.onViewPromise.then( function() {
@@ -323,9 +306,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                      self.parentModel.$$getEditEnabled() && (
                        !self.parentModel.isTypest || (
                          'assigned' == self.record.state &&
-                         'unusable' != self.record.audio_status &&
-                         'unavailable' != self.record.audio_status &&
-                         'refused' != self.record.participant_status
+                         'Unusable' != self.record.audio_status &&
+                         'Unavailable' != self.record.audio_status &&
+                         'Refused' != self.record.participant_status
                        )
                      );
             };
@@ -348,9 +331,9 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               return self.parentModel.$$getEditEnabled() && (
                        !self.parentModel.isTypist || (
                          'assigned' == self.record.state &&
-                         'unusable' != self.record.audio_status &&
-                         'unavailable' != self.record.audio_status &&
-                         'refused' != self.record.participant_status
+                         'Unusable' != self.record.audio_status &&
+                         'Unavailable' != self.record.audio_status &&
+                         'Refused' != self.record.participant_status
                        )
                      ) &&
                      self.record.data_type && (
@@ -360,7 +343,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             }
           } );
         } );
-
 
         angular.extend( this, {
           onViewPromise: null,
@@ -380,8 +362,58 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           reyDataModel: CnReyDataModelFactory.instance( parentModel ),
           isWorking: false,
           noteCount: 0,
+          updatingAudioStatusList: false,
+          updateAudioStatusList: function() {
+            return self.updatingAudioStatusList ? $q.all() : CnHttpFactory.instance( {
+              path: 'test_type/' + self.record.test_type_id + '/status_type',
+              data: {
+                select: { column: [ 'id', 'category', 'name' ] },
+                modifier: { order: 'status_type.rank' }
+              }
+            } ).query().then( function( response ) {
+              self.updatingAudioStatusList = true;
 
-          onView: function() {
+              // rebuild the three status lists based on what this test type will allow
+              var enumList = [ { value: '', name: '(empty)' } ];
+              var audioFound = false;
+              var participantFound = false;
+              var adminFound = false;
+              self.parentModel.metadata.columnList.audio_status_type_id.enumList = angular.copy( enumList );
+              self.parentModel.metadata.columnList.participant_status_type_id.enumList = angular.copy( enumList );
+              self.parentModel.metadata.columnList.admin_status_type_id.enumList = angular.copy( enumList );
+              response.data.forEach( function( statusType ) {
+                if( self.record.audio_status_type_id == statusType.id ) audioFound = true;
+                else if( self.record.participant_status_type_id == statusType.id ) participantFound = true;
+                else if( self.record.admin_status_type_id == statusType.id ) adminFound = true;
+                self.parentModel.metadata.columnList[statusType.category+'_status_type_id'].enumList.push(
+                  { value: statusType.id, name: statusType.name }
+                );
+              } );
+
+              // since it's possible that the chosen status is no longer available for this test type we need to add it
+              if( !audioFound && self.record.audio_status_type_id ) {
+                self.parentModel.metadata.columnList.audio_status_type_id.enumList.push(
+                  { value: self.record.audio_status_type_id, name: self.record.audio_status_type }
+                );
+              }
+
+              if( !participantFound && self.record.participant_status_type_id ) {
+                self.parentModel.metadata.columnList.participant_status_type_id.enumList.push(
+                  { value: self.record.participant_status_type_id, name: self.record.participant_status_type }
+                );
+              }
+              
+              if( !adminFound && self.record.admin_status_type_id ) {
+                self.parentModel.metadata.columnList.admin_status_type_id.enumList.push(
+                  { value: self.record.admin_status_type_id, name: self.record.admin_status_type }
+                );
+              }
+
+              self.updatingAudioStatusList = false;
+            } );
+          },
+
+          onView: function( force ) {
             // get the number of notes
             CnHttpFactory.instance( {
               path: self.parentModel.getServiceResourcePath() + '/test_entry_note'
@@ -389,23 +421,26 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               self.noteCount = response.headers( 'Total' );
             } );
 
-            this.onViewPromise = this.$$onView().then( function() {
+            this.onViewPromise = this.$$onView( force ).then( function() {
               // get the sound file list for this test-entry
-              return CnHttpFactory.instance( {
-                path: self.parentModel.getServiceResourcePath() + '/sound_file',
-                data: { select: { column: [ 'id', 'name', 'url', 'identifying' ] } },
-                onError: function( response ) {
-                  // don't show error message for missing recordings (too disruptive)
-                  if( 404 == response.status ) {
-                    console.warn(
-                      'Problem loading sound files for ' + self.parentModel.getServiceResourcePath() );
-                  } else return CnModalMessageFactory.httpError( response );
-                }
-              } ).query().then( function( response ) {
-                self.soundFileList = response.data;
-                // add an active property to track which recording the user is working with
-                self.soundFileList.forEach( function( soundFile, index ) { soundFile.active = 0 == index; } );
-              } );
+              return $q.all( [
+                self.updateAudioStatusList(),
+                CnHttpFactory.instance( {
+                  path: self.parentModel.getServiceResourcePath() + '/sound_file',
+                  data: { select: { column: [ 'id', 'name', 'url', 'identifying' ] } },
+                  onError: function( response ) {
+                    // don't show error message for missing recordings (too disruptive)
+                    if( 404 == response.status ) {
+                      console.warn(
+                        'Problem loading sound files for ' + self.parentModel.getServiceResourcePath() );
+                    } else return CnModalMessageFactory.httpError( response );
+                  }
+                } ).query().then( function( response ) {
+                  self.soundFileList = response.data;
+                  // add an active property to track which recording the user is working with
+                  self.soundFileList.forEach( function( soundFile, index ) { soundFile.active = 0 == index; } );
+                } )
+              ] );
             } );
             return self.onViewPromise;
           },

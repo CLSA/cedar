@@ -1,11 +1,14 @@
-SELECT "Removing write access to report_restriction services" AS "";
+SELECT "Adding new services" AS "";
 
-DELETE FROM service WHERE subject = "report_restriction" and method != "GET";
+INSERT IGNORE INTO service ( subject, method, resource, restricted ) VALUES
+( "sound_file", "PATCH", 1, 0 ),
+( 'status_type', 'DELETE', 1, 1 ),
+( 'status_type', 'GET', 0, 0 ),
+( 'status_type', 'GET', 1, 0 ),
+( 'status_type', 'PATCH', 1, 1 ),
+( 'status_type', 'POST', 0, 1 );
 
-SELECT "Adding PATCH access to sound_file so that they can be marked as identifying" AS "";
-
-INSERT IGNORE INTO service SET
-method = "PATCH",
-subject = "sound_file",
-resource = 1,
-restricted = 0;
+UPDATE service SET restricted = 0
+WHERE subject = "test_type"
+AND method = "GET"
+AND resource = 1;

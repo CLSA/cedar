@@ -22,12 +22,14 @@ class test_entry extends \cenozo\database\record
    */
   public function is_completable()
   {
+    $db_audio_status_type = $this->get_audio_status_type();
+    $db_participant_status_type = $this->get_participant_status_type();
     return (
-      is_null( $this->audio_status ) ||
-      ( 'unusable' != $this->audio_status && 'unavailable' != $this->audio_status )
+      is_null( $db_audio_status_type ) ||
+      ( 'unusable' != $db_audio_status_type->name && 'unavailable' != $db_audio_status_type->name )
     ) && (
-      is_null( $this->participant_status ) ||
-      'refused' != $this->participant_status
+      is_null( $db_participant_status_type ) ||
+      'refused' != $db_participant_status_type->name
     );
   }
 
@@ -170,6 +172,33 @@ class test_entry extends \cenozo\database\record
     }
 
     return parent::get_unique_record( $column, $value );
+  }
+
+  /**
+   * Convenience method
+   */
+  public function get_audio_status_type()
+  {
+    return is_null( $this->audio_status_type_id ) ?
+      NULL : lib::create( 'database\status_type', $this->audio_status_type_id );
+  }
+
+  /**
+   * Convenience method
+   */
+  public function get_participant_status_type()
+  {
+    return is_null( $this->participant_status_type_id ) ?
+      NULL : lib::create( 'database\status_type', $this->participant_status_type_id );
+  }
+
+  /**
+   * Convenience method
+   */
+  public function get_admin_status_type()
+  {
+    return is_null( $this->admin_status_type_id ) ?
+      NULL : lib::create( 'database\status_type', $this->admin_status_type_id );
   }
 
   /**

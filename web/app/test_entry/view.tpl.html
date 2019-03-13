@@ -55,25 +55,36 @@
         <hr />
         <div class="container-fluid vertical-spacer">
           <div class="row">
-            <label for="audio_status" class="col-sm-2">Audio Status</label>
             <div class="col-sm-4">
+              <label for="audio_status_type_id">Audio Status</label>
               <select
-                id="audio_status"
+                id="audio_status_type_id"
                 class="form-control"
-                ng-model="model.viewModel.record.audio_status"
-                ng-options="item.value as item.name for item in audioStatusList"
+                ng-model="model.viewModel.record.audio_status_type_id"
+                ng-options="item.value as item.name for item in model.metadata.columnList.audio_status_type_id.enumList"
                 ng-change="model.viewModel.patchStatus( 'audio' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
             </div>
-            <label for="participant_status" class="col-sm-2">Participant Status</label>
             <div class="col-sm-4">
+              <label for="participant_status_type_id">Participant Status</label>
               <select
-                id="participant_status"
+                id="participant_status_type_id"
                 class="form-control"
-                ng-model="model.viewModel.record.participant_status"
-                ng-options="item.value as item.name for item in getParticipantStatusList()"
+                ng-model="model.viewModel.record.participant_status_type_id"
+                ng-options="item.value as item.name for item in model.metadata.columnList.participant_status_type_id.enumList"
                 ng-change="model.viewModel.patchStatus( 'participant' )"
+                ng-disabled="!model.getSubStatusEditEnabled()">
+              </select>
+            </div>
+            <div class="col-sm-4">
+              <label for="participant_status_type_id">Admin Status</label>
+              <select
+                id="admin_status_type_id"
+                class="form-control"
+                ng-model="model.viewModel.record.admin_status_type_id"
+                ng-options="item.value as item.name for item in model.metadata.columnList.admin_status_type_id.enumList"
+                ng-change="model.viewModel.patchStatus( 'admin' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
             </div>

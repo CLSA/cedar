@@ -56,10 +56,22 @@ class test_type extends \cenozo\database\record
 
     if( is_null( $modifier ) ) $modifier = lib::create( 'database\modifier' );
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.audio_status_type_id',
+      'audio_status_type.id',
+      'audio_status_type'
+    );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.participant_status_type_id',
+      'participant_status_type.id',
+      'participant_status_type'
+    );
     $modifier->where( 'test_entry.state', '=', 'submitted' );
-    $modifier->where( 'COALESCE( test_entry.audio_status, "" )', '!=', 'unusable' );
-    $modifier->where( 'COALESCE( test_entry.audio_status, "" )', '!=', 'unavailable' );
-    $modifier->where( 'COALESCE( test_entry.participant_status, "" )', '!=', 'refused' );
+    $modifier->where( 'COALESCE( audio_status_type.name, "" )', '!=', 'unusable' );
+    $modifier->where( 'COALESCE( audio_status_type.name, "" )', '!=', 'unavailable' );
+    $modifier->where( 'COALESCE( participant_status_type.name, "" )', '!=', 'refused' );
 
     // AFT /////////////////////////////////////////////////////////////////////////////////////////
     // alt-score is simply all unique animal codes
@@ -478,11 +490,17 @@ class test_type extends \cenozo\database\record
     $rey2_mod->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
     $rey2_mod->join(
       'test_entry', 'first_test_entry.transcription_id', 'test_entry.transcription_id', '', 'first_test_entry' );
+    $modifier->left_join(
+      'status_type',
+      'first_test_entry.participant_status_type_id',
+      'participant_status_type.id',
+      'participant_status_type'
+    );
     $rey2_mod->join( 'test_type', 'first_test_entry.test_type_id', 'first_test_type.id', '', 'first_test_type' );
     $rey2_mod->join( 'rey_data', 'first_test_entry.id', 'first_rey_data.test_entry_id', '', 'first_rey_data' );
     $rey2_mod->where( 'test_type.name', 'LIKE', '%(REY2)' );
     $rey2_mod->where( 'first_test_type.name', 'LIKE', '%(REY1)' );
-    $rey2_mod->where( 'COALESCE( first_test_entry.participant_status, "" )', 'NOT LIKE', 'prompt%' );
+    $rey2_mod->where( 'COALESCE( participant_status_type.name, "" )', 'NOT LIKE', 'prompt%' );
 
     static::db()->execute( sprintf(
       "INSERT INTO temp_rescore\n%s %s",

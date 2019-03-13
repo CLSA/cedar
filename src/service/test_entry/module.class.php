@@ -54,6 +54,24 @@ class module extends \cenozo\service\site_restricted_participant_module
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.audio_status_type_id',
+      'audio_status_type.id',
+      'audio_status_type'
+    );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.participant_status_type_id',
+      'participant_status_type.id',
+      'participant_status_type'
+    );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.admin_status_type_id',
+      'admin_status_type.id',
+      'admin_status_type'
+    );
 
     if( $select->has_table_columns( 'site' ) )
     {

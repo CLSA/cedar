@@ -31,10 +31,22 @@ class quality_control extends \cenozo\business\report\base_report
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->join( 'test_entry_note', 'test_entry.id', 'test_entry_note.test_entry_id' );
     $modifier->join( 'user', 'test_entry_note.user_id', 'user.id' );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.audio_status_type_id',
+      'audio_status_type.id',
+      'audio_status_type'
+    );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.participant_status_type_id',
+      'participant_status_type.id',
+      'participant_status_type'
+    );
     $modifier->where_bracket( true );
-    $modifier->where( 'test_entry.audio_status', 'IN', array( 'salvable', 'unusable' ) );
-    $modifier->or_where(
-      'test_entry.participant_status', 'IN', array( 'prompted', 'prompt middle', 'prompt end' ) );
+    $modifier->where( 'audio_status_type.name', 'LIKE', 'Salvable%' );
+    $modifier->or_where( 'audio_status_type.name', '=', 'Unusable' );
+    $modifier->where( 'participant_status_type.name', 'LIKE', 'Prompt%' );
     $modifier->where_bracket( false );
     $modifier->group( 'transcription.id' );
     $modifier->order( 'transcription.start_datetime' );
@@ -81,7 +93,7 @@ class quality_control extends \cenozo\business\report\base_report
     if( $this->db_role->all_sites ) $select->add_column( 'site.name', 'Site', false );
     $select->add_column(
       'GROUP_CONCAT('."\n".
-      '  language.name'."\n".
+      '  DISTINCT language.name'."\n".
       '  ORDER BY language.name'."\n".
       '  SEPARATOR ","'."\n".
       ')',

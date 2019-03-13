@@ -141,14 +141,20 @@ class export
         $result = $this->db->query( sprintf(
           'SELECT uid AS entity_id, '.
                  'IFNULL( note, 9 ) AS COG_%s_META_NOTES_%s, '.
-                 'IFNULL( audio_status, 9 ) AS COG_%s_META_AUDIO_STATUS_%s, '.
-                 'IFNULL( participant_status, 9 ) AS COG_%s_META_PSTATUS_%s '.
+                 'IFNULL( audio_status_type.name, 9 ) AS COG_%s_META_AUDIO_STATUS_%s, '.
+                 'IFNULL( participant_status_type.name, 9 ) AS COG_%s_META_PSTATUS_%s '.
           'FROM transcription '.
           'JOIN %s.participant ON transcription.participant_id = participant.id '.
           'JOIN %s.cohort ON participant.cohort_id= cohort.id '.
           'JOIN test_entry ON transcription.id = test_entry.transcription_id '.
           'JOIN test_type ON test_entry.test_type_id = test_type.id '.
           'LEFT JOIN test_entry_note ON test_entry.id = test_entry_note.test_entry_id '.
+          'LEFT JOIN status_type AS audio_status_type '.
+                 'ON test_entry.audio_status_type_id = audio_status_type.id '.
+          'LEFT JOIN status_type AS participant_status_type '.
+                 'ON test_entry.participant_status_type_id = participant_status_type.id '.
+          'LEFT JOIN status_type AS admin_status_type '.
+                 'ON test_entry.admin_status_type_id = admin_status_type.id '.
           'WHERE cohort.name = "%s" '.
           'AND test_type.name = "%s" '.
           'ORDER BY uid',
@@ -199,8 +205,8 @@ class export
         {
           $result = $this->db->query( sprintf(
             'SELECT uid AS entity_id, '.
-                   'audio_status, '.
-                   'participant_status, '.
+                   'audio_status_type.name AS audio_status, '.
+                   'participant_status_type.name AS participant_status, '.
                    'counting, '.
                    'alphabet '.
             'FROM transcription '.
@@ -210,6 +216,12 @@ class export
             'JOIN premat_data ON test_entry.id = premat_data.test_entry_id '.
             'JOIN test_type ON test_entry.test_type_id = test_type.id '.
             'LEFT JOIN test_entry_note ON test_entry.id = test_entry_note.test_entry_id '.
+            'LEFT JOIN status_type AS audio_status_type '.
+                   'ON test_entry.audio_status_type_id = audio_status_type.id '.
+            'LEFT JOIN status_type AS participant_status_type '.
+                   'ON test_entry.participant_status_type_id = participant_status_type.id '.
+            'LEFT JOIN status_type AS admin_status_type '.
+                   'ON test_entry.admin_status_type_id = admin_status_type.id '.
             'WHERE cohort.name = "%s" '.
             'AND test_type.name = "Pre Mental Alternation (pre-MAT)" '.
             'ORDER BY uid',
