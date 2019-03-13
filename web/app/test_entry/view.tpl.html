@@ -65,6 +65,15 @@
                 ng-change="model.viewModel.patchStatus( 'audio' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
+              <input
+                id="audio_status_type_other"
+                class="form-control"
+                type="text"
+                ng-if="model.viewModel.otherStatusTypeSelected( 'audio' )"
+                ng-model="model.viewModel.record.audio_status_type_other"
+                cn-change="model.getSubStatusEditEnabled() && model.viewModel.patchStatus( 'audio' )"
+                ng-disabled="!model.getSubStatusEditEnabled()">
+              </input>
             </div>
             <div class="col-sm-4">
               <label for="participant_status_type_id">Participant Status</label>
@@ -76,6 +85,15 @@
                 ng-change="model.viewModel.patchStatus( 'participant' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
+              <input
+                id="participant_status_type_other"
+                class="form-control"
+                type="text"
+                ng-if="model.viewModel.otherStatusTypeSelected( 'participant' )"
+                ng-model="model.viewModel.record.participant_status_type_other"
+                cn-change="model.getSubStatusEditEnabled() && model.viewModel.patchStatus( 'participant' )"
+                ng-disabled="!model.getSubStatusEditEnabled()">
+              </input>
             </div>
             <div class="col-sm-4">
               <label for="participant_status_type_id">Admin Status</label>
@@ -87,6 +105,15 @@
                 ng-change="model.viewModel.patchStatus( 'admin' )"
                 ng-disabled="!model.getSubStatusEditEnabled()">
               </select>
+              <input
+                id="admin_status_type_other"
+                class="form-control"
+                type="text"
+                ng-if="model.viewModel.otherStatusTypeSelected( 'admin' )"
+                ng-model="model.viewModel.record.admin_status_type_other"
+                cn-change="model.getSubStatusEditEnabled() && model.viewModel.patchStatus( 'admin' )"
+                ng-disabled="!model.getSubStatusEditEnabled()">
+              </input>
             </div>
           </div>
         </div>

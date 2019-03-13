@@ -444,20 +444,45 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             } );
             return self.onViewPromise;
           },
+          otherStatusTypeSelected: function( type ) {
+            var strProp = type + '_status_type';
+            return null != self.record[strProp] && null != self.record[strProp].match( 'Other' );
+          },
           patchStatus: function( type ) {
             // Patching status is special since it can be done under some circumstances where the test-entry
             // is not editable
             if( self.parentModel.getStatusEditEnabled() ) {
-              var property = type + '_status';
+              var strProp = type + '_status_type';
+              var idProp = strProp + '_id';
+              var otherProp = strProp + '_other';
               var data = {};
-              data[property] = '' == self.record[property] ? null : self.record[property];
+
+              data[idProp] = '' == self.record[idProp] ? null : self.record[idProp];
+              var statusType = self.parentModel.metadata.columnList[idProp].enumList.findByProperty( 'value', data[idProp] );
+              if( null == statusType || null == statusType.name.match( 'Other' ) ) self.record[otherProp] = null;
+              data[otherProp] = self.record[otherProp];
+
+              // also update the status_type string value
+              self.record[strProp] = null == statusType ? null : statusType.name;
+
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath(),
                 data: data
               } ).patch();
             }
           },
-          submit: function() { return setTestEntryState( 'submitted' ); },
+          submit: function() {
+            // make sure that other status boxes aren't empty
+            return ( self.otherStatusTypeSelected( 'audio' ) && !self.record.audio_status_type_other ) ||
+                   ( self.otherStatusTypeSelected( 'participant' ) && !self.record.participant_status_type_other ) ||
+                   ( self.otherStatusTypeSelected( 'admin' ) && !self.record.admin_status_type_other ) ?
+              CnModalMessageFactory.instance( {
+                title: 'Cannot Submit',
+                message: 'The test-entry cannot be submitted because a status type of "Other" is selected but additional status ' +
+                  'notes have not been provided.'
+              } ).show() :
+              setTestEntryState( 'submitted' );
+          },
           defer: function() { return setTestEntryState( 'deferred', 'typist' ); },
           returnToTypist: function() {
             // when reassigning if the transcription is not assigned then ask for who to assign it to
