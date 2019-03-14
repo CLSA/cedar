@@ -110,7 +110,7 @@ CREATE PROCEDURE patch_test_entry()
     IF @test THEN
       UPDATE test_entry
       JOIN status_type
-        ON test_entry.audio_status = IF( name = "Salvable: Other", "salvable", name )
+        ON test_entry.audio_status = name
         AND category = "audio"
       SET test_entry.audio_status_type_id = status_type.id;
 
