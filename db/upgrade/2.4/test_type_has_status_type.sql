@@ -70,7 +70,7 @@ CREATE PROCEDURE patch_test_type_has_status_type()
       SELECT test_type.id, status_type.id
       FROM test_type, status_type
       WHERE status_type.category = "audio"
-      AND status_type.name != "CRF";
+      AND status_type.name NOT IN ( "CRF", "Salvable" );
 
       INSERT IGNORE INTO test_type_has_status_type( test_type_id, status_type_id )
       SELECT test_type.id, status_type.id
