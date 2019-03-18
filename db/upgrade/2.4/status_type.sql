@@ -18,7 +18,7 @@ INSERT IGNORE INTO status_type( category, rank, name ) VALUES
 ( 'participant', 3, 'Prompt: End' ),
 ( 'participant', 4, 'Prompt: Less than 5s' ),
 ( 'participant', 5, 'Prompt: More than 5s' ),
-( 'participant', 6, 'Prompt: Less then 10s' ),
+( 'participant', 6, 'Prompt: Less than 10s' ),
 ( 'participant', 7, 'Prompt: More than 10s' ),
 ( 'participant', 8, 'Prompt: Correction after 4D' ),
 ( 'participant', 9, 'Prompt: Suspected' ),
