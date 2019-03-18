@@ -46,7 +46,7 @@ class quality_control extends \cenozo\business\report\base_report
     $modifier->where_bracket( true );
     $modifier->where( 'audio_status_type.name', 'LIKE', 'Salvable%' );
     $modifier->or_where( 'audio_status_type.name', '=', 'Unusable' );
-    $modifier->where( 'participant_status_type.name', 'LIKE', 'Prompt%' );
+    $modifier->or_where( 'participant_status_type.name', 'LIKE', 'Prompt%' );
     $modifier->where_bracket( false );
     $modifier->group( 'transcription.id' );
     $modifier->order( 'transcription.start_datetime' );
