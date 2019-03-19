@@ -43,10 +43,17 @@ class quality_control extends \cenozo\business\report\base_report
       'participant_status_type.id',
       'participant_status_type'
     );
+    $modifier->left_join(
+      'status_type',
+      'test_entry.admin_status_type_id',
+      'admin_status_type.id',
+      'admin_status_type'
+    );
     $modifier->where_bracket( true );
     $modifier->where( 'audio_status_type.name', 'LIKE', 'Salvable%' );
     $modifier->or_where( 'audio_status_type.name', '=', 'Unusable' );
     $modifier->or_where( 'participant_status_type.name', 'LIKE', 'Prompt%' );
+    $modifier->or_where( 'admin_status_type.name', '!=', NULL );
     $modifier->where_bracket( false );
     $modifier->group( 'transcription.id' );
     $modifier->order( 'transcription.start_datetime' );
