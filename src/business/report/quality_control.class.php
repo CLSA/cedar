@@ -29,8 +29,8 @@ class quality_control extends \cenozo\business\report\base_report
     $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
-    $modifier->join( 'test_entry_note', 'test_entry.id', 'test_entry_note.test_entry_id' );
-    $modifier->join( 'user', 'test_entry_note.user_id', 'user.id' );
+    $modifier->left_join( 'test_entry_note', 'test_entry.id', 'test_entry_note.test_entry_id' );
+    $modifier->left_join( 'user', 'test_entry_note.user_id', 'user.id' );
     $modifier->left_join(
       'status_type',
       'test_entry.audio_status_type_id',
