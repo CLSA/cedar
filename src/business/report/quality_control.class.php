@@ -109,6 +109,33 @@ class quality_control extends \cenozo\business\report\base_report
     );
     $select->add_column(
       'GROUP_CONCAT('."\n".
+      '  CONCAT_WS( ": ", test_type.name, audio_status_type.name, audio_status_type_other )'."\n".
+      '  ORDER BY test_type.name'."\n".
+      '  SEPARATOR "\\n"'."\n".
+      ')',
+      'Audio Status',
+      false
+    );
+    $select->add_column(
+      'GROUP_CONCAT('."\n".
+      '  CONCAT_WS( ": ", test_type.name, participant_status_type.name, participant_status_type_other )'."\n".
+      '  ORDER BY test_type.name'."\n".
+      '  SEPARATOR "\\n"'."\n".
+      ')',
+      'Participant Status',
+      false
+    );
+    $select->add_column(
+      'GROUP_CONCAT('."\n".
+      '  CONCAT_WS( ": ", test_type.name, admin_status_type.name, admin_status_type_other )'."\n".
+      '  ORDER BY test_type.name'."\n".
+      '  SEPARATOR "\\n"'."\n".
+      ')',
+      'Admin Status',
+      false
+    );
+    $select->add_column(
+      'GROUP_CONCAT('."\n".
       '  CONCAT( "[", user.name, "] for ", test_type.name, ": ", test_entry_note.note )'."\n".
       '  ORDER BY test_entry_note.datetime'."\n".
       '  SEPARATOR "\\n"'."\n".
