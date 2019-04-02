@@ -35,4 +35,6 @@ INSERT IGNORE INTO status_type( category, rank, name ) VALUES
 ( 'admin', 2, 'Correct number of words provided' ),
 ( 'admin', 3, 'Number of words on list provided' ),
 ( 'admin', 4, 'Not corrected before 4D' ),
-( 'admin', 5, 'Other' );
+( 'admin', 5, 'Cut off at beginning' ),
+( 'admin', 6, 'Cut off at end' ),
+( 'admin', 7, 'Other' );
