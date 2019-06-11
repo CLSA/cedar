@@ -69,9 +69,9 @@ class test_type extends \cenozo\database\record
       'participant_status_type'
     );
     $modifier->where( 'test_entry.state', '=', 'submitted' );
-    $modifier->where( 'COALESCE( audio_status_type.name, "" )', '!=', 'unusable' );
-    $modifier->where( 'COALESCE( audio_status_type.name, "" )', '!=', 'unavailable' );
-    $modifier->where( 'COALESCE( participant_status_type.name, "" )', '!=', 'refused' );
+    $modifier->where( 'COALESCE( LOWER( audio_status_type.name ), "" )', '!=', 'unusable' );
+    $modifier->where( 'COALESCE( LOWER( audio_status_type.name ), "" )', '!=', 'unavailable' );
+    $modifier->where( 'COALESCE( LOWER( participant_status_type.name ), "" )', '!=', 'refused' );
 
     // AFT /////////////////////////////////////////////////////////////////////////////////////////
     // alt-score is simply all unique animal codes

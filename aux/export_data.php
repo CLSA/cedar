@@ -141,8 +141,8 @@ class export
         $result = $this->db->query( sprintf(
           'SELECT uid AS entity_id, '.
                  'IFNULL( note, 9 ) AS COG_%s_META_NOTES_%s, '.
-                 'IFNULL( audio_status_type.name, 9 ) AS COG_%s_META_AUDIO_STATUS_%s, '.
-                 'IFNULL( participant_status_type.name, 9 ) AS COG_%s_META_PSTATUS_%s '.
+                 'IFNULL( LOWER( audio_status_type.name ), 9 ) AS COG_%s_META_AUDIO_STATUS_%s, '.
+                 'IFNULL( LOWER( participant_status_type.name ), 9 ) AS COG_%s_META_PSTATUS_%s '.
           'FROM transcription '.
           'JOIN %s.participant ON transcription.participant_id = participant.id '.
           'JOIN %s.cohort ON participant.cohort_id= cohort.id '.
@@ -205,8 +205,8 @@ class export
         {
           $result = $this->db->query( sprintf(
             'SELECT uid AS entity_id, '.
-                   'audio_status_type.name AS audio_status, '.
-                   'participant_status_type.name AS participant_status, '.
+                   'LOWER( audio_status_type.name ) AS audio_status, '.
+                   'LOWER( participant_status_type.name ) AS participant_status, '.
                    'counting, '.
                    'alphabet '.
             'FROM transcription '.

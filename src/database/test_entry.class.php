@@ -23,13 +23,13 @@ class test_entry extends \cenozo\database\record
   public function is_completable()
   {
     $db_audio_status_type = $this->get_audio_status_type();
+    $audio_status = is_null( $db_audio_status_type ) ? NULL : strtolower( $db_audio_status_type->name );
     $db_participant_status_type = $this->get_participant_status_type();
+    $participant_status = is_null( $db_participant_status_type ) ? NULL : strtolower( $db_participant_status_type->name );
     return (
-      is_null( $db_audio_status_type ) ||
-      ( 'unusable' != $db_audio_status_type->name && 'unavailable' != $db_audio_status_type->name )
+      is_null( $audio_status ) || ( 'unusable' != $audio_status && 'unavailable' != $audio_status )
     ) && (
-      is_null( $db_participant_status_type ) ||
-      'refused' != $db_participant_status_type->name
+      is_null( $participant_status ) || 'refused' != $participant_status
     );
   }
 
