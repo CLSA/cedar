@@ -57,7 +57,7 @@ define( function() {
           $scope.model.metadata.getPromise().then( function() {
             $scope.$watch( 'model.testEntryModel.viewModel.languageIdList', function( list ) {
               $scope.model.variantList.forEach( function( variant ) {
-                variant.allowed = 0 <= list.indexOf( variant.variant_language_id );
+                variant.allowed = list.includes( variant.variant_language_id );
               } );
             } );
           } );
@@ -229,7 +229,7 @@ define( function() {
                   // convert sister words
                   matchList.forEach( function( matchWord, index, array ) {
                     self.parentModel.sisterList.some( function( sisterWord ) {
-                      if( 0 <= sisterWord.sisterWordList.indexOf( matchWord ) ) {
+                      if( sisterWord.sisterWordList.includes( matchWord ) ) {
                         array[index] = sisterWord.word;
                         return true;
                       }
@@ -258,7 +258,7 @@ define( function() {
 
               // convert sister words
               self.parentModel.sisterList.some( function( sisterWord ) {
-                if( 0 <= sisterWord.sisterWordList.indexOf( text ) ) {
+                if( sisterWord.sisterWordList.includes( text ) ) {
                   text = sisterWord.word;
                   return true;
                 }

@@ -463,7 +463,7 @@ cenozo.service( 'CnModalNewWordFactory', [
       angular.extend( this, params );
 
       // make sure the initial languageId is in the restrict list
-      if( 0 > this.languageIdRestrictList.indexOf( this.languageId ) )
+      if( !this.languageIdRestrictList.includes( this.languageId ) )
         this.languageId = this.languageIdRestrictList[0];
 
       this.show = function() {
