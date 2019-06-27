@@ -202,6 +202,7 @@ class test_type extends \cenozo\database\record
     $homophone_mod->join(
       'homophone', 'homophone.first_word_id', 'homophone_count.first_word_id', '', 'homophone_count' );
     $homophone_mod->group( 'fas_data.id' );
+    $homophone_mod->order( 'test_entry.transcription_id' );
     $homophone_mod->order( 'fas_data.test_entry_id' );
     $homophone_mod->order( 'homophone.first_word_id' );
 
