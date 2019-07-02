@@ -209,41 +209,21 @@ define( function() {
             }
 
             var newWordList = [];
-            if( quoteEnclosed ) { 
+            if( quoteEnclosed ) {
               // do not modify input that was enclosed by double-quotes
               newWordList.push( word );
             } else {
               // split the word up by spaces
               var text = angular.isString( word ) ? word : word.word;
-              var tempWordList = text.split( / +/ ).getUnique();
-
-              // for each sub-word look for REY words and parse them out
-              tempWordList.forEach( function( text ) {
-                // get unique list of all primary/variant words that match
-                var matchList = text.match( self.parentModel.wordRegExp );
-                if( null == matchList ) {
-                  newWordList.push( text );
-                } else {
-                  matchList = matchList.getUnique();
-
-                  // convert sister words
-                  matchList.forEach( function( matchWord, index, array ) {
-                    self.parentModel.sisterList.some( function( sisterWord ) {
-                      if( 0 <= sisterWord.sisterWordList.indexOf( matchWord ) ) {
-                        array[index] = sisterWord.word;
-                        return true;
-                      }
-                    } );
-                  } );
-
-                  // get unique list of all remaining words (removing empty strings)
-                  newWordList = newWordList.concat(
-                    matchList,
-                    text.split( self.parentModel.wordOrSpaceRegExp ).filter( function( string ) {
-                      return 2 < string.length;
-                    } ).getUnique()
-                  );
-                }
+              text.split( / +/ ).getUnique().forEach( function( text ) {
+                // check if the word is a sister word and convert to the parent if so
+                self.parentModel.sisterList.some( function( sisterWord ) {
+                  if( sisterWord.sisterWordList.includes( text ) ) {
+                    text = sisterWord.word;
+                    return true;
+                  }
+                } );
+                newWordList.push( text );
               } );
             }
 
@@ -438,8 +418,7 @@ define( function() {
         CnBaseDataModelFactory.construct( this, module );
         this.viewModel = CnReyDataViewFactory.instance( this, root );
         this.testEntryModel = testEntryModel;
-        this.wordRegExp = null;
-        this.wordOrSpaceRegExp = null;
+        this.fullWordList = [];
         this.sisterList = [];
         this.variantList = [];
         this.languageList = [];
@@ -461,17 +440,11 @@ define( function() {
                 } );
               } );
 
-              // build the regular expressions that matches any primary, variant or sister word
-              var regString = '';
+              // build a list of all primary, variant and sister words
               self.sisterList.forEach( function( sisterWord ) {
-                if( 0 < regString.length ) regString += '|';
-                sisterWord.sisterWordList.forEach( function( sister ) {
-                  regString += '^' + sister + '|' + sister + '$';
-                } );
-                regString += '^' + sisterWord.word + '|' + sisterWord.word + '$';
+                sisterWord.sisterWordList.forEach( sister => self.fullWordList.push( sister ) );
+                self.fullWordList.push( sisterWord.word );
               } );
-              self.wordRegExp = new RegExp( regString, 'gi' );
-              self.wordOrSpaceRegExp = new RegExp( regString + '| +', 'gi' );
             } ),
 
             CnHttpFactory.instance( {
