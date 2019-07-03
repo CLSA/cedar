@@ -155,7 +155,7 @@ class patch extends \cenozo\service\patch
     {
       $db_word = $this->get_leaf_record();
 
-      $data_type_list = array( 'rey' );
+      if( 'invalid' == $db_word->aft && 'invalid' == $db_word->fas ) $data_type_list = array( 'rey' );
       if( 'invalid' == $db_word->aft ) $data_type_list[] = 'aft';
       if( 'invalid' == $db_word->fas ) $data_type_list[] = 'fas';
 

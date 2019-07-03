@@ -202,7 +202,11 @@ define( function() {
           }
 
           if( true == data.misspelled || 'invalid' == data.aft || 'invalid' == data.fas ) {
-            var which = 'invalid' == data.aft ? 'All AFT' : 'invalid' == data.fas ? 'All FAS' : 'All';
+            var which = 'invalid' == data.aft
+                      ? ( 'invalid' == this.record.fas ? 'All AFT and REY' : 'All AFT' )
+                      : 'invalid' == data.fas
+                      ? ( 'invalid' == this.record.aft ? 'All FAS and REY' : 'All FAS' )
+                      : 'All';
             var promise = true == data.misspelled
                         ? CnModalSelectWordFactory.instance( {
                             message:
