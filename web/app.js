@@ -278,8 +278,8 @@ cenozo.directive( 'cnSubmitWord', [
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory',
-  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewWordFactory ) {
+  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory', '$q',
+  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewWordFactory, $q ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
@@ -306,6 +306,9 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                 } );
               }
             } );
+          },
+          checkBeforeSubmit: function() {
+            return $q.all().then( function() { return true; } );
           }
         } );
 

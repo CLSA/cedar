@@ -35,7 +35,8 @@ define( function() {
     river: { type: 'boolean' },
     river_rey_data_variant_id: { type: 'enum' },
     language_id: { type: 'enum' },
-    language_code: { column: 'language.code', type: 'hidden' }
+    language_code: { column: 'language.code', type: 'hidden' },
+    language_name: { column: 'language.name', type: 'hidden' }
   } );
 
   /* ######################################################################################################## */
@@ -53,9 +54,10 @@ define( function() {
           $scope.wordTypeaheadTemplateUrl = cenozoApp.getFileUrl( 'cedar', 'word-typeahead-match.tpl.html' );
           $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
-          // update which variants are allowed every time the language list changes
+          // update language and which variants are allowed every time the language list changes
           $scope.model.metadata.getPromise().then( function() {
             $scope.$watch( 'model.testEntryModel.viewModel.languageIdList', function( list ) {
+              $scope.model.viewModel.onView();
               $scope.model.variantList.forEach( function( variant ) {
                 variant.allowed = 0 <= list.indexOf( variant.variant_language_id );
               } );
@@ -164,8 +166,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnReyDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalNewWordFactory, CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', 'CnModalNewWordFactory', 'CnHttpFactory', '$q',
+    function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalConfirmFactory, CnModalNewWordFactory, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
@@ -402,6 +404,35 @@ define( function() {
               else if( Number.isInteger( self.record[variantProperty] ) )
                 word.value = 'variant' + self.record[variantProperty];
             } );
+          },
+          checkBeforeSubmit: function() {
+            // show a warning if all variants are of the opposite language to the test
+
+            // first count the number of variants used and how many are of the test's language
+            var variantCount = 0;
+            var languageCount = 0;
+            self.wordList.forEach( function( word ) {
+              var property = word.name + '_rey_data_variant_id';
+              if( self.record[property] ) {
+                variantCount++;
+                var variant = self.parentModel.variantList.findByProperty( 'value', self.record[property] );
+                if( variant.variant_language_id == self.record.language_id ) languageCount++;
+              }
+            } );
+
+            // if there are at least 2 variants and none of the variants are in the same language as the test show a warning
+            return 0 == languageCount && 1 < variantCount ?
+              CnModalConfirmFactory.instance( {
+                title: 'WARNING: Language Mismatch',
+                message:
+                  'Are you sure that the REY test was administered in ' + self.record.language_name + '?\n\n' +
+                  'None of the selected variant words are in ' + self.record.language_name + ', ' +
+                  'however the test is currently set to that language. ' +
+                  'If you believe the test was not administered in ' + self.record.language_name + ' ' +
+                  'then cancel this submission and change the language before re-submitting.'
+              } ).show().then( function( response ) {
+                return response;
+              } ) : $q.all().then( function() { return true; } );
           }
         } );
       }

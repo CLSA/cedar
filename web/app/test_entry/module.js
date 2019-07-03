@@ -473,15 +473,34 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           },
           submit: function() {
             // make sure that other status boxes aren't empty
-            return ( self.otherStatusTypeSelected( 'audio' ) && !self.record.audio_status_type_other ) ||
-                   ( self.otherStatusTypeSelected( 'participant' ) && !self.record.participant_status_type_other ) ||
-                   ( self.otherStatusTypeSelected( 'admin' ) && !self.record.admin_status_type_other ) ?
-              CnModalMessageFactory.instance( {
+            if( ( self.otherStatusTypeSelected( 'audio' ) && !self.record.audio_status_type_other ) ||
+                ( self.otherStatusTypeSelected( 'participant' ) && !self.record.participant_status_type_other ) ||
+                ( self.otherStatusTypeSelected( 'admin' ) && !self.record.admin_status_type_other ) ) {
+              return CnModalMessageFactory.instance( {
                 title: 'Cannot Submit',
                 message: 'The test-entry cannot be submitted because a status type of "Other" is selected but additional status ' +
                   'notes have not been provided.'
-              } ).show() :
-              setTestEntryState( 'submitted' );
+              } ).show();
+            } else {
+              var dataModel = null;
+              if( 'aft' == self.record.data_type ) {
+                dataModel = self.aftDataModel;
+              } else if( 'fas' == self.record.data_type ) {
+                dataModel = self.fasDataModel;
+              } else if( 'mat' == self.record.data_type ) {
+                dataModel = self.matDataModel;
+              } else if( 'premat' == self.record.data_type ) {
+                dataModel = self.prematDataModel;
+              } else if( 'rey' == self.record.data_type ) {
+                dataModel = self.reyDataModel;
+              } else {
+                throw new Error( 'Invalid data type "' + self.record.data_type + '"' );
+              }
+
+              dataModel.viewModel.checkBeforeSubmit().then( function( response ) {
+                if( response ) return setTestEntryState( 'submitted' );
+              } );
+            }
           },
           defer: function() { return setTestEntryState( 'deferred', 'typist' ); },
           returnToTypist: function() {
