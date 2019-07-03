@@ -50,4 +50,43 @@ class post extends \cenozo\service\post
       }
     }
   }
+
+  /**
+   * Exteds parent method
+   */
+  protected function finish()
+  {
+    parent::finish();
+
+    $db_test_entry = $this->get_parent_record();
+    $data_table_name = $db_test_entry->get_data_table_name();
+    if( 'rey_data' == $data_table_name )
+    {
+      $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
+      $db_rey_data = $rey_data_class_name::get_unique_record( 'test_entry_id', $db_test_entry->id );
+
+      // If a rey test is set to a language that doesn't exist then change it to one that does
+      if( !is_null( $db_rey_data ) )
+      {
+        $language_sel = lib::create( 'database\select' );
+        $language_sel->add_column( 'id' );
+        $language_list = $db_test_entry->get_language_list( $language_sel );
+        $found = false;
+        foreach( $language_list as $language )
+        {
+          if( $db_rey_data->language_id == $language['id'] )
+          {
+            $found = true;
+            break;
+          }
+        }
+
+        if( !$found )
+        {
+          $db_rey_data->language_id = $language_list[0]['id'];
+          $db_rey_data->save();
+        }
+      }
+    }
+  }
 }

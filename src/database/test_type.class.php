@@ -203,7 +203,7 @@ class test_type extends \cenozo\database\record
       'homophone', 'homophone.first_word_id', 'homophone_count.first_word_id', '', 'homophone_count' );
     $homophone_mod->group( 'fas_data.id' );
     $homophone_mod->order( 'fas_data.test_entry_id' );
-    $homophone_mod->order( 'homophone.first_word_id' );
+    $homophone_mod->order( 'fas_data.rank' );
 
     // create an ordered list of all fas data that has a homophone
     static::db()->execute( 'DROP TABLE IF EXISTS temp_data' );
