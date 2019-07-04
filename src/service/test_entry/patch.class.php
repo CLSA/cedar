@@ -69,7 +69,8 @@ class patch extends \cenozo\service\patch
           foreach( $db_test_entry->get_language_list( $select ) as $row ) $test_entry_language_list[] = $row['id'];
 
           // remove all languages which are in the test entry but not in the word list
-          $db_test_entry->remove_language( array_diff( $test_entry_language_list, $word_language_list ) );
+          $remove_language_list = array_diff( $test_entry_language_list, $word_language_list );
+          if( 0 < count( $remove_language_list ) ) $db_test_entry->remove_language( $remove_language_list );
         }
       }
     }
