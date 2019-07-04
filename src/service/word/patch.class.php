@@ -46,6 +46,24 @@ class patch extends \cenozo\service\patch
   /**
    * Override parent method
    */
+  protected function validate()
+  {
+    parent::validate();
+
+    if( 300 > $this->status->get_code() )
+    {
+      // only admins can edit a word once misspelled, aft and fas have been set
+      $db_word = $this->get_leaf_record();
+      if( !is_null( $db_word->misspelled ) &&
+          !is_null( $db_word->aft ) &&
+          !is_null( $db_word->fas ) &&
+          'administrator' != lib::create( 'business\session' )->get_role()->name ) $this->status->set_code( 403 );
+    }
+  }
+
+  /**
+   * Override parent method
+   */
   protected function setup()
   {
     parent::setup();

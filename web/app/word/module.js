@@ -174,8 +174,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
-    'CnBaseViewFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory', '$q',
-    function( CnBaseViewFactory, CnModalSelectWordFactory, CnModalTextFactory, $q ) {
+    'CnBaseViewFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory', 'CnSession', '$q',
+    function( CnBaseViewFactory, CnModalSelectWordFactory, CnModalTextFactory, CnSession, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
@@ -188,6 +188,20 @@ define( function() {
           if( angular.isDefined( self.testEntryModel ) )
             self.testEntryModel.getChooseEnabled = function() { return false; };
         } );
+
+        this.onView = function( force ) {
+          // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
+          return this.$$onView( force ).then( function() {
+            self.parentModel.getEditEnabled = function() {
+              return self.parentModel.$$getEditEnabled() && (
+                'administrator' == CnSession.role.name ||
+                '' === self.record.mispelled ||
+                '' === self.record.aft ||
+                '' === self.record.fas
+              );
+            }
+          } );
+        };
 
         this.onPatch = function( data ) {
           function undoChange( data ) {
