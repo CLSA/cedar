@@ -22,6 +22,7 @@ CREATE PROCEDURE patch_report_restriction()
     PREPARE statement FROM @sql;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
+
   END //
 DELIMITER ;
 
