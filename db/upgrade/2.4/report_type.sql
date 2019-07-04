@@ -20,6 +20,16 @@ DROP PROCEDURE IF EXISTS patch_report_type;
     EXECUTE statement;
     DEALLOCATE PREPARE statement;
 
+    SELECT "Adding animal_code report to report_type table" AS "";
+
+    SET @sql = CONCAT(
+      "INSERT IGNORE INTO ", @cenozo, ".report_type ( name, title, subject, description ) VALUES ",
+      "( 'animal_code', 'Animal Code', 'word', ",
+        "'This report provides a list of all words broken down by animal code.' )" );
+    PREPARE statement FROM @sql;
+    EXECUTE statement;
+    DEALLOCATE PREPARE statement;
+
   END //
 DELIMITER ;
 

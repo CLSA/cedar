@@ -57,6 +57,11 @@ define( function() {
         column: 'word_test_type_total.rey_total',
         title: '#REY',
         type: 'number'
+      },
+      update_timestamp: {
+        column: 'word.update_timestamp',
+        title: 'Timestamp',
+        type: 'datetime'
       }
     },
     defaultOrder: {
