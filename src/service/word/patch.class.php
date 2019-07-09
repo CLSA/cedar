@@ -87,7 +87,9 @@ class patch extends \cenozo\service\patch
             $this->status->set_code( 306 );
             $this->set_data( 'The parent sister word cannot be used because it already has its own parent sister word.' );
           }
-          else if( $db_english_language->id == $db_word->language_id && $db_sister_word->language_id != $db_word->language_id )
+          else if( $db_english_language->id == $db_word->language_id &&
+                   !is_null( $db_sister_word ) &&
+                   $db_sister_word->language_id != $db_word->language_id )
           {
             $this->status->set_code( 306 );
             $this->set_data( 'English words cannot have a non-English parent sister word.' );
