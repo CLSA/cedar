@@ -70,51 +70,51 @@ class patch extends \cenozo\service\patch
         $patch_array = $this->get_file_as_array();
         if( array_key_exists( 'sister_word_id', $patch_array ) )
         {
-          $db_sister_word = lib::create( 'database\word', $patch_array['sister_word_id'] );
-          log::debug( $db_english_language->id == $db_word->language_id, $db_sister_word->language_id != $db_word->language_id );
-          if( $db_sister_word->id == $db_word->id )
+          if( !is_null( $patch_array['sister_word_id'] ) )
           {
-            $this->status->set_code( 306 );
-            $this->set_data( 'A word cannot have itself as its own parent sister word.' );
-          }
-          else if( 'invalid' == $db_sister_word->fas )
-          {
-            $this->status->set_code( 306 );
-            $this->set_data( 'The parent sister word cannot be used because its FAS status is invalid' );
-          }
-          else if( !is_null( $db_sister_word->sister_word_id ) )
-          {
-            $this->status->set_code( 306 );
-            $this->set_data( 'The parent sister word cannot be used because it already has its own parent sister word.' );
-          }
-          else if( $db_english_language->id == $db_word->language_id &&
-                   !is_null( $db_sister_word ) &&
-                   $db_sister_word->language_id != $db_word->language_id )
-          {
-            $this->status->set_code( 306 );
-            $this->set_data( 'English words cannot have a non-English parent sister word.' );
-          }
-          else
-          {
-            // make sure this word isn't a parent sister word
-            $word_class_name = lib::get_class_name( 'database\word' );
-            $select = lib::create( 'database\select' );
-            $select->add_column( 'word' );
-            $select->add_table_column( 'language', 'code' );
-            $modifier = lib::create( 'database\modifier' );
-            $modifier->join( 'language', 'word.language_id', 'language.id' );
-            $modifier->where( 'sister_word_id', '=', $db_word->id );
-            $word_list = $word_class_name::select( $select, $modifier );
-
-            if( 0 < count( $word_list ) )
+            $db_sister_word = lib::create( 'database\word', $patch_array['sister_word_id'] );
+            if( $db_sister_word->id == $db_word->id )
             {
-              $list = [];
-              foreach( $word_list as $word ) $list[] = sprintf( '"%s" [%s]', $word['word'], $word['code'] );
               $this->status->set_code( 306 );
-              $this->set_data( sprintf(
-                'You cannot assign a parent sister to this word since it is already a parent to: %s',
-                implode( ', ', $list )
-              ) );
+              $this->set_data( 'A word cannot have itself as its own parent sister word.' );
+            }
+            else if( 'invalid' == $db_sister_word->fas )
+            {
+              $this->status->set_code( 306 );
+              $this->set_data( 'The parent sister word cannot be used because its FAS status is invalid' );
+            }
+            else if( !is_null( $db_sister_word->sister_word_id ) )
+            {
+              $this->status->set_code( 306 );
+              $this->set_data( 'The parent sister word cannot be used because it already has its own parent sister word.' );
+            }
+            else if( $db_english_language->id == $db_word->language_id && $db_sister_word->language_id != $db_word->language_id )
+            {
+              $this->status->set_code( 306 );
+              $this->set_data( 'English words cannot have a non-English parent sister word.' );
+            }
+            else
+            {
+              // make sure this word isn't a parent sister word
+              $word_class_name = lib::get_class_name( 'database\word' );
+              $select = lib::create( 'database\select' );
+              $select->add_column( 'word' );
+              $select->add_table_column( 'language', 'code' );
+              $modifier = lib::create( 'database\modifier' );
+              $modifier->join( 'language', 'word.language_id', 'language.id' );
+              $modifier->where( 'sister_word_id', '=', $db_word->id );
+              $word_list = $word_class_name::select( $select, $modifier );
+
+              if( 0 < count( $word_list ) )
+              {
+                $list = [];
+                foreach( $word_list as $word ) $list[] = sprintf( '"%s" [%s]', $word['word'], $word['code'] );
+                $this->status->set_code( 306 );
+                $this->set_data( sprintf(
+                  'You cannot assign a parent sister to this word since it is already a parent to: %s',
+                  implode( ', ', $list )
+                ) );
+              }
             }
           }
         }
