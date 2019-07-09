@@ -63,11 +63,15 @@ class patch extends \cenozo\service\patch
       }
       else
       {
+        $language_class_name = lib::get_class_name( 'database\language' );
+        $db_english_language = $language_class_name::get_unique_record( 'code', 'en' );
+
         // do not allow a word's sister word to be itself, a word who has a parent or an fas-invalid word
         $patch_array = $this->get_file_as_array();
         if( array_key_exists( 'sister_word_id', $patch_array ) )
         {
           $db_sister_word = lib::create( 'database\word', $patch_array['sister_word_id'] );
+          log::debug( $db_english_language->id == $db_word->language_id, $db_sister_word->language_id != $db_word->language_id );
           if( $db_sister_word->id == $db_word->id )
           {
             $this->status->set_code( 306 );
@@ -82,6 +86,11 @@ class patch extends \cenozo\service\patch
           {
             $this->status->set_code( 306 );
             $this->set_data( 'The parent sister word cannot be used because it already has its own parent sister word.' );
+          }
+          else if( $db_english_language->id == $db_word->language_id && $db_sister_word->language_id != $db_word->language_id )
+          {
+            $this->status->set_code( 306 );
+            $this->set_data( 'English words cannot have a non-English parent sister word.' );
           }
           else
           {
