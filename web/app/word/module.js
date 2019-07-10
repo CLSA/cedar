@@ -196,10 +196,18 @@ define( function() {
         this.lastFasValue = null;
         this.sisterWordLastPatched = false;
 
-        // disable the choosing of test-entries using this word
         this.deferred.promise.then( function() {
+          // disable the choosing of test-entries using this word
           if( angular.isDefined( self.testEntryModel ) )
             self.testEntryModel.getChooseEnabled = function() { return false; };
+
+          // only allow words with no animal code to be compounded
+          if( angular.isDefined( self.compoundModel ) )
+            self.compoundModel.getAddEnabled = function() {
+              return self.compoundModel.$$getAddEnabled() &&
+                     angular.isDefined( self.record.animal_code ) &&
+                     !self.record.animal_code;
+            };
         } );
 
         this.onView = function( force ) {
