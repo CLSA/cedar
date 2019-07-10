@@ -98,7 +98,8 @@ define( function() {
           { column: 'word.fas', operator: '!=', value: 'invalid' },
           { column: 'word.sister_word_id', operator: '=', value: null }
         ] }
-      }
+      },
+      constant: 'view' // changed in the model below
     },
     misspelled: {
       title: 'Misspelled',
@@ -202,17 +203,27 @@ define( function() {
         } );
 
         this.onView = function( force ) {
-          // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
-          return this.$$onView( force ).then( function() {
-            self.parentModel.getEditEnabled = function() {
-              return self.parentModel.$$getEditEnabled() && (
-                'administrator' == CnSession.role.name ||
-                '' === self.record.mispelled ||
-                '' === self.record.aft ||
-                '' === self.record.fas
-              );
-            }
-          } );
+          return $q.all( [
+            // do not allow compounded words to have a parent sister word
+            CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/compound'
+            } ).count().then( function( response ) {
+              var mainInputGroup = self.parentModel.module.inputGroupList.findByProperty( 'title', '' );
+              mainInputGroup.inputList.sister_word_id.constant = 0 < parseInt( response.headers( 'Total' ) ) ? 'view' : false;
+            } ),
+            
+            // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
+            this.$$onView( force ).then( function() {
+              self.parentModel.getEditEnabled = function() {
+                return self.parentModel.$$getEditEnabled() && (
+                  'administrator' == CnSession.role.name ||
+                  '' === self.record.mispelled ||
+                  '' === self.record.aft ||
+                  '' === self.record.fas
+                );
+              }
+            } )
+          ] );
         };
 
         this.onPatch = function( data ) {

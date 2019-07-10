@@ -73,7 +73,12 @@ class patch extends \cenozo\service\patch
           if( !is_null( $patch_array['sister_word_id'] ) )
           {
             $db_sister_word = lib::create( 'database\word', $patch_array['sister_word_id'] );
-            if( $db_sister_word->id == $db_word->id )
+            if( 0 < $db_word->get_compound_count() )
+            {
+              $this->status->set_code( 306 );
+              $this->set_data( 'Compounded words cannot have a parent sister word.' );
+            }
+            else if( $db_sister_word->id == $db_word->id )
             {
               $this->status->set_code( 306 );
               $this->set_data( 'A word cannot have itself as its own parent sister word.' );
