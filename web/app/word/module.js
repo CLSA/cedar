@@ -93,8 +93,13 @@ define( function() {
       typeahead: {
         table: 'word',
         select: 'CONCAT( word.word, " [", language.code, "]" )',
-        where: 'word.word'
-      }
+        where: 'word.word',
+        modifier: { where: [
+          { column: 'word.fas', operator: '!=', value: 'invalid' },
+          { column: 'word.sister_word_id', operator: '=', value: null }
+        ] }
+      },
+      constant: 'view' // changed in the model below
     },
     misspelled: {
       title: 'Misspelled',
@@ -179,33 +184,54 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
-    'CnBaseViewFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory', 'CnSession', '$q',
-    function( CnBaseViewFactory, CnModalSelectWordFactory, CnModalTextFactory, CnSession, $q ) {
+    'CnBaseViewFactory', 'CnModalMessageFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory',
+    'CnSession', 'CnHttpFactory', '$q',
+    function( CnBaseViewFactory, CnModalMessageFactory, CnModalSelectWordFactory, CnModalTextFactory,
+              CnSession, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
         this.lastMisspelledValue = null;
         this.lastAftValue = null;
         this.lastFasValue = null;
+        this.sisterWordLastPatched = false;
 
-        // disable the choosing of test-entries using this word
         this.deferred.promise.then( function() {
+          // disable the choosing of test-entries using this word
           if( angular.isDefined( self.testEntryModel ) )
             self.testEntryModel.getChooseEnabled = function() { return false; };
+
+          // only allow words with no animal code to be compounded
+          if( angular.isDefined( self.compoundModel ) )
+            self.compoundModel.getAddEnabled = function() {
+              return self.compoundModel.$$getAddEnabled() &&
+                     angular.isDefined( self.record.animal_code ) &&
+                     !self.record.animal_code;
+            };
         } );
 
         this.onView = function( force ) {
-          // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
-          return this.$$onView( force ).then( function() {
-            self.parentModel.getEditEnabled = function() {
-              return self.parentModel.$$getEditEnabled() && (
-                'administrator' == CnSession.role.name ||
-                '' === self.record.mispelled ||
-                '' === self.record.aft ||
-                '' === self.record.fas
-              );
-            }
-          } );
+          return $q.all( [
+            // do not allow compounded words to have a parent sister word
+            CnHttpFactory.instance( {
+              path: self.parentModel.getServiceResourcePath() + '/compound'
+            } ).count().then( function( response ) {
+              var mainInputGroup = self.parentModel.module.inputGroupList.findByProperty( 'title', '' );
+              mainInputGroup.inputList.sister_word_id.constant = 0 < parseInt( response.headers( 'Total' ) ) ? 'view' : false;
+            } ),
+            
+            // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
+            this.$$onView( force ).then( function() {
+              self.parentModel.getEditEnabled = function() {
+                return self.parentModel.$$getEditEnabled() && (
+                  'administrator' == CnSession.role.name ||
+                  '' === self.record.mispelled ||
+                  '' === self.record.aft ||
+                  '' === self.record.fas
+                );
+              }
+            } )
+          ] );
         };
 
         this.onPatch = function( data ) {
@@ -219,6 +245,8 @@ define( function() {
               self.record.fas = null == self.lastFasValue ? self.backupRecord.fas : self.lastFasValue;
             }
           }
+
+          self.sisterWordLastPatched = angular.isDefined( data.sister_word_id );
 
           if( true == data.misspelled || 'invalid' == data.aft || 'invalid' == data.fas ) {
             var which = 'invalid' == data.aft
@@ -292,6 +320,36 @@ define( function() {
             }
           } );
         };
+
+        // reset the formatted sister word if there is a problem
+        this.onPatchError = function( response ) {
+          this.$$onPatchError( response );
+          if( 306 == response.status &&
+              angular.isDefined( response.config.data.sister_word_id ) ) {
+            this.formattedRecord.sister_word_id = this.backupRecord.formatted_sister_word_id;
+          }
+        };
+
+        // warn if the new sister word is an intrusion
+        this.afterPatch( function() {
+          if( self.sisterWordLastPatched ) {
+            if( self.record.sister_word_id ) {
+              CnHttpFactory.instance( {
+                path: 'word/' + self.record.sister_word_id,
+                data: { select: { column: 'fas' } }
+              } ).get().then( function( response ) {
+                if( 'intrusion' == response.data.fas ) {
+                  CnModalMessageFactory.instance( {
+                    title: 'Parent Sister Word is Intrusion',
+                    message: 'Warning, the parent sister word you have selected is an FAS intrusion. ' +
+                      'Please check to make sure you have selected the correct parent sister word.'
+                  } ).show();
+                }
+              } );
+            }
+            self.sisterWordLastPatched = false;
+          }
+        } );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
