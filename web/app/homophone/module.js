@@ -10,29 +10,16 @@ define( function() {
       possessive: 'homophone\'s'
     },
     columnList: {
-      rank: { title: 'Rank' },
+      first_word: { column: 'first_word.word', title: 'First Word' },
+      first_language: { column: 'first_language.code', title: 'First Language' },
+      rank: { title: 'Rank', type: 'rank' },
       word: { column: 'word.word', title: 'Word' },
+      language: { column: 'language.code', title: 'Language' },
       word_id: { type: 'hidden' }
     },
     defaultOrder: {
-      column: 'homophone.rank',
+      column: 'first_word.word',
       reverse: false
-    }
-  } );
-
-  module.addInputGroup( '', {
-    rank: {
-      title: 'Rank',
-      type: 'string'
-    },
-    word_id: {
-      title: 'Word',
-      type: 'lookup-typeahead',
-      typeahead: {
-        table: 'word',
-        select: 'word.word',
-        where: 'word.word'
-      }
     }
   } );
 
@@ -42,21 +29,6 @@ define( function() {
     function( CnHomophoneModelFactory ) {
       return {
         templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnHomophoneModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnHomophoneView', [
-    'CnHomophoneModelFactory',
-    function( CnHomophoneModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?' },
         controller: function( $scope ) {
@@ -97,7 +69,8 @@ define( function() {
         // add word back into the data array (even if word is the parent module)
         this.getDataArray = function( removeList, type ) {
           var data = this.$$getDataArray( removeList, type );
-          if( 'list' == type && angular.isUndefined( data.word ) ) data.push( this.columnList.word );
+          if( 'list' == type && null == data.findByProperty( 'title', 'Word' ) ) data.push( this.columnList.word );
+          if( 'word' == this.getSubjectFromState() ) data.splice( data.findIndexByProperty( 'title', 'First Word' ), 1 );
           return data;
         };
 
