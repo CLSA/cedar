@@ -92,6 +92,7 @@ class ui extends \cenozo\ui\ui
       }
       $this->add_listitem( 'Test Types', 'test_type' );
       $this->add_listitem( 'Words', 'word' );
+      $this->add_listitem( 'Homophones', 'homophone' );
     }
 
     // add application-specific states to the base list
