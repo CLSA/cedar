@@ -295,7 +295,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                   list.push( language.id );
                   return list;
                 }, [] );
-                if( 0 > self.languageIdList.indexOf( self.record.participant_language_id ) )
+                if( !self.languageIdList.includes( self.record.participant_language_id ) )
                   self.record.participant_language_id = self.languageIdList[0];
               }
             } );
