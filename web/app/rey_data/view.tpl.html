@@ -20,8 +20,9 @@
        style="padding-bottom: 2px; margin: 0px;">
     <label class="col-sm-3 control-label">{{ word.label }}</label>
     <div class="col-sm-4" style="text-align: center;">
+      {{ word.value }}
       <input id="{{ word.name }}_yes"
-             value="1"
+             ng-value="1"
              ng-model="word.value"
              ng-change="patch( word.name )"
              ng-disabled="!isComplete || !editEnabled"
@@ -31,7 +32,7 @@
              ng-style="{ color: !isComplete || !editEnabled ? '#ccc' : '' }"
              style="text-align: left; min-width: 4em;">Yes</label>
       <input id="{{ word.name }}_no"
-             value="0"
+             ng-value="0"
              ng-model="word.value"
              ng-change="patch( word.name )"
              ng-disabled="!isComplete || !editEnabled"
@@ -45,7 +46,7 @@
                       cnByObjectProperty:'language_id':model.viewModel.record.language_id |
                       cnByObjectProperty:'word':word.name">
         <input id="{{ word.name }}_{{ variant.name }}"
-               value="variant{{ variant.value }}"
+               ng-value="variant{{ variant.value }}"
                ng-model="word.value"
                ng-change="patch( word.name )"
                ng-disabled="!variant.allowed || !isComplete || !editEnabled"
