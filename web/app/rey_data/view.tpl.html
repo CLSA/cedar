@@ -20,7 +20,6 @@
        style="padding-bottom: 2px; margin: 0px;">
     <label class="col-sm-3 control-label">{{ word.label }}</label>
     <div class="col-sm-4" style="text-align: center;">
-      {{ word.value }}
       <input id="{{ word.name }}_yes"
              ng-value="1"
              ng-model="word.value"
@@ -46,7 +45,7 @@
                       cnByObjectProperty:'language_id':model.viewModel.record.language_id |
                       cnByObjectProperty:'word':word.name">
         <input id="{{ word.name }}_{{ variant.name }}"
-               ng-value="variant{{ variant.value }}"
+               value="variant{{ variant.value }}"
                ng-model="word.value"
                ng-change="patch( word.name )"
                ng-disabled="!variant.allowed || !isComplete || !editEnabled"

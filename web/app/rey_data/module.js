@@ -132,11 +132,11 @@ define( function() {
                 } else {
                   var variantProperty = property + '_rey_data_variant_id';
                   var wordValue = $scope.model.viewModel.wordList.findByProperty( 'name', property ).value;
-                  var match = wordValue.match( /variant([0-9]+)/ );
-                  if( null == match ) {
+                  if( angular.isNumber( wordValue ) ) {
                     data[property] = parseInt( wordValue );
                     data[variantProperty] = null;
                   } else {
+                    var match = wordValue.match( /variant([0-9]+)/ );
                     data[property] = null;
                     data[variantProperty] = parseInt( match[1] );
                   }
