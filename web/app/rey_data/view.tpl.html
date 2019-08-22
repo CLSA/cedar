@@ -21,7 +21,7 @@
     <label class="col-sm-3 control-label">{{ word.label }}</label>
     <div class="col-sm-4" style="text-align: center;">
       <input id="{{ word.name }}_yes"
-             value="1"
+             ng-value="1"
              ng-model="word.value"
              ng-change="patch( word.name )"
              ng-disabled="!isComplete || !editEnabled"
@@ -31,7 +31,7 @@
              ng-style="{ color: !isComplete || !editEnabled ? '#ccc' : '' }"
              style="text-align: left; min-width: 4em;">Yes</label>
       <input id="{{ word.name }}_no"
-             value="0"
+             ng-value="0"
              ng-model="word.value"
              ng-change="patch( word.name )"
              ng-disabled="!isComplete || !editEnabled"
