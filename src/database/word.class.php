@@ -22,8 +22,9 @@ class word extends \cenozo\database\record
     if( ( 'word' == $column_name && !is_null( $this->language_id ) ) ||
         ( 'language_id' == $column_name && !is_null( $this->word ) ) )
     {
+      if( 'word' == $column_name ) $value = strtolower( str_replace( "`", "'", $value ) );
       $language_id = 'language_id' == $column_name ? $value : $this->language_id;
-      $word = 'word' == $column_name ? strtolower( str_replace( "`", "'", $value ) ) : $this->word;
+      $word = 'word' == $column_name ? $value : $this->word;
 
       $test = 'a-z';
       $special_letter_class_name = lib::get_class_name( 'database\special_letter' );
