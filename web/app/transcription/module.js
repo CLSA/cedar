@@ -78,7 +78,8 @@ define( function() {
     site_id: {
       title: 'Credited Site',
       type: 'hidden',
-      isExcluded: 'add'
+      isExcluded: 'add',
+      isConstant: function( $state, model ) { return !model.isAdministrator(); }
     },
     state: {
       title: 'State',
@@ -507,6 +508,7 @@ define( function() {
           } );
         };
 
+        this.isAdministrator = function() { return 'administrator' == CnSession.role.name; };
         this.isTypist = function() { return 'typist' == CnSession.role.name; };
         this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
 
@@ -514,7 +516,6 @@ define( function() {
           var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;
           inputList.user_id.type = 'enum';
           inputList.site_id.type = 'enum';
-          inputList.site_id.isConstant = 3 > CnSession.role.tier;
           inputList.state.type = 'string';
         }
 
