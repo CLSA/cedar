@@ -29,12 +29,12 @@ define( function() {
       column: 'language.name',
       title: 'Language',
       type: 'string',
-      constant: true
+      isConstant: true
     },
     letter: {
       title: 'Letter',
       type: 'string',
-      constant: true
+      isConstant: true
     }
   } );
 

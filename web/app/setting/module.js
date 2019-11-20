@@ -37,7 +37,7 @@ define( function() {
       column: 'site.name',
       title: 'Site',
       type: 'string',
-      constant: true
+      isConstant: true
     },
     max_working_transcriptions: {
       title: 'Max Working Transcriptions',

@@ -74,12 +74,12 @@ define( function() {
     language_id: {
       title: 'Language',
       type: 'enum',
-      constant: 'view'
+      isConstant: 'view'
     },
     word: {
       title: 'Word',
       type: 'string',
-      constant: 'view'
+      isConstant: 'view'
     },
     animal_code: {
       title: 'Animal Code',
@@ -99,7 +99,9 @@ define( function() {
           { column: 'word.sister_word_id', operator: '=', value: null }
         ] }
       },
-      constant: 'view' // changed in the model below
+      isConstant: function( $state, model ) {
+        return 0 == model.viewModel.compoundWordCount ? false : 'view';
+      }
     },
     misspelled: {
       title: 'Misspelled',
@@ -195,6 +197,7 @@ define( function() {
         this.lastAftValue = null;
         this.lastFasValue = null;
         this.sisterWordLastPatched = false;
+        this.compoundWordCount = 0;
 
         this.deferred.promise.then( function() {
           // disable the choosing of test-entries using this word
@@ -212,12 +215,11 @@ define( function() {
 
         this.onView = function( force ) {
           return $q.all( [
-            // do not allow compounded words to have a parent sister word
+            // keep track of how many compound words this word has (to set sister_word_id to constant above)
             CnHttpFactory.instance( {
               path: self.parentModel.getServiceResourcePath() + '/compound'
             } ).count().then( function( response ) {
-              var mainInputGroup = self.parentModel.module.inputGroupList.findByProperty( 'title', '' );
-              mainInputGroup.inputList.sister_word_id.constant = 0 < parseInt( response.headers( 'Total' ) ) ? 'view' : false;
+              self.compoundWordCount = parseInt( response.headers( 'Total' ) );
             } ),
             
             // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined

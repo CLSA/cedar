@@ -38,12 +38,12 @@ define( function() {
     average_score: {
       title: 'Average Score',
       type: 'string',
-      constant: true
+      isConstant: true
     },
     average_alt_score: {
       title: 'Average Alternate Score',
       type: 'string',
-      constant: true
+      isConstant: true
     },
     description: {
       title: 'Description',

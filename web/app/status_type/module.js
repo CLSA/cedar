@@ -29,7 +29,7 @@ define( function() {
     category: {
       title: 'Category',
       type: 'enum',
-      constant: 'view'
+      isConstant: 'view'
     },
     rank: {
       title: 'Rank',
@@ -65,8 +65,8 @@ define( function() {
                 var input = cnRecordAddScope.dataArray.findByProperty( 'title', '' ).inputArray.findByProperty( 'key', 'rank' );
 
                 // lock the rank input so users don't try and change it while the enum is being updated
-                var oldConstant = input.constant;
-                input.constant = true;
+                var oldConstant = input.isConstant;
+                input.isConstant = function() { return true; };
 
                 // update the max rank, then rebuild the input's enum list using the new metadata
                 $scope.model.setMaxRank( cnRecordAddScope.record[property] ).then( function() {
@@ -80,7 +80,7 @@ define( function() {
 
                   // if the rank is out of the new category's range then reset it
                   if( cnRecordAddScope.record.rank > maxRank + 1 ) cnRecordAddScope.record.rank = undefined;
-                  input.constant = oldConstant;
+                  input.isConstant = oldConstant;
                 } );
               }
             };

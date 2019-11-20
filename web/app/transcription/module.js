@@ -67,8 +67,8 @@ define( function() {
       column: 'participant.uid',
       title: 'Participant',
       type: 'string',
-      exclude: 'add',
-      constant: true
+      isExcluded: 'add',
+      isConstant: true
     },
     user_id: {
       title: 'User',
@@ -78,28 +78,28 @@ define( function() {
     site_id: {
       title: 'Credited Site',
       type: 'hidden',
-      exclude: 'add'
+      isExcluded: 'add'
     },
     state: {
       title: 'State',
       type: 'hidden',
-      exclude: 'add',
-      constant: true,
+      isExcluded: 'add',
+      isConstant: true,
       help: 'One of "assigned", "deferred" or "completed"'
     },
     start_datetime: {
       column: 'start_datetime',
       title: 'Start Date & Time',
       type: 'datetimesecond',
-      exclude: 'add',
-      constant: true
+      isExcluded: 'add',
+      isConstant: true
     },
     end_datetime: {
       column: 'end_datetime',
       title: 'End Date & Time',
       type: 'datetimesecond',
-      exclude: 'add',
-      constant: true,
+      isExcluded: 'add',
+      isConstant: true,
       help: 'Only set when the state is "completed"'
     }
   } );
@@ -514,7 +514,7 @@ define( function() {
           var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;
           inputList.user_id.type = 'enum';
           inputList.site_id.type = 'enum';
-          inputList.site_id.constant = 3 > CnSession.role.tier;
+          inputList.site_id.isConstant = 3 > CnSession.role.tier;
           inputList.state.type = 'string';
         }
 
