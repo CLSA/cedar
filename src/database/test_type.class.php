@@ -369,7 +369,7 @@ class test_type extends \cenozo\database\record
     $mat_mod->where(
       'IFNULL( IF('."\n".
       '  mat_data.value RLIKE "[0-9]",'."\n".
-      '  mat_data.value = sequence.value + 1,'."\n".
+      '  mat_data.value = IF( sequence.value RLIKE "[0-9]", sequence.value + 1, NULL ),'."\n".
       '  ord( mat_data.value ) = ord( sequence.value ) + 1 '."\n".
       '), true )',
       '=',
