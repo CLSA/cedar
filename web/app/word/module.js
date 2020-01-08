@@ -318,6 +318,7 @@ define( function() {
                 if( 'primary' == self.record.aft ) self.record.aft = '';
               } else {
                 self.record.aft = 'primary';
+                self.record.misspelled = false;
               }
             }
           } );

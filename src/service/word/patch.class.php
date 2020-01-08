@@ -149,9 +149,14 @@ class patch extends \cenozo\service\patch
     }
 
     if( !$db_word->animal_code && 'primary' == $db_word->aft )
+    {
       $db_word->aft = NULL;
+    }
     else if( $db_word->animal_code )
+    {
       $db_word->aft = 'primary';
+      $db_word->misspelled = false;
+    }
   }
 
   /**
