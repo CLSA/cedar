@@ -18,12 +18,10 @@ class compound extends \cenozo\database\has_rank
    */
   public function delete()
   {
-    $db_word = $this->get_word();
-
     parent::delete();
 
     // also update the base word's AFT and FAS status
-    $db_word->update_based_on_compound_words();
+    $this->get_word()->update_based_on_compound_words();
   }
 
   /**
@@ -33,8 +31,11 @@ class compound extends \cenozo\database\has_rank
   {
     parent::save();
 
-    // also update the base word's AFT and FAS status
-    $this->get_word()->update_based_on_compound_words();
+    // Note: we only want to update the word if there are 2 or more compound words, otherwise the
+    // word's AFT and FAS columns will be set when there is only 1 compound word resulting in the
+    // word being uneditable by supervisors
+    $db_word = $this->get_word();
+    if( 1 < $db_word->get_compound_count() ) $db_word->update_based_on_compound_words();
   }
 
   /**
