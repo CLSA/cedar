@@ -198,6 +198,7 @@ define( function() {
         this.lastFasValue = null;
         this.sisterWordLastPatched = false;
         this.compoundWordCount = 0;
+        this.wordLocked = false;
 
         this.deferred.promise.then( function() {
           // disable the choosing of test-entries using this word
@@ -213,6 +214,14 @@ define( function() {
             };
         } );
 
+        this.updateWordLocked = function() {
+          this.wordLocked = 
+            'administrator' != CnSession.role.name &&
+            '' !== self.record.mispelled &&
+            '' !== self.record.aft &&
+            '' !== self.record.fas;
+        };
+
         this.onView = function( force ) {
           return $q.all( [
             // keep track of how many compound words this word has (to set sister_word_id to constant above)
@@ -224,13 +233,9 @@ define( function() {
             
             // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
             this.$$onView( force ).then( function() {
+              self.updateWordLocked();
               self.parentModel.getEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() && (
-                  'administrator' == CnSession.role.name ||
-                  '' === self.record.mispelled ||
-                  '' === self.record.aft ||
-                  '' === self.record.fas
-                );
+                return self.parentModel.$$getEditEnabled() && !self.wordLocked;
               }
             } )
           ] );
@@ -296,6 +301,8 @@ define( function() {
                       
                       // if a note was added then the test-entry list may have changed
                       if( angular.isDefined( self.testEntryModel ) ) self.testEntryModel.listModel.onList( true );
+
+                      self.updateWordLocked();
                     } );
                   }
                 } );
@@ -321,6 +328,8 @@ define( function() {
                 self.record.misspelled = false;
               }
             }
+
+            self.updateWordLocked();
           } );
         };
 
