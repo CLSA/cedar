@@ -113,8 +113,7 @@ class transcription extends \cenozo\database\record
     $test_type_class_name = lib::get_class_name( 'database\test_type' );
 
     $modifier = lib::create( 'database\modifier' );
-    $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
-    $modifier->where( 'transcription.id', '=', $this->id );
+    $modifier->where( 'test_entry.transcription_id', '=', $this->id );
 
     $test_type_class_name::rescore_all( $modifier );
   }

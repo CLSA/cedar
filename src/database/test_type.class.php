@@ -25,7 +25,7 @@ class test_type extends \cenozo\database\record
   public function rescore( $modifier = NULL )
   {
     if( is_null( $modifier ) ) $modifier = lib::create( 'database\modifier' );
-    $modifier->where( 'test_type.id', '=', $this->id );
+    $modifier->where( 'test_entry.test_type_id', '=', $this->id );
     static::rescore_all( $modifier );
   }
 
@@ -55,6 +55,10 @@ class test_type extends \cenozo\database\record
     $select->add_column( 'id' );
 
     if( is_null( $modifier ) ) $modifier = lib::create( 'database\modifier' );
+
+    // this is used below to set all test scores to NULL before setting their new values
+    $test_entry_mod = clone $modifier;
+
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
     $modifier->left_join(
       'status_type',
@@ -490,12 +494,6 @@ class test_type extends \cenozo\database\record
     $rey2_mod->join( 'rey_data', 'test_entry.id', 'rey_data.test_entry_id' );
     $rey2_mod->join(
       'test_entry', 'first_test_entry.transcription_id', 'test_entry.transcription_id', '', 'first_test_entry' );
-    $modifier->left_join(
-      'status_type',
-      'first_test_entry.participant_status_type_id',
-      'participant_status_type.id',
-      'participant_status_type'
-    );
     $rey2_mod->join( 'test_type', 'first_test_entry.test_type_id', 'first_test_type.id', '', 'first_test_type' );
     $rey2_mod->join( 'rey_data', 'first_test_entry.id', 'first_rey_data.test_entry_id', '', 'first_rey_data' );
     $rey2_mod->where( 'test_type.name', 'LIKE', '%(REY2)' );
@@ -506,6 +504,11 @@ class test_type extends \cenozo\database\record
       "INSERT INTO temp_rescore\n%s %s",
       $rey2_sel->get_sql(),
       $rey2_mod->get_sql()
+    ) );
+
+    static::db()->execute( sprintf(
+      'UPDATE test_entry SET score = NULL, alt_score = NULL %s',
+      $test_entry_mod->get_sql()
     ) );
 
     // now update the test-entry scores
