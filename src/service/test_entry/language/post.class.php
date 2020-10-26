@@ -35,13 +35,16 @@ class post extends \cenozo\service\post
 
       // do not allow languages which are used in the data to be removed
       $data_table_name = $db_test_entry->get_data_table_name();
-      if( 'aft_data' == $data_table_name || 'fas_data' == $data_table_name ) {
+      if( 'aft_data' == $data_table_name || 'fas_data' == $data_table_name )
+      {
         $modifier = lib::create( 'database\modifier' );
         $modifier->join( 'word', $data_table_name.'.word_id', 'word.id' );
         $modifier->where( 'word.language_id', 'IN', $post_object->remove );
         $method_name = sprintf( 'get_%s_count', $data_table_name );
         if( 0 < $db_test_entry->$method_name( $modifier ) ) $this->get_status()->set_code( 409 );
-      } else if( 'rey_data' == $data_table_name ) {
+      }
+      else if( 'rey_data' == $data_table_name )
+      {
         $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
         $modifier = lib::create( 'database\modifier' );
         $modifier->where( 'word.language_id', 'IN', $post_object->remove );

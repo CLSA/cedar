@@ -49,7 +49,8 @@ class patch extends \cenozo\service\patch
     {
       $db_test_entry = $this->get_leaf_record();
       $data_table_name = $db_test_entry->get_data_table_name();
-      if( 'aft_data' == $data_table_name || 'fas_data' == $data_table_name ) {
+      if( 'aft_data' == $data_table_name || 'fas_data' == $data_table_name )
+      {
         $modifier = lib::create( 'database\modifier' );
         $modifier->join( 'word', $data_table_name.'.word_id', 'word.id' );
         $select = lib::create( 'database\select' );
