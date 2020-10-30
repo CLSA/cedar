@@ -83,8 +83,8 @@ class ui extends \cenozo\ui\ui
       // remove certain default list items
       $this->remove_listitem( 'Availability Types' );
       $this->remove_listitem( 'Form Types' );
-      $this->remove_listitem( 'Quotas' );
       $this->remove_listitem( 'Sources' );
+      $this->remove_listitem( 'Strata' );
       if( 2 < $db_role->tier )
       {
         $this->add_listitem( 'REY Variant', 'rey_data_variant' );
