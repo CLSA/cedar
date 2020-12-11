@@ -192,7 +192,7 @@ define( function() {
               CnSession, CnHttpFactory, $q ) {
       var object = function( parentModel, root ) {
         var self = this;
-        CnBaseViewFactory.construct( this, parentModel, root );
+        CnBaseViewFactory.construct( this, parentModel, root, 'compound' );
         this.lastMisspelledValue = null;
         this.lastAftValue = null;
         this.lastFasValue = null;

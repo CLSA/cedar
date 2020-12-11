@@ -450,7 +450,7 @@ define( function() {
     function( CnBaseViewFactory, CnHttpFactory ) {
       var object = function( parentModel, root ) {
         var self = this;
-        CnBaseViewFactory.construct( this, parentModel, root );
+        CnBaseViewFactory.construct( this, parentModel, root, 'test_entry' );
 
         // never allow the language list to be changed directly, this is done automatically by the database
         this.deferred.promise.then( function() {
