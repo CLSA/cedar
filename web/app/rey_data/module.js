@@ -461,7 +461,10 @@ define( function() {
 
             CnHttpFactory.instance( {
               path: 'word?rey_words=1',
-              data: { select: { column: [ 'id', 'word', 'sister_list' ] } }
+              data: {
+                select: { column: [ 'id', 'word', 'sister_list' ] },
+                modifier: { limit: 1000 }
+              }
             } ).query().then( function( response ) {
               response.data.forEach( function( item ) {
                 self.sisterList.push( {
@@ -486,7 +489,8 @@ define( function() {
                     { table: 'variant', column: 'word', alias: 'variant' },
                     { table: 'variant', column: 'language_id', alias: 'variant_language_id' }
                   ]
-                }
+                },
+                modifier: { limit: 1000 }
               }
             } ).query().then( function( response ) {
               response.data.forEach( function( item ) {
@@ -505,7 +509,7 @@ define( function() {
               path: 'language',
               data: {
                 select: { column: [ 'id', 'name' ] },
-                modifier: { where: { column: 'active', operator: '=', value: true } }
+                modifier: { where: { column: 'active', operator: '=', value: true }, limit: 1000 }
               }
             } ).query().then( function( response ) {
               response.data.forEach( function( item ) {

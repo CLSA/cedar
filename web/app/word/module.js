@@ -85,7 +85,13 @@ define( function() {
       title: 'Animal Code',
       type: 'string',
       // regex is exactly 7 integers >= 0 delimited by a period (.)
-      regex: '^([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)\.([0-9]|[1-9][0-9]+)$'
+      regex: '^([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)\.' +
+              '([0-9]|[1-9][0-9]+)$'
     },
     sister_word_id: {
       title: 'Parent Sister Word',
@@ -387,7 +393,11 @@ define( function() {
               path: 'language',
               data: {
                 select: { column: [ 'id', 'name' ] },
-                modifier: { where: { column: 'active', operator: '=', value: true }, order: { name: false } }
+                modifier: {
+                  where: { column: 'active', operator: '=', value: true },
+                  order: { name: false },
+                  limit: 1000
+                }
               }
             } ).query().then( function success( response ) {
               self.metadata.columnList.language_id.enumList = [];
