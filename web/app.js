@@ -419,8 +419,7 @@ cenozo.factory( 'CnBaseDataModelFactory', [
             return 'premat_data' == type || 'rey_data' == type
                  ? type + '/test_entry_id=' + $state.params.identifier
                  : 'test_entry/' + $state.params.identifier + '/' + type;
-          },
-          isTypist: function() { return 'typist' == CnSession.role.name; }
+          }
         } );
 
         if( 'aft' == object.getDataType() || 'fas' == object.getDataType() ) {

@@ -160,21 +160,21 @@
               State: {{ model.viewModel.record.state|cnUCWords }} <span class="caret"></span>
             </button>
             <ul class="dropdown-menu">
-              <li ng-if="'assigned' != model.viewModel.record.state && !model.isTypist">
+              <li ng-if="'assigned' != model.viewModel.record.state && !model.isRole( 'typist' )">
                 <a ng-click="model.viewModel.returnToTypist()">
                   {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Return to Typist
                 </a>
               </li>
               <li ng-if="'deferred' != model.viewModel.record.state &&
-                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                         ( !model.isRole( 'typist' ) || 'submitted' != model.viewModel.record.state )">
                 <a ng-click="model.viewModel.defer()">
                   {{ 'submitted' == model.viewModel.record.state ? 'Un-submit and ' : '' }} Defer
                 </a>
               </li>
               <li ng-if="'submitted' != model.viewModel.record.state &&
-                         ( !model.isTypist || 'submitted' != model.viewModel.record.state )">
+                         ( !model.isRole( 'typist' ) || 'submitted' != model.viewModel.record.state )">
                 <a ng-click="model.viewModel.submit()">
-                  {{ model.isTypist ? 'Submit' : 'Force Submit' }}
+                  {{ model.isRole( 'typist' ) ? 'Submit' : 'Force Submit' }}
                 </a>
               </li>
             </ul>

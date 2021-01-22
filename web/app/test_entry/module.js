@@ -31,7 +31,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
       },
       user_list: {
         title: 'User List',
-        isIncluded: function( $state, model ) { return !model.isTypist; },
+        isIncluded: function( $state, model ) { return !model.isRole( 'typist' ); },
         help: 'Which users have worked with the test-entry, ordered by first access date'
       },
       language_list: {
@@ -249,12 +249,12 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               }
             } ).patch().then( function() {
               self.record.state = state;
-              if( 'assigned' != state && self.parentModel.isTypist ) return self.transition( 'next' );
+              if( 'assigned' != state && self.parentModel.isRole( 'typist' ) ) return self.transition( 'next' );
             } ).finally( function() { self.isWorking = false; } );
           }
 
           var checkNote = false;
-          if( forceNote ) checkNote = 'typist' == forceNote ? self.parentModel.isTypist : true;
+          if( forceNote ) checkNote = 'typist' == forceNote ? self.parentModel.isRole( 'typist' ) : true;
 
           if( checkNote ) {
             // force a new message if the last one wasn't left by the current user
@@ -317,7 +317,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           angular.extend( self.parentModel, {
             getStatusEditEnabled: function() {
               return self.parentModel.$$getEditEnabled() &&
-                     ( !self.parentModel.isTypist || 'assigned' == self.record.state );
+                     ( !self.parentModel.isRole( 'typist' ) || 'assigned' == self.record.state );
             },
             getSubStatusEditEnabled: function( base ) {
               return self.parentModel.$$getEditEnabled() &&
@@ -329,7 +329,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             },
             getEditEnabled: function() {
               return self.parentModel.$$getEditEnabled() && (
-                       !self.parentModel.isTypist || (
+                       !self.parentModel.isRole( 'typist' ) || (
                          'assigned' == self.record.state &&
                          'Unusable' != self.record.audio_status &&
                          'Unavailable' != self.record.audio_status &&
@@ -548,7 +548,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             } ).patch();
           },
           close: function() {
-            if( self.parentModel.isTypist ) {
+            if( self.parentModel.isRole( 'typist' ) ) {
               self.isWorking = true;
               return CnHttpFactory.instance( {
                 path: self.parentModel.getServiceResourcePath() + '?close=1',
@@ -586,10 +586,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
         this.listModel = CnTestEntryListFactory.instance( this );
         this.viewModel = CnTestEntryViewFactory.instance( this, root );
 
-        this.isTypist = true;
         CnSession.promise.then( function() {
-          self.isTypist = 'typist' == CnSession.role.name;
-          if( !self.isTypist ) {
+          if( !self.isRole( 'typist' ) ) {
             self.addColumn( 'score', { title: 'Score', type: 'number' } );
             self.addColumn( 'alt_score', { title: 'Alt Score', type: 'number' } );
           }

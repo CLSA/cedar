@@ -21,12 +21,12 @@ define( function() {
       user: {
         column: 'user.name',
         title: 'Assigned',
-        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        isIncluded: function( $state, model ) { return !model.isRole( 'typist' ); },
         help: 'Which user the transcription is assigned to'
       },
       user_list: {
         title: 'User List',
-        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        isIncluded: function( $state, model ) { return !model.isRole( 'typist' ); },
         help: 'Which users have worked with at least one test-entry, ordered by first access date'
       },
       language_list: {
@@ -36,12 +36,12 @@ define( function() {
       site: {
         column: 'site.name',
         title: 'Credited Site',
-        isIncluded: function( $state, model ) { return !model.isTypist(); }
+        isIncluded: function( $state, model ) { return !model.isRole( 'typist' ); }
       },
       state: {
         title: 'State',
         type: 'string',
-        isIncluded: function( $state, model ) { return !model.isTypist(); },
+        isIncluded: function( $state, model ) { return !model.isRole( 'typist' ); },
         help: 'One of "assigned", "deferred" or "completed"'
       },
       start_datetime: {
@@ -79,7 +79,7 @@ define( function() {
       title: 'Credited Site',
       type: 'hidden',
       isExcluded: 'add',
-      isConstant: function( $state, model ) { return !model.isAdministrator(); }
+      isConstant: function( $state, model ) { return !model.isRole( 'administrator' ); }
     },
     state: {
       title: 'State',
@@ -508,11 +508,9 @@ define( function() {
           } );
         };
 
-        this.isAdministrator = function() { return 'administrator' == CnSession.role.name; };
-        this.isTypist = function() { return 'typist' == CnSession.role.name; };
         this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
 
-        if( !this.isTypist() ) {
+        if( !this.isRole( 'typist' ) ) {
           var inputList = module.inputGroupList.findByProperty( 'title', '' ).inputList;
           inputList.user_id.type = 'enum';
           inputList.site_id.type = 'enum';
