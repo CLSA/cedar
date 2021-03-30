@@ -12,7 +12,7 @@ global $SETTINGS;
 // tagged version
 $SETTINGS['general']['application_name'] = 'cedar';
 $SETTINGS['general']['instance_name'] = $SETTINGS['general']['application_name'];
-$SETTINGS['general']['version'] = '2.6';
+$SETTINGS['general']['version'] = '2.7';
 $SETTINGS['general']['build'] = '33bc230';
 
 // the location of cedar internal path
