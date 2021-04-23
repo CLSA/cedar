@@ -268,7 +268,6 @@ define( function() {
                   minLength: 10
                 } ).show();
 
-                console.log( response );
                 if( !response ) {
                   undo = true;
                 } else {
