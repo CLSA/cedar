@@ -16,10 +16,14 @@ define( function() {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
         scope: { model: '=?', editEnabled: '=' },
-        controller: function( $scope ) { 
+        controller: async function( $scope ) { 
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnPrematDataModelFactory.root;
           $scope.isComplete = false;
-          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
+          try {
+            await $scope.model.viewModel.onView();
+          } finally {
+            $scope.isComplete = true;
+          }
 
           $scope.patch = function( property ) {
             if( $scope.model.getEditEnabled() ) {
@@ -35,8 +39,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnPrematDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory',
+    function( CnBaseDataViewFactory ) {
       var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); };
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }

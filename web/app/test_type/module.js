@@ -54,20 +54,18 @@ define( function() {
   module.addExtraOperation( 'list', {
     title: 'Rescore All Test Entries',
     isIncluded: function( $state, model ) { return model.canRescoreTestEntries(); },
-    operation: function( $state, model ) {
-      model.listModel.rescoreTestEntries().then( function( response ) {
-        if( angular.isDefined( response ) ) model.listModel.onList( true );
-      } );
+    isDisabled: function( $state, model ) { return model.listModel.rescoreInProgress; },
+    operation: async function( $state, model ) {
+      if( await model.listModel.rescoreTestEntries() ) await model.listModel.onList( true );
     }
   } );
 
   module.addExtraOperation( 'view', {
     title: 'Rescore Test Entries',
     isIncluded: function( $state, model ) { return model.canRescoreTestEntries(); },
-    operation: function( $state, model ) {
-      model.viewModel.rescoreTestEntries().then( function( response ) {
-        if( angular.isDefined( response ) ) model.viewModel.onView();
-      } );
+    isDisabled: function( $state, model ) { return model.viewModel.rescoreInProgress; },
+    operation: async function( $state, model ) {
+      if( await model.viewModel.rescoreTestEntries() ) await model.viewModel.onView();
     }
   } );
 
@@ -106,20 +104,31 @@ define( function() {
     'CnBaseListFactory', 'CnHttpFactory', 'CnModalConfirmFactory',
     function( CnBaseListFactory, CnHttpFactory, CnModalConfirmFactory ) {
       var object = function( parentModel ) {
-        var self = this;
         CnBaseListFactory.construct( this, parentModel );
 
-        this.rescoreTestEntries = function() {
-          return CnModalConfirmFactory.instance( {
-            title: 'Re-Score All Test Entries',
-            message: 'Are you sure you wish to re-score all test entries?\n\n' +
-                     'This process is processor-intensive and may slow down the application for all ' +
-                     'users while scores are being re-calculated.  You should only continue if it is ' +
-                     'necessary for tests to be re-scored immediately.'
-          } ).show().then( function( response ) {
-            if( response ) return CnHttpFactory.instance( { path: 'test_type?rescore=1' } ).count();
-          } );
-        };
+        angular.extend( this, {
+          rescoreInProgress: false,
+          rescoreTestEntries: async function() {
+            var response = await CnModalConfirmFactory.instance( {
+              title: 'Re-Score All Test Entries',
+              message: 'Are you sure you wish to re-score all test entries?\n\n' +
+                       'This process is processor-intensive and may slow down the application for all ' +
+                       'users while scores are being re-calculated.  You should only continue if it is ' +
+                       'necessary for tests to be re-scored immediately.'
+            } ).show();
+
+            if( response ) {
+              try {
+                this.rescoreInProgress = true;
+                response = await CnHttpFactory.instance( { path: 'test_type?rescore=1' } ).count();
+              } finally {
+                this.rescoreInProgress = false;
+              }
+            }
+
+            return response;
+          }
+        } );
       };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
@@ -130,22 +139,31 @@ define( function() {
     'CnBaseViewFactory', 'CnHttpFactory', 'CnModalConfirmFactory',
     function( CnBaseViewFactory, CnHttpFactory, CnModalConfirmFactory ) {
       var object = function( parentModel, root ) {
-        var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
-        this.rescoreTestEntries = function() {
-          return CnModalConfirmFactory.instance( {
-            title: 'Re-Score ' + self.record.data_type.toUpperCase() + ' Test Entries',
-            message: 'Are you sure you wish to re-score all ' + self.record.name + ' test entries?\n\n' +
-                     'This process is processor-intensive and may slow down the application for all ' +
-                     'users while scores are being re-calculated.  You should only continue if it is ' +
-                     'necessary for ' + self.record.name + ' tests to be re-scored immediately.'
-          } ).show().then( function( response ) {
-            if( response ) return CnHttpFactory.instance( {
-              path: 'test_type/' + self.record.id + '?rescore=1'
-            } ).get();
-          } );
-        };
+        angular.extend( this, {
+          rescoreInProgress: false,
+          rescoreTestEntries: async function() {
+            var response = await CnModalConfirmFactory.instance( {
+              title: 'Re-Score ' + this.record.data_type.toUpperCase() + ' Test Entries',
+              message: 'Are you sure you wish to re-score all ' + this.record.name + ' test entries?\n\n' +
+                       'This process is processor-intensive and may slow down the application for all ' +
+                       'users while scores are being re-calculated.  You should only continue if it is ' +
+                       'necessary for ' + this.record.name + ' tests to be re-scored immediately.'
+            } ).show();
+
+            if( response ) {
+              try {
+                this.rescoreInProgress = true;
+                response = await CnHttpFactory.instance( { path: 'test_type/' + this.record.id + '?rescore=1' } ).get();
+              } finally {
+                this.rescoreInProgress = false;
+              }
+            }
+
+            return response;
+          }
+        } );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -156,7 +174,6 @@ define( function() {
     'CnBaseModelFactory', 'CnTestTypeListFactory', 'CnTestTypeViewFactory', 'CnSession',
     function( CnBaseModelFactory, CnTestTypeListFactory, CnTestTypeViewFactory, CnSession ) {
       var object = function( root ) {
-        var self = this;
         CnBaseModelFactory.construct( this, module );
         this.listModel = CnTestTypeListFactory.instance( this );
         this.viewModel = CnTestTypeViewFactory.instance( this, root );

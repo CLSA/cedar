@@ -4,9 +4,9 @@ var cenozo = angular.module( 'cenozo' );
 
 cenozo.controller( 'HeaderCtrl', [
   '$scope', 'CnBaseHeader',
-  async function( $scope, CnBaseHeader ) {
+  function( $scope, CnBaseHeader ) {
     // copy all properties from the base header
-    await CnBaseHeader.construct( $scope );
+    CnBaseHeader.construct( $scope );
   }
 ] );
 
@@ -62,15 +62,15 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           );
           return null != word.match( re );
         },
-        getValues: function( value ) {
+        getValues: async function( value ) {
           var self = this;
           var guid = cenozo.generateGUID();
 
           // convert to lower case
           value = value.toLowerCase();
 
-          self.lastGUID = guid;
-          return $timeout( function() {
+          this.lastGUID = guid;
+          return await $timeout( async function() {
             // return an empty list if this isn't the last GUID
             if( guid != self.lastGUID ) return [];
             if( !self.isWordValid( value ) ) {
@@ -100,16 +100,15 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
               if( null != self.testType )
                 where.push( { column: self.testType, operator: '!=', value: 'invalid' } );
 
-              return CnHttpFactory.instance( {
+              var response = await CnHttpFactory.instance( {
                 path: 'word',
                 data: {
                   select: { column: [ 'id', 'word', { table: 'language', column: 'code' } ] },
                   modifier: { where: where, order: { word: false }, limit: 10000 }
                 }
-              } ).query().then( function( response ) {
-                self.valueCache = angular.copy( response.data );
-                return self.resolveList( value );
-              } );
+              } ).query();
+
+              self.valueCache = angular.copy( response.data );
             }
 
             return self.resolveList( value );
@@ -131,7 +130,6 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
         scope.isComplete = false;
         scope.isWorking = false;
         scope.wordTypeaheadTemplateUrl = cenozoApp.getFileUrl( 'cedar', 'word-typeahead-match.tpl.html' );
-        scope.model.viewModel.onView().finally( function() { scope.isComplete = true; } );
 
         function postSubmit( selected ) {
           if( !selected ) scope.preventSelectedNewWord = false;
@@ -169,7 +167,7 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
 
             postSubmit( false );
           },
-          submitNewWord: function( selected ) {
+          submitNewWord: async function( selected ) {
             // string if it's a new word, integer if it's an existing intrusion
             if( angular.isObject( scope.newWord ) ||
                 ( null == scope.typeaheadModel.lastGUID && 0 < scope.newWord.length ) ) {
@@ -182,7 +180,7 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
                 // get rid of en- and em-dashes
                 scope.newWord = scope.newWord.toLowerCase().replace( /[—–]/g, '-' );
                 if( !scope.typeaheadModel.isWordValid( scope.newWord ) && !scope.newWord.match( /^-+$/ ) ) {
-                  CnModalMessageFactory.instance( {
+                  await CnModalMessageFactory.instance( {
                     title: 'Invalid Word',
                     message: 'The word you have provided is invalid.\n\n' +
                              'Please enter a word at least two characters long using only letters, ' + 
@@ -194,50 +192,64 @@ cenozo.factory( 'CnBaseRankDataViewDirectiveControllerFactory', [
                 }
               }
 
-              if( proceed ) scope.submitWord( scope.newWord, selected );
+              if( proceed ) await scope.submitWord( scope.newWord, selected );
             }
           },
-          submitWord: function( word, selected ) {
+          submitWord: async function( word, selected ) {
             if( angular.isUndefined( selected ) ) selected = false;
             if( angular.isString( word ) && null != word.match( /^-+$/ ) ) word = { id: null };
             scope.isWorking = true;
             scope.newWord = '';
-            scope.model.viewModel.submitIntrusion(
-              word, scope.cursor,
-              'replace' == scope.cursorType
-            ).finally( function() {
+            try {
+              scope.model.viewModel.submitIntrusion(
+                word, scope.cursor,
+                'replace' == scope.cursorType
+              );
+            } finally {
               scope.cursor = null; // return the cursor to the end of the list
               scope.cursorType = null;
               scope.isWorking = false;
-              $timeout( function() { postSubmit( selected ) }, 20 );
-            } );
+              await $timeout( function() { postSubmit( selected ) }, 20 );
+            }
           },
-          removeWord: function( word ) {
-            CnModalConfirmFactory.instance( {
+          removeWord: async function( word ) {
+            var response = await CnModalConfirmFactory.instance( {
               title: 'Remove ' + ( 'placeholder' == word.word_type ? 'placeholder' : '"' + word.word + '"' ) ,
               message: 'Are you sure you want to remove ' +
                        ( 'placeholder' == word.word_type ? 'the placeholder' : '"' + word.word + '"' ) +
                        ' from the word list?'
-            } ).show().then( function( response ) {
-              if( response ) {
-                scope.isWorking = false;
-                scope.model.viewModel.deleteIntrusion( word ).finally( function() {
-                  // we may have to change the cursor if it is no longer valid
-                  if( null != scope.cursor ) {
-                    var len = scope.model.viewModel.record.length;
-                    if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor ) {
-                      scope.cursor = null;
-                      scope.cursorType = null;
-                    }
-                  }
+            } ).show();
 
-                  scope.isWorking = false;
-                  postSubmit( false );
-                } );
+            if( response ) {
+              try {
+                scope.isWorking = false;
+                await scope.model.viewModel.deleteIntrusion( word );
+              } finally {
+                // we may have to change the cursor if it is no longer valid
+                if( null != scope.cursor ) {
+                  var len = scope.model.viewModel.record.length;
+                  if( 0 == len || scope.model.viewModel.record[len-1].rank < scope.cursor ) {
+                    scope.cursor = null;
+                    scope.cursorType = null;
+                  }
+                }
+
+                scope.isWorking = false;
+                postSubmit( false );
               }
-            } );
+            }
           }
         } );
+
+        async function init() {
+          try {
+            await scope.model.viewModel.onView();
+          } finally {
+            scope.isComplete = true;
+          }
+        }
+
+        init();
       }
     };
   }
@@ -278,8 +290,8 @@ cenozo.directive( 'cnSubmitWord', [
 
 /* ######################################################################################################## */
 cenozo.factory( 'CnBaseDataViewFactory', [
-  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory', '$q',
-  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewWordFactory, $q ) {
+  'CnBaseViewFactory', 'CnHttpFactory', 'CnModalMessageFactory', 'CnModalNewWordFactory',
+  function( CnBaseViewFactory, CnHttpFactory, CnModalMessageFactory, CnModalNewWordFactory ) {
     return {
       construct: function( object, parentModel, root ) {
         CnBaseViewFactory.construct( object, parentModel, root );
@@ -289,79 +301,78 @@ cenozo.factory( 'CnBaseDataViewFactory', [
             return path.substring( 0, path.lastIndexOf( '/' ) );
           },
           // write a custom onView function
-          onView: function() {
+          onView: async function() {
             object.isLoading = true;
 
             // start by confirming whether or not this is the correct test type for the test entry
-            return parentModel.testEntryModel.viewModel.onViewPromise.then( function() {
-              if( parentModel.getDataType() == parentModel.testEntryModel.viewModel.record.data_type ) {
-                return object.$$onView( true ).then( function() {
-                  delete object.record.getIdentifier; // we don't need the identifier function
+            await parentModel.testEntryModel.viewModel.onViewPromise;
 
-                  // convert boolean to integer
-                  if( angular.isObject( object.record ) )
-                    for( var property in object.record )
-                      if( 'boolean' == typeof( object.record[property] ) )
-                        object.record[property] = object.record[property] ? 1 : 0;
-                } );
-              }
-            } );
+            if( parentModel.getDataType() == parentModel.testEntryModel.viewModel.record.data_type ) {
+              await object.$$onView( true );
+              delete object.record.getIdentifier; // we don't need the identifier function
+
+              // convert boolean to integer
+              if( angular.isObject( object.record ) )
+                for( var property in object.record )
+                  if( 'boolean' == typeof( object.record[property] ) )
+                    object.record[property] = object.record[property] ? 1 : 0;
+            }
           },
-          checkBeforeSubmit: function() {
-            return $q.all().then( function() { return true; } );
-          }
+          // data view factories may implement this, but if not then we must return true after a fulfilled promise
+          checkBeforeSubmit: async function() { return true; }
         } );
 
         if( 'aft' == parentModel.getDataType() || 'fas' == parentModel.getDataType() ) {
           angular.extend( object, {
-            submitIntrusion: function( word, rank, replace ) {
+            submitIntrusion: async function( word, rank, replace ) {
               // private method used below
-              function sendIntrusion( input, rank, replace ) {
+              async function sendIntrusion( input, rank, replace ) {
                 var data = angular.isDefined( input.id ) ? { word_id: input.id } : input;
                 if( null != rank ) data.rank = rank;
 
-                return CnHttpFactory.instance( {
-                  path: object.parentModel.getServiceResourcePath(),
-                  data: data,
-                  onError: function( response ) {
-                    if( 406 == response.status ) {
-                      // the word is misspelled
-                      return CnModalMessageFactory.instance( {
-                        title: 'Misspelled Word',
-                        message: 'You have selected a misspelled word. This word cannot be used.'
-                      } ).show();
-                    } else if( 409 == response.status ) {
-                      // the word is invalid
-                      return CnModalMessageFactory.instance( {
-                        title: 'Invalid Word',
-                        message: 'You have selected an invalid word. This word cannot be used.'
-                      } ).show();
-                    } else CnModalMessageFactory.httpError( response );
-                  }
-                } ).post().then( function( response ) {
+                try {
+                  var response = await CnHttpFactory.instance( {
+                    path: object.parentModel.getServiceResourcePath(),
+                    data: data,
+                    onError: function( error ) {
+                      if( 406 == error.status ) {
+                        // the word is misspelled
+                        return CnModalMessageFactory.instance( {
+                          title: 'Misspelled Word',
+                          message: 'You have selected a misspelled word. This word cannot be used.'
+                        } ).show();
+                      } else if( 409 == error.status ) {
+                        // the word is invalid
+                        return CnModalMessageFactory.instance( {
+                          title: 'Invalid Word',
+                          message: 'You have selected an invalid word. This word cannot be used.'
+                        } ).show();
+                      } else CnModalMessageFactory.httpError( error );
+                    }
+                  } ).post();
+
                   if( null != rank ) {
                     var index = object.record.findIndexByProperty( 'rank', rank );
                     if( null != index ) {
                       // remove the word at the found index if we are in replace mode
                       if( replace ) {
-                        return CnHttpFactory.instance( {
+                        await CnHttpFactory.instance( {
                           path: object.parentModel.getServiceResourcePath() + '/' + object.record[index].id
-                        } ).delete().then( function() {
-                          object.record.splice( index, 1, response.data );
-                        } );
+                        } ).delete();
+                        object.record.splice( index, 1, response.data );
                       } else {
                         object.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
                         object.record.splice( index, 0, response.data );
                       }
                     } else {
-                      console.warn(
-                        'Tried inserting word at rank "' + rank + '", which was not found in the list'
-                      );
+                      console.warn( 'Tried inserting word at rank "' + rank + '", which was not found in the list' );
                     }
                   } else {
                     object.record.push( response.data );
                   }
-                } );
+                } catch( error ) {
+                  // handled by onError above
+                }
               }
 
               if( angular.isString( word ) ) {
@@ -369,29 +380,29 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                 word = word.replace( /^"|"$/g, '' ).toLowerCase();
 
                 // it's a new word, so double-check with the user before proceeding
-                return CnModalNewWordFactory.instance( {
+                var response = await CnModalNewWordFactory.instance( {
                   word: word,
                   languageId: object.parentModel.testEntryModel.viewModel.record.participant_language_id,
                   languageIdRestrictList: object.parentModel.testEntryModel.viewModel.languageIdList
-                } ).show().then( function( response ) {
-                  if( null != response ) {
-                    return sendIntrusion( { language_id: response, word: word }, rank, replace );
-                  }
-                } );
-              } else return sendIntrusion( word, rank, replace ); // it's not a new word so send it immediately
+                } ).show();
+
+                if( null != response ) await sendIntrusion( { language_id: response, word: word }, rank, replace );
+              } else {
+                await sendIntrusion( word, rank, replace ); // it's not a new word so send it immediately
+              }
             },
-            deleteIntrusion: function( wordRecord ) {
-              return CnHttpFactory.instance( {
+            deleteIntrusion: async function( wordRecord ) {
+              await CnHttpFactory.instance( {
                 path: object.parentModel.getServiceResourcePath() + '/' + wordRecord.id
-              } ).delete().then( function() {
-                var index = object.record.findIndexByProperty( 'id', wordRecord.id );
-                if( null != index ) {
-                  object.record.splice( index, 1 );
-                  object.record.forEach( function( word ) { if( word.rank > wordRecord.rank ) word.rank--; } );
-                } else {
-                  console.warn( 'Tried removing word which was not found in the list' );
-                }
-              } );
+              } ).delete();
+
+              var index = object.record.findIndexByProperty( 'id', wordRecord.id );
+              if( null != index ) {
+                object.record.splice( index, 1 );
+                object.record.forEach( function( word ) { if( word.rank > wordRecord.rank ) word.rank--; } );
+              } else {
+                console.warn( 'Tried removing word which was not found in the list' );
+              }
             }
           } );
         }
@@ -455,12 +466,13 @@ cenozo.service( 'CnModalNewWordFactory', [
   '$uibModal', 'CnHttpFactory',
   function( $uibModal, CnHttpFactory ) {
     var object = function( params ) {
-      var self = this;
-      this.title = 'Confirm Word';
-      this.word = null;
-      this.languageId = null;
-      this.languageIdRestrictList = [];
-      this.languageList = [];
+      angular.extend( this, {
+        title: 'Confirm Word',
+        word: null,
+        languageId: null,
+        languageIdRestrictList: [],
+        languageList: []
+      } );
 
       angular.extend( this, params );
 
@@ -468,34 +480,35 @@ cenozo.service( 'CnModalNewWordFactory', [
       if( !this.languageIdRestrictList.includes( this.languageId ) )
         this.languageId = this.languageIdRestrictList[0];
 
-      this.show = function() {
+      this.show = async function() {
         var where = [ { column: 'active', operator: '=', value: true } ];
         if( 0 < this.languageIdRestrictList.length )
           where.push( { column: 'id', operator: 'IN', value: this.languageIdRestrictList } );
-        return CnHttpFactory.instance( {
+        var response = await CnHttpFactory.instance( {
           path: 'language',
           data: {
             select: { column: [ 'id', 'name' ] },
             modifier: { where: where, order: { name: false } }
           }
-        } ).query().then( function( response) {
-          self.languageList = [];
-          response.data.forEach( function( item ) {
-            self.languageList.push( { value: item.id, name: item.name } );
-          } );
+        } ).query();
 
-          return $uibModal.open( {
-            backdrop: 'static',
-            keyboard: true,
-            modalFade: true,
-            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-word.tpl.html' ),
-            controller: function( $scope, $uibModalInstance ) {
-              $scope.model = self;
-              $scope.proceed = function() { $uibModalInstance.close( $scope.model.languageId ); };
-              $scope.cancel = function() { $uibModalInstance.close( null ); };
-            }
-          } ).result;
+        var self = this;
+        this.languageList = [];
+        response.data.forEach( function( item ) {
+          self.languageList.push( { value: item.id, name: item.name } );
         } );
+
+        return $uibModal.open( {
+          backdrop: 'static',
+          keyboard: true,
+          modalFade: true,
+          templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-new-word.tpl.html' ),
+          controller: function( $scope, $uibModalInstance ) {
+            $scope.model = self;
+            $scope.proceed = function() { $uibModalInstance.close( $scope.model.languageId ); };
+            $scope.cancel = function() { $uibModalInstance.close( null ); };
+          }
+        } ).result;
       };
     };
 
@@ -508,7 +521,6 @@ cenozo.service( 'CnModalSelectTypistFactory', [
   '$uibModal', 'CnSession', 'CnHttpFactory',
   function( $uibModal, CnSession, CnHttpFactory ) {
     var object = function( params ) {
-      var self = this;
       this.title = 'Select Typist';
       this.message = 'Please select a typist:';
       this.site_id = CnSession.site.id;
@@ -517,8 +529,8 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
       angular.extend( this, params );
 
-      this.show = function() {
-        return CnHttpFactory.instance( {
+      this.show = async function() {
+        var response = await CnHttpFactory.instance( {
           path: 'user',
           data: {
             select: { column: [ 'id', 'name', 'first_name', 'last_name' ] },
@@ -539,32 +551,33 @@ cenozo.service( 'CnModalSelectTypistFactory', [
               }, {
                 column: 'access.site_id',
                 operator: '=',
-                value: self.site_id
+                value: this.site_id
               } ],
               order: 'name'
             }
           }
-        } ).query().then( function( response ) {
-          self.userList = [ { name: "(Select Typist)", value: undefined } ];
-          response.data.forEach( function( item ) {
-            self.userList.push( {
-              value: item.id,
-              name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
-            } );
+        } ).query();
+
+        this.userList = [ { name: "(Select Typist)", value: undefined } ];
+        var self = this;
+        response.data.forEach( function( item ) {
+          self.userList.push( {
+            value: item.id,
+            name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
           } );
-        } ).then( function() {
-          return $uibModal.open( {
-            backdrop: 'static',
-            keyboard: true,
-            modalFade: true,
-            templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-typist.tpl.html' ),
-            controller: function( $scope, $uibModalInstance ) {
-              $scope.model = self;
-              $scope.proceed = function() { $uibModalInstance.close( $scope.user_id ); };
-              $scope.cancel = function() { $uibModalInstance.close( null ); };
-            }
-          } ).result;
         } );
+
+        return $uibModal.open( {
+          backdrop: 'static',
+          keyboard: true,
+          modalFade: true,
+          templateUrl: cenozoApp.getFileUrl( 'cedar', 'modal-select-typist.tpl.html' ),
+          controller: function( $scope, $uibModalInstance ) {
+            $scope.model = self;
+            $scope.proceed = function() { $uibModalInstance.close( $scope.user_id ); };
+            $scope.cancel = function() { $uibModalInstance.close( null ); };
+          }
+        } ).result;
       };
     };
 
@@ -574,18 +587,20 @@ cenozo.service( 'CnModalSelectTypistFactory', [
 
 /* ######################################################################################################## */
 cenozo.service( 'CnModalSelectWordFactory', [
-  '$uibModal', '$timeout', 'CnModalMessageFactory', 'CnWordTypeaheadFactory',
-  function( $uibModal, $timeout, CnModalMessageFactory, CnWordTypeaheadFactory ) {
+  '$uibModal', 'CnModalMessageFactory', 'CnWordTypeaheadFactory',
+  function( $uibModal, CnModalMessageFactory, CnWordTypeaheadFactory ) {
     var object = function( params ) {
-      var self = this;
-      this.title = 'Select Word';
-      this.message = 'Please select a word:';
-      this.word = null;
-      this.languageIdRestrictList = [];
+      angular.extend( this, {
+        title: 'Select Word',
+        message: 'Please select a word:',
+        word: null,
+        languageIdRestrictList: []
+      } );
 
       angular.extend( this, params );
 
       this.show = function() {
+        var self = this;
         return $uibModal.open( {
           backdrop: 'static',
           keyboard: true,

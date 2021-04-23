@@ -57,10 +57,10 @@ define( function() {
             cnRecordAddScope = data;
 
             // change the max rank based on the currently selected category
-            var checkFunction = cnRecordAddScope.check;
-            cnRecordAddScope.check = function( property ) {
+            var checkFn = cnRecordAddScope.check;
+            cnRecordAddScope.check = async function( property ) {
               // run the original check function first
-              checkFunction( property );
+              checkFn( property );
               if( 'category' == property ) {
                 var input = cnRecordAddScope.dataArray.findByProperty( 'title', '' ).inputArray.findByProperty( 'key', 'rank' );
 
@@ -69,19 +69,19 @@ define( function() {
                 input.isConstant = function() { return true; };
 
                 // update the max rank, then rebuild the input's enum list using the new metadata
-                $scope.model.setMaxRank( cnRecordAddScope.record[property] ).then( function() {
-                  var maxRank = $scope.model.metadata.columnList.rank.enumList.length;
-                  input.enumList = $scope.model.metadata.columnList.rank.enumList;
-                  input.enumList.push( {
-                    value: maxRank + 1,
-                    name: $filter( 'cnOrdinal' )( maxRank + 1 )
-                  } );
-                  input.enumList.unshift( { value: undefined, name: '(Select Rank)' } );
+                await $scope.model.setMaxRank( cnRecordAddScope.record[property] );
 
-                  // if the rank is out of the new category's range then reset it
-                  if( cnRecordAddScope.record.rank > maxRank + 1 ) cnRecordAddScope.record.rank = undefined;
-                  input.isConstant = oldConstant;
+                var maxRank = $scope.model.metadata.columnList.rank.enumList.length;
+                input.enumList = $scope.model.metadata.columnList.rank.enumList;
+                input.enumList.push( {
+                  value: maxRank + 1,
+                  name: $filter( 'cnOrdinal' )( maxRank + 1 )
                 } );
+                input.enumList.unshift( { value: undefined, name: '(Select Rank)' } );
+
+                // if the rank is out of the new category's range then reset it
+                if( cnRecordAddScope.record.rank > maxRank + 1 ) cnRecordAddScope.record.rank = undefined;
+                input.isConstant = oldConstant;
               }
             };
           }, 500 );
@@ -143,13 +143,11 @@ define( function() {
     'CnBaseViewFactory', 'CnModalConfirmFactory',
     function( CnBaseViewFactory, CnModalConfirmFactory ) {
       var object = function( parentModel, root ) {
-        var self = this;
         CnBaseViewFactory.construct( this, parentModel, root );
 
-        this.onView = function( force ) {
-          return this.$$onView( force ).then( function() {
-            return self.parentModel.setMaxRank( self.record.category );
-          } );
+        this.onView = async function( force ) {
+          await this.$$onView( force );
+          await this.parentModel.setMaxRank( this.record.category );
         };
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };

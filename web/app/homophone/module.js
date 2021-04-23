@@ -61,7 +61,6 @@ define( function() {
     'CnBaseModelFactory', 'CnHomophoneListFactory', 'CnHomophoneViewFactory', '$state',
     function( CnBaseModelFactory, CnHomophoneListFactory, CnHomophoneViewFactory, $state ) {
       var object = function( root ) {
-        var self = this;
         CnBaseModelFactory.construct( this, module );
         this.listModel = CnHomophoneListFactory.instance( this );
         this.viewModel = CnHomophoneViewFactory.instance( this, root );
@@ -75,8 +74,8 @@ define( function() {
         };
 
         // go directly to the word when clicking on a homophone
-        this.transitionToViewState = function( record ) {
-          return $state.go( 'word.view', { identifier: record.word_id } );
+        this.transitionToViewState = async function( record ) {
+          await $state.go( 'word.view', { identifier: record.word_id } );
         };
       };
 

@@ -193,181 +193,185 @@ define( function() {
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
     'CnBaseViewFactory', 'CnModalMessageFactory', 'CnModalSelectWordFactory', 'CnModalTextFactory',
-    'CnSession', 'CnHttpFactory', '$q',
+    'CnSession', 'CnHttpFactory',
     function( CnBaseViewFactory, CnModalMessageFactory, CnModalSelectWordFactory, CnModalTextFactory,
-              CnSession, CnHttpFactory, $q ) {
+              CnSession, CnHttpFactory ) {
       var object = function( parentModel, root ) {
-        var self = this;
         CnBaseViewFactory.construct( this, parentModel, root, 'compound' );
-        this.lastMisspelledValue = null;
-        this.lastAftValue = null;
-        this.lastFasValue = null;
-        this.sisterWordLastPatched = false;
-        this.compoundWordCount = 0;
-        this.wordLocked = false;
 
-        this.deferred.promise.then( function() {
+        angular.extend( this, {
+          lastMisspelledValue: null,
+          lastAftValue: null,
+          lastFasValue: null,
+          sisterWordLastPatched: false,
+          compoundWordCount: 0,
+          wordLocked: false,
+
+          updateWordLocked: function() {
+            this.wordLocked = 
+              'administrator' != CnSession.role.name &&
+              '' !== this.record.mispelled &&
+              '' !== this.record.aft &&
+              '' !== this.record.fas;
+          },
+
+          onView: async function( force ) {
+            // keep track of how many compound words this word has (to set sister_word_id to constant above)
+            var response = await CnHttpFactory.instance( {
+              path: this.parentModel.getServiceResourcePath() + '/compound'
+            } ).count();
+            this.compoundWordCount = parseInt( response.headers( 'Total' ) );
+            
+            // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
+            await this.$$onView( force );
+
+            this.updateWordLocked();
+            var self = this;
+            this.parentModel.getEditEnabled = function() { return self.parentModel.$$getEditEnabled() && !self.wordLocked; }
+          },
+
+          onPatch: async function( data ) {
+
+            this.sisterWordLastPatched = angular.isDefined( data.sister_word_id );
+
+            if( true == data.misspelled || 'invalid' == data.aft || 'invalid' == data.fas ) {
+              var which = 'invalid' == data.aft
+                        ? ( 'invalid' == this.record.fas ? 'All AFT and REY' : 'All AFT' )
+                        : 'invalid' == data.fas
+                        ? ( 'invalid' == this.record.aft ? 'All FAS and REY' : 'All FAS' )
+                        : 'All';
+
+              var undo = false;
+              if( true == data.misspelled ) {
+                var response = await CnModalSelectWordFactory.instance( {
+                  message:
+                    'Please select the correct spelling for this word.\n\n' +
+                    'If you provide a word then all test-entries using the misspelled word will be ' +
+                    'changed to the selected word. You may leave the replacement word blank if you do ' +
+                    'want test-entries to be affected.',
+                  languageIdRestrictList: [ this.record.language_id ]
+                } ).show();
+
+                if( null == response ) undo = true;
+                else data.correct_word = response;
+              }
+              
+              if( !undo ) {
+                // get a message to leave in test-entries using this word
+                var response = await CnModalTextFactory.instance( {
+                  title: 'Test Entry Note',
+                  message: which + ' test entries using this word will be re-assigned to the last user that ' +
+                           'it was assigned to.  Please provide a note that will be added to these test-entries:',
+                  text: 'The ' + this.record.language + ' word "' + this.record.word + '" which is used by ' +
+                        'this test-entry has been marked as invalid. Please replace this word with another ' +
+                        'valid word and re-submit.',
+                  minLength: 10
+                } ).show();
+
+                console.log( response );
+                if( !response ) {
+                  undo = true;
+                } else {
+                  data.note = response;
+                  await this.$$onPatch( data );
+
+                  // setting misspelled to true means aft and fas must be invalid
+                  if( true == data.misspelled ) {
+                    this.record.aft = 'invalid';
+                    this.record.fas = 'invalid';
+                  }
+                  
+                  // if a note was added then the test-entry list may have changed
+                  if( angular.isDefined( this.testEntryModel ) ) this.testEntryModel.listModel.onList( true );
+
+                  this.updateWordLocked();
+                }
+              }
+
+              if( undo ) {
+                if( true == data.misspelled ) {
+                  this.record.misspelled =
+                    null == this.lastMisspelledValue ? this.backupRecord.misspelled : this.lastMisspelledValue;
+                } else if( 'invalid' == data.aft ) {
+                  this.record.aft = null == this.lastAftValue ? this.backupRecord.aft : this.lastAftValue;
+                } else if( 'invalid' == data.fas ) {
+                  this.record.fas = null == this.lastFasValue ? this.backupRecord.fas : this.lastFasValue;
+                }
+              }
+            } else { // not setting misspelled to true
+              await this.$$onPatch( data );
+
+              if( angular.isDefined( data.misspelled ) ) {
+                this.lastMisspelledValue = data.misspelled;
+                this.lastAftValue = data.aft;
+                this.lastFasValue = data.fas;
+              } else if( 'intrusion' == data.aft || 'primary' == data.aft ||
+                         'intrusion' == data.fas || 'primary' == data.fas ) {
+                // setting aft or fas to intrusion or primary means the word cannot be misspelled
+                this.record.misspelled = false;
+              } else if( angular.isDefined( data.animal_code ) ) {
+                if( 0 == data.animal_code.length ) {
+                  if( 'primary' == this.record.aft ) this.record.aft = '';
+                } else {
+                  this.record.aft = 'primary';
+                  this.record.misspelled = false;
+                }
+              }
+
+              this.updateWordLocked();
+            }
+          },
+
+          // reset the formatted sister word if there is a problem
+          onPatchError: function( response ) {
+            this.$$onPatchError( response );
+            if( 306 == response.status &&
+                angular.isDefined( response.config.data.sister_word_id ) ) {
+              this.formattedRecord.sister_word_id = this.backupRecord.formatted_sister_word_id;
+            }
+          }
+        } );
+
+        // warn if the new sister word is an intrusion
+        var self = this;
+        this.afterPatch( async function() {
+          if( self.sisterWordLastPatched ) {
+            if( self.record.sister_word_id ) {
+              var response = await CnHttpFactory.instance( {
+                path: 'word/' + self.record.sister_word_id,
+                data: { select: { column: 'fas' } }
+              } ).get();
+
+              if( 'intrusion' == response.data.fas ) {
+                await CnModalMessageFactory.instance( {
+                  title: 'Parent Sister Word is Intrusion',
+                  message: 'Warning, the parent sister word you have selected is an FAS intrusion. ' +
+                    'Please check to make sure you have selected the correct parent sister word.'
+                } ).show();
+              }
+            }
+            self.sisterWordLastPatched = false;
+          }
+        } );
+
+        async function init() {
+          await self.deferred.promise;
+
           // disable the choosing of test-entries using this word
           if( angular.isDefined( self.testEntryModel ) )
             self.testEntryModel.getChooseEnabled = function() { return false; };
 
           // only allow words with no animal code to be compounded
-          if( angular.isDefined( self.compoundModel ) )
+          if( angular.isDefined( self.compoundModel ) ) {
             self.compoundModel.getAddEnabled = function() {
               return self.compoundModel.$$getAddEnabled() &&
                      angular.isDefined( self.record.animal_code ) &&
                      !self.record.animal_code;
             };
-        } );
-
-        this.updateWordLocked = function() {
-          this.wordLocked = 
-            'administrator' != CnSession.role.name &&
-            '' !== self.record.mispelled &&
-            '' !== self.record.aft &&
-            '' !== self.record.fas;
-        };
-
-        this.onView = function( force ) {
-          return $q.all( [
-            // keep track of how many compound words this word has (to set sister_word_id to constant above)
-            CnHttpFactory.instance( {
-              path: self.parentModel.getServiceResourcePath() + '/compound'
-            } ).count().then( function( response ) {
-              self.compoundWordCount = parseInt( response.headers( 'Total' ) );
-            } ),
-            
-            // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
-            this.$$onView( force ).then( function() {
-              self.updateWordLocked();
-              self.parentModel.getEditEnabled = function() {
-                return self.parentModel.$$getEditEnabled() && !self.wordLocked;
-              }
-            } )
-          ] );
-        };
-
-        this.onPatch = function( data ) {
-          function undoChange( data ) {
-            if( true == data.misspelled ) {
-              self.record.misspelled =
-                null == self.lastMisspelledValue ? self.backupRecord.misspelled : self.lastMisspelledValue;
-            } else if( 'invalid' == data.aft ) {
-              self.record.aft = null == self.lastAftValue ? self.backupRecord.aft : self.lastAftValue;
-            } else if( 'invalid' == data.fas ) {
-              self.record.fas = null == self.lastFasValue ? self.backupRecord.fas : self.lastFasValue;
-            }
           }
+        }
 
-          self.sisterWordLastPatched = angular.isDefined( data.sister_word_id );
-
-          if( true == data.misspelled || 'invalid' == data.aft || 'invalid' == data.fas ) {
-            var which = 'invalid' == data.aft
-                      ? ( 'invalid' == this.record.fas ? 'All AFT and REY' : 'All AFT' )
-                      : 'invalid' == data.fas
-                      ? ( 'invalid' == this.record.aft ? 'All FAS and REY' : 'All FAS' )
-                      : 'All';
-            var promise = true == data.misspelled
-                        ? CnModalSelectWordFactory.instance( {
-                            message:
-                              'Please select the correct spelling for this word.\n\n' +
-                              'If you provide a word then all test-entries using the misspelled word will be ' +
-                              'changed to the selected word. You may leave the replacement word blank if you do ' +
-                              'want test-entries to be affected.',
-                            languageIdRestrictList: [ self.record.language_id ]
-                          } ).show()
-                        : $q.all().then( function() { return undefined; } );
-            
-            return promise.then( function( response ) {
-              if( angular.isDefined( response ) && null == response ) {
-                undoChange( data );
-              } else {
-                if( angular.isDefined( response ) ) data.correct_word = response;
-
-                // get a message to leave in test-entries using this word
-                return CnModalTextFactory.instance( {
-                  title: 'Test Entry Note',
-                  message: which + ' test entries using this word will be re-assigned to the last user that ' +
-                           'it was assigned to.  Please provide a note that will be added to these test-entries:',
-                  text: 'The ' + self.record.language + ' word "' + self.record.word + '" which is used by ' +
-                        'this test-entry has been marked as invalid. Please replace this word with another ' +
-                        'valid word and re-submit.',
-                  minLength: 10
-                } ).show().then( function( response ) {
-                  if( !response ) {
-                    undoChange( data );
-                  } else {
-                    data.note = response;
-                    return self.$$onPatch( data ).then( function() {
-                      // setting misspelled to true means aft and fas must be invalid
-                      if( true == data.misspelled ) {
-                        self.record.aft = 'invalid';
-                        self.record.fas = 'invalid';
-                      }
-                      
-                      // if a note was added then the test-entry list may have changed
-                      if( angular.isDefined( self.testEntryModel ) ) self.testEntryModel.listModel.onList( true );
-
-                      self.updateWordLocked();
-                    } );
-                  }
-                } );
-              }
-            } );
-          }
-
-          // if we get here then we're not setting misspelled to true
-          return self.$$onPatch( data ).then( function() {
-            if( angular.isDefined( data.misspelled ) ) {
-              self.lastMisspelledValue = data.misspelled;
-              self.lastAftValue = data.aft;
-              self.lastFasValue = data.fas;
-            } else if( 'intrusion' == data.aft || 'primary' == data.aft ||
-                       'intrusion' == data.fas || 'primary' == data.fas ) {
-              // setting aft or fas to intrusion or primary means the word cannot be misspelled
-              self.record.misspelled = false;
-            } else if( angular.isDefined( data.animal_code ) ) {
-              if( 0 == data.animal_code.length ) {
-                if( 'primary' == self.record.aft ) self.record.aft = '';
-              } else {
-                self.record.aft = 'primary';
-                self.record.misspelled = false;
-              }
-            }
-
-            self.updateWordLocked();
-          } );
-        };
-
-        // reset the formatted sister word if there is a problem
-        this.onPatchError = function( response ) {
-          this.$$onPatchError( response );
-          if( 306 == response.status &&
-              angular.isDefined( response.config.data.sister_word_id ) ) {
-            this.formattedRecord.sister_word_id = this.backupRecord.formatted_sister_word_id;
-          }
-        };
-
-        // warn if the new sister word is an intrusion
-        this.afterPatch( function() {
-          if( self.sisterWordLastPatched ) {
-            if( self.record.sister_word_id ) {
-              CnHttpFactory.instance( {
-                path: 'word/' + self.record.sister_word_id,
-                data: { select: { column: 'fas' } }
-              } ).get().then( function( response ) {
-                if( 'intrusion' == response.data.fas ) {
-                  CnModalMessageFactory.instance( {
-                    title: 'Parent Sister Word is Intrusion',
-                    message: 'Warning, the parent sister word you have selected is an FAS intrusion. ' +
-                      'Please check to make sure you have selected the correct parent sister word.'
-                  } ).show();
-                }
-              } );
-            }
-            self.sisterWordLastPatched = false;
-          }
-        } );
+        init();
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -380,31 +384,31 @@ define( function() {
     function( CnBaseModelFactory,
               CnWordAddFactory, CnWordListFactory, CnWordViewFactory, CnHttpFactory ) {
       var object = function( root ) {
-        var self = this;
         CnBaseModelFactory.construct( this, module );
         this.addModel = CnWordAddFactory.instance( this );
         this.listModel = CnWordListFactory.instance( this );
         this.viewModel = CnWordViewFactory.instance( this, root );
 
         // extend getMetadata
-        this.getMetadata = function() {
-          return this.$$getMetadata().then( function() {
-            return CnHttpFactory.instance( {
-              path: 'language',
-              data: {
-                select: { column: [ 'id', 'name' ] },
-                modifier: {
-                  where: { column: 'active', operator: '=', value: true },
-                  order: { name: false },
-                  limit: 1000
-                }
+        this.getMetadata = async function() {
+          await this.$$getMetadata();
+
+          var response = await CnHttpFactory.instance( {
+            path: 'language',
+            data: {
+              select: { column: [ 'id', 'name' ] },
+              modifier: {
+                where: { column: 'active', operator: '=', value: true },
+                order: { name: false },
+                limit: 1000
               }
-            } ).query().then( function success( response ) {
-              self.metadata.columnList.language_id.enumList = [];
-              response.data.forEach( function( item ) {
-                self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
-              } );
-            } );
+            }
+          } ).query();
+
+          this.metadata.columnList.language_id.enumList = [];
+          var self = this;
+          response.data.forEach( function( item ) {
+            self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
           } );
         };
       };

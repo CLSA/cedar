@@ -12,14 +12,18 @@ define( [ cenozoApp.module( 'user' ).getFileUrl( 'module.js' ) ], function() {
       $delegate.instance = function( parentModel, root ) {
         var object = instance( parentModel, root );
 
-        // overrride cohort list's onDelete
-        object.deferred.promise.then( function() {
+        async function init() {
+          // overrride cohort list's onDelete
+          await object.deferred.promise;
+
           if( angular.isDefined( object.cohortModel ) ) {
             object.cohortModel.getChooseEnabled = function() {
               return 3 <= CnSession.role.tier && object.cohortModel.$$getChooseEnabled();
             };
           }
-        } );
+        }
+
+        init();
         return object;
       };
       return $delegate;

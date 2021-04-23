@@ -6,8 +6,8 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnMatDataView', [
-    'CnMatDataModelFactory', 'CnModalConfirmFactory', '$timeout', '$q',
-    function( CnMatDataModelFactory, CnModalConfirmFactory, $timeout, $q ) {
+    'CnMatDataModelFactory', 'CnModalConfirmFactory', '$timeout',
+    function( CnMatDataModelFactory, CnModalConfirmFactory, $timeout ) {
       return {
         templateUrl: module.getFileUrl( 'view.tpl.html' ),
         restrict: 'E',
@@ -16,7 +16,6 @@ define( function() {
           if( angular.isUndefined( $scope.model ) ) $scope.model = CnPrematDataModelFactory.root;
           $scope.isComplete = false;
           $scope.isWorking = false;
-          $scope.model.viewModel.onView().finally( function() { $scope.isComplete = true; } );
 
           angular.extend( $scope, {
             cursor: null,
@@ -52,71 +51,79 @@ define( function() {
               // otherwise set the cache to the new word
               else $scope.newWordCache = $scope.newWord;
             },
-            submitNewWord: function() {
+            submitNewWord: async function() {
               if( 0 < $scope.newWord.length ) {
-                // show a warning to the user if the first entry is not a 1
-                var promise = $q.all();
-                if( ( 0 == $scope.model.viewModel.record.length || 1 == $scope.cursor ) &&
-                    '1' != $scope.newWord ) {
-                  promise = CnModalConfirmFactory.instance( {
-                    title: 'First word should be "1"',
-                    message:
-                      'Warning, the first word to this test should always be "1".\n\n' +
-                      'Please confirm that the participant started with something other than the number "1" ' +
-                      'and that this was not caused by the beginning of the recording being missing.\n\n' +
-                      'Are you sure you wish to make "' + $scope.newWord + '" the first word?'
-                  } ).show();
-                }
+                var message =
+                  'Warning, the first word to this test should always be "1".\n\n' +
+                  'Please confirm that the participant started with something other than the number "1" ' +
+                  'and that this was not caused by the beginning of the recording being missing.\n\n' +
+                  'Are you sure you wish to make "' + $scope.newWord + '" the first word?';
 
-                promise.then( function( response ) {
-                  if( false !== response ) {
+                // show a warning to the user if the first entry is not a 1
+                var proceed = ( 0 == $scope.model.viewModel.record.length || 1 == $scope.cursor ) && '1' != $scope.newWord
+                            ? await CnModalConfirmFactory.instance( { title: 'First word should be "1"', message: message } ).show()
+                            : true;
+                if( proceed ) {
+                  try {
                     $scope.isWorking = true;
-                    $scope.model.viewModel.submitWord(
+                    await $scope.model.viewModel.submitWord(
                       $scope.newWord,
                       $scope.cursor,
                       'replace' == $scope.cursorType
-                    ).then( function() {
-                      $scope.newWord = '';
-                      $scope.newWordCache = '';
-                    } ).finally( function() {
-                      $scope.cursor = null;
-                      $scope.cursorType = null;
-                      $scope.isWorking = false;
-                      $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
-                    } );
-                  } else {
+                    );
+
                     $scope.newWord = '';
                     $scope.newWordCache = '';
-                    $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
+                  } finally {
+                    $scope.cursor = null;
+                    $scope.cursorType = null;
+                    $scope.isWorking = false;
                   }
-                } );
+                } else {
+                  $scope.newWord = '';
+                  $scope.newWordCache = '';
+                }
+
+                await $timeout( function() { document.getElementById( 'newWord' ).focus(); }, 20 );
               }
             },
-            removeWord: function( index ) {
+            removeWord: async function( index ) {
               var word = $scope.model.viewModel.record[index].word;
               $scope.isWorking = true;
-              CnModalConfirmFactory.instance( {
+              var response = await CnModalConfirmFactory.instance( {
                 title: 'Remove "' + word + '"',
                 message: 'Are you sure you want to remove "' + word + '" from the word list?'
-              } ).show().then( function( response ) {
-                if( response ) {
-                  $scope.model.viewModel.deleteWord( index ).finally( function() {
-                    // we may have to change the cursor if it is no longer valid
-                    if( null != $scope.cursor ) {
-                      var len = $scope.model.viewModel.record.length;
-                      if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor ) {
-                        $scope.cursor = null;
-                        $scope.cursorType = null;
-                      }
-                    }
+              } ).show();
 
-                    $scope.isWorking = false;
-                    document.getElementById( 'newWord' ).focus();
-                  } );
+              if( response ) {
+                try {
+                  await $scope.model.viewModel.deleteWord( index );
+                } finally {
+                  // we may have to change the cursor if it is no longer valid
+                  if( null != $scope.cursor ) {
+                    var len = $scope.model.viewModel.record.length;
+                    if( 0 == len || $scope.model.viewModel.record[len-1].rank < $scope.cursor ) {
+                      $scope.cursor = null;
+                      $scope.cursorType = null;
+                    }
+                  }
+
+                  $scope.isWorking = false;
+                  document.getElementById( 'newWord' ).focus();
                 }
-              } );
+              }
             }
           } );
+
+          async function init() {
+            try {
+              $scope.model.viewModel.onView();
+            } finally {
+              $scope.isComplete = true;
+            }
+          }
+
+          init();
         }
       }
     }
@@ -124,53 +131,50 @@ define( function() {
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnMatDataViewFactory', [
-    'CnBaseDataViewFactory', 'CnHttpFactory', '$q',
-    function( CnBaseDataViewFactory, CnHttpFactory, $q ) {
+    'CnBaseDataViewFactory', 'CnHttpFactory',
+    function( CnBaseDataViewFactory, CnHttpFactory ) {
       var object = function( parentModel, root ) {
-        var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
 
         angular.extend( this, {
-          submitWord: function( word, rank, replace ) {
+          submitWord: async function( word, rank, replace ) {
             var data = { value: word };
             if( null != rank ) data.rank = rank;
 
-            return CnHttpFactory.instance( {
+            var response = await CnHttpFactory.instance( {
               path: this.parentModel.getServiceResourcePath(),
               data: data
-            } ).post().then( function( response ) {
-              if( null != rank ) {
-                var index = self.record.findIndexByProperty( 'rank', rank );
-                if( null != index ) {
-                  // remove the word at the found index if we are in replace mode
-                  if( replace ) {
-                    return CnHttpFactory.instance( {
-                      path: self.parentModel.getServiceResourcePath() + '/' + self.record[index].id
-                    } ).delete().then( function() {
-                      self.record.splice( index, 1, response.data );
-                    } );
-                  } else {
-                    self.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
-                    self.record.splice( index, 0, response.data );
-                  }
+            } ).post();
+
+            if( null != rank ) {
+              var index = this.record.findIndexByProperty( 'rank', rank );
+              if( null != index ) {
+                // remove the word at the found index if we are in replace mode
+                if( replace ) {
+                  await CnHttpFactory.instance( {
+                    path: this.parentModel.getServiceResourcePath() + '/' + this.record[index].id
+                  } ).delete();
+                  this.record.splice( index, 1, response.data );
                 } else {
-                  console.warn(
-                    'Tried inserting word at rank "' + rank + '", which was not found in the list'
-                  );
+                  this.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                  this.record.splice( index, 0, response.data );
                 }
               } else {
-                self.record.push( response.data );
+                console.warn(
+                  'Tried inserting word at rank "' + rank + '", which was not found in the list'
+                );
               }
-            } );
+            } else {
+              this.record.push( response.data );
+            }
           },
-          deleteWord: function( index ) {
+          deleteWord: async function( index ) {
             if( angular.isDefined( this.record[index] ) ) {
-              return CnHttpFactory.instance( {
+              await CnHttpFactory.instance( {
                 path: this.parentModel.getServiceResourcePath() + '/' + this.record[index].id
-              } ).delete().then( function() {
-                self.record.splice( index, 1 );
-              } );
-            } else return $q.all();
+              } ).delete();
+              this.record.splice( index, 1 );
+            }
           }
         } );
       }
