@@ -248,7 +248,7 @@ define( function() {
         angular.extend( this, {
           rescoreInProgress: false,
           rescoreTestEntries: async function() {
-            var response = CnModalConfirmFactory.instance( {
+            var response = await CnModalConfirmFactory.instance( {
               title: 'Re-Score All Test Entries',
               message: 'Are you sure you wish to re-score all test entries?\n\n' +
                        'This process is processor-intensive and may slow down the application for all ' +
@@ -599,7 +599,7 @@ define( function() {
 
         // special function to update the user list
         this.updateUserList = async function( participantIdentifier ) {
-          var response = CnHttpFactory.instance( {
+          var response = await CnHttpFactory.instance( {
             path: 'participant/' + participantIdentifier,
             data: { select: { column: [ { table: 'site', column: 'id', alias: 'site_id' } ] } }
           } ).get();

@@ -97,7 +97,7 @@ define( function() {
           var parentIdentifier = parentModel.getParentIdentifier();
           if( 'word' == parentIdentifier.subject ) {
             var identifier = parentIdentifier.identifier;
-            var response = CnHttpFactory.instance( {
+            var response = await CnHttpFactory.instance( {
               path: 'word/' + identifier,
               data: { select: { column: [ 'language_id' ] } }
             } ).get();
