@@ -353,6 +353,7 @@ define( function() {
           }
         } );
 
+        var self = this;
         async function init() {
           await self.deferred.promise;
 

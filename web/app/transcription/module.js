@@ -485,7 +485,7 @@ define( function() {
         var self = this;
         async function init() {
           // never allow the language list to be changed directly, this is done automatically by the database
-          await this.deferred;
+          await self.deferred;
 
           if( angular.isDefined( self.languageModel ) ) {
             self.languageModel.getChooseEnabled = function() { return false; };
