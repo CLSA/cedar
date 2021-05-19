@@ -22,14 +22,14 @@ class module extends \cenozo\service\module
 
     if( $select->has_column( 'average_score' ) )
     {
-      $modifier->join( 'test_entry', 'test_type.id', 'test_entry.test_type_id' );
+      $modifier->left_join( 'test_entry', 'test_type.id', 'test_entry.test_type_id' );
       $modifier->group( 'test_type.id' );
       $select->add_column( 'ROUND( AVG( test_entry.score ), 2 )', 'average_score', false );
     }
 
     if( $select->has_column( 'average_alt_score' ) )
     {
-      $modifier->join( 'test_entry', 'test_type.id', 'test_entry.test_type_id' );
+      $modifier->left_join( 'test_entry', 'test_type.id', 'test_entry.test_type_id' );
       $modifier->group( 'test_type.id' );
       $select->add_column( 'ROUND( AVG( test_entry.alt_score ), 2 )', 'average_alt_score', false );
     }
