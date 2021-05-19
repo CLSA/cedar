@@ -223,7 +223,7 @@ define( function() {
             // the list with the input word object
             if( angular.isObject( word ) && 1 == newWordList.length && word.word == newWordList[0] ) newWordList = [ word ];
 
-            await newWordList.forEach( async function( word ) {
+            await Promise.all( newWordList.map( async function( word ) {
               var text = angular.isString( word ) ? word : word.word;
 
               // convert sister words
@@ -318,7 +318,7 @@ define( function() {
                   }
                 }
               }
-            } );
+            } ) );
           },
           deleteIntrusion: async function( wordRecord ) {
             await CnHttpFactory.instance( {

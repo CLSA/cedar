@@ -357,7 +357,7 @@ define( function() {
             } ).query();
 
             var self = this;
-            response.data.forEach( async function( item ) {
+            await Promise.all( response.data.map( async function( item ) {
               var currentSiteId = item.id;
               self.siteList.push( {
                 name: item.name,
@@ -403,7 +403,7 @@ define( function() {
                   user: item.name
                 } );
               } );
-            } );
+            } ) );
           }
         };
 
