@@ -182,7 +182,7 @@ define( function() {
       var object = function( parentModel, root ) {
         var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
-        var onViewFn = this.onView;
+        this.baseOnViewFn = this.onView;
 
         angular.extend( this, {
           intrusionList: [],
@@ -348,7 +348,7 @@ define( function() {
           },
           onView: async function() {
             var object = this;
-            await onViewFn();
+            await this.baseOnViewFn();
 
             if( 'fr' == this.record.language_code ) {
               this.wordList = [

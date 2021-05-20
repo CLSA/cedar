@@ -57,10 +57,10 @@ define( function() {
             cnRecordAddScope = data;
 
             // change the max rank based on the currently selected category
-            var checkFn = cnRecordAddScope.check;
+            cnRecordAddScope.baseCheckFn = cnRecordAddScope.check;
             cnRecordAddScope.check = async function( property ) {
               // run the original check function first
-              checkFn( property );
+              cnRecordAddScope.baseCheckFn( property );
               if( 'category' == property ) {
                 var input = cnRecordAddScope.dataArray.findByProperty( 'title', '' ).inputArray.findByProperty( 'key', 'rank' );
 
