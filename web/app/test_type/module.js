@@ -139,7 +139,7 @@ define( function() {
     'CnBaseViewFactory', 'CnHttpFactory', 'CnModalConfirmFactory',
     function( CnBaseViewFactory, CnHttpFactory, CnModalConfirmFactory ) {
       var object = function( parentModel, root ) {
-        CnBaseViewFactory.construct( this, parentModel, root );
+        CnBaseViewFactory.construct( this, parentModel, root, 'cohort' );
 
         angular.extend( this, {
           rescoreInProgress: false,
