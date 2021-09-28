@@ -462,15 +462,38 @@ define( function() {
         this.getMetadata = async function() {
           await this.$$getMetadata();
 
-          var response = await CnHttpFactory.instance( {
-            path: 'word?rey_words=1',
-            data: {
-              select: { column: [ 'id', 'word', 'sister_list' ] },
-              modifier: { limit: 1000 }
-            }
-          } ).query();
+          var [wordResponse, reyDataVariantResponse, languageResponse] = await Promise.all( [
+            CnHttpFactory.instance( {
+              path: 'word?rey_words=1',
+              data: {
+                select: { column: [ 'id', 'word', 'sister_list' ] },
+                modifier: { limit: 1000 }
+              }
+            } ).query(),
 
-          response.data.forEach( function( item ) {
+            CnHttpFactory.instance( {
+              path: 'rey_data_variant',
+              data: {
+                select: {
+                  column: [ 'id', 'word', 'language_id',
+                    { table: 'variant', column: 'word', alias: 'variant' },
+                    { table: 'variant', column: 'language_id', alias: 'variant_language_id' }
+                  ]
+                },
+                modifier: { limit: 1000 }
+              }
+            } ).query(),
+
+            CnHttpFactory.instance( {
+              path: 'language',
+              data: {
+                select: { column: [ 'id', 'name' ] },
+                modifier: { where: { column: 'active', operator: '=', value: true }, limit: 1000 }
+              }
+            } ).query()
+          ] );
+
+          wordResponse.data.forEach( function( item ) {
             self.sisterList.push( {
               id: item.id,
               word: item.word,
@@ -484,20 +507,7 @@ define( function() {
             self.fullWordList.push( sisterWord.word );
           } );
 
-          var response = await CnHttpFactory.instance( {
-            path: 'rey_data_variant',
-            data: {
-              select: {
-                column: [ 'id', 'word', 'language_id',
-                  { table: 'variant', column: 'word', alias: 'variant' },
-                  { table: 'variant', column: 'language_id', alias: 'variant_language_id' }
-                ]
-              },
-              modifier: { limit: 1000 }
-            }
-          } ).query();
-
-          response.data.forEach( function( item ) {
+          reyDataVariantResponse.data.forEach( function( item ) {
             self.variantList.push( {
               value: item.id,
               word: item.word,
@@ -508,15 +518,7 @@ define( function() {
             } );
           } );
 
-          var response = await CnHttpFactory.instance( {
-            path: 'language',
-            data: {
-              select: { column: [ 'id', 'name' ] },
-              modifier: { where: { column: 'active', operator: '=', value: true }, limit: 1000 }
-            }
-          } ).query();
-
-          response.data.forEach( function( item ) {
+          languageResponse.data.forEach( function( item ) {
             self.languageList.push( { value: item.id, name: item.name } );
           } );
         };
