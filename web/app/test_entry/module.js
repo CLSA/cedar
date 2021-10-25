@@ -1,9 +1,8 @@
-define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce( function( list, name ) {
-  return list.concat( cenozoApp.module( name ).getRequiredFiles() );
-}, [] ), function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'test_entry',
+                          dependencies: ['aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data'],
+                          models: ['list', 'view'],
+                          create: module => {
 
-  try { var module = cenozoApp.module( 'test_entry', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {
       parent: {
@@ -69,21 +68,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
     prev_test_entry_id: { type: 'hidden' },
     next_test_entry_id: { type: 'hidden' }
   } );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestEntryList', [
-    'CnTestEntryModelFactory',
-    function( CnTestEntryModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestEntryModelFactory.root;
-        }
-      };
-    }
-  ] );
 
   /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTestEntryNotes', [
@@ -186,9 +170,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             },
             selectSoundFile: function( id ) {
               // set the sound file matching the id as active and all others as not-active
-              $scope.model.viewModel.soundFileList.forEach( function( soundFile ) {
-                soundFile.active = id == soundFile.id;
-              } );
+              $scope.model.viewModel.soundFileList.forEach( soundFile => { soundFile.active = id == soundFile.id; } );
             }
           } );
 
@@ -214,15 +196,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           }, 200 );
         }
       };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestEntryListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
   ] );
 
@@ -280,12 +253,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
                 this.parentModel.metadata.columnList.participant_status_type_id.enumList = angular.copy( enumList );
                 this.parentModel.metadata.columnList.admin_status_type_id.enumList = angular.copy( enumList );
 
-                var self = this;
-                response.data.forEach( function( statusType ) {
-                  if( self.record.audio_status_type_id == statusType.id ) audioFound = true;
-                  else if( self.record.participant_status_type_id == statusType.id ) participantFound = true;
-                  else if( self.record.admin_status_type_id == statusType.id ) adminFound = true;
-                  self.parentModel.metadata.columnList[statusType.category+'_status_type_id'].enumList.push(
+                response.data.forEach( statusType => {
+                  if( this.record.audio_status_type_id == statusType.id ) audioFound = true;
+                  else if( this.record.participant_status_type_id == statusType.id ) participantFound = true;
+                  else if( this.record.admin_status_type_id == statusType.id ) adminFound = true;
+                  this.parentModel.metadata.columnList[statusType.category+'_status_type_id'].enumList.push(
                     { value: statusType.id, name: statusType.name }
                   );
                 } );
@@ -347,7 +319,7 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             }
 
             // add an active property to track which recording the user is working with
-            this.soundFileList.forEach( function( soundFile, index ) { soundFile.active = 0 == index; } );
+            this.soundFileList.forEach( ( soundFile, index ) => { soundFile.active = 0 == index; } );
           },
 
           // Sets the state of a test entry
@@ -502,7 +474,6 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           viewNotes: function() { $state.go( 'test_entry.notes', { identifier: this.record.getIdentifier() } ); },
           transition: async function( direction ) {
             var self = this;
-
             var columnName = 'previous' == direction ? 'prev_test_entry_id' : 'next_test_entry_id';
             try {
               await CnHttpFactory.instance( {
@@ -558,68 +529,67 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           }
         } );
 
-        var self = this;
-        async function init() {
-          await self.deferred.promise;
+        async function init( object ) {
+          await object.deferred.promise;
 
           // get and store a list of all languages used by this test-entry
-          if( angular.isDefined( self.languageModel ) ) {
-            self.languageModel.listModel.afterList( function() {
-              if( !self.languageModel.listModel.chooseMode ) {
-                self.languageIdList = self.languageModel.listModel.cache.reduce( function( list, language ) {
+          if( angular.isDefined( object.languageModel ) ) {
+            object.languageModel.listModel.afterList( function() {
+              if( !object.languageModel.listModel.chooseMode ) {
+                object.languageIdList = object.languageModel.listModel.cache.reduce( ( list, language ) => {
                   list.push( language.id );
                   return list;
                 }, [] );
-                if( !self.languageIdList.includes( self.record.participant_language_id ) )
-                  self.record.participant_language_id = self.languageIdList[0];
+                if( !object.languageIdList.includes( object.record.participant_language_id ) )
+                  object.record.participant_language_id = object.languageIdList[0];
               }
             } );
 
             // define whether or not the language list can be choosen from
-            self.languageModel.getChooseEnabled = function() {
-              return self.languageModel.$$getChooseEnabled() &&
-                     self.parentModel.$$getEditEnabled() && (
-                       !self.parentModel.isTypest || (
-                         'assigned' == self.record.state &&
-                         'Unusable' != self.record.audio_status &&
-                         'Unavailable' != self.record.audio_status &&
-                         'Refused' != self.record.participant_status
+            object.languageModel.getChooseEnabled = function() {
+              return object.languageModel.$$getChooseEnabled() &&
+                     object.parentModel.$$getEditEnabled() && (
+                       !object.parentModel.isTypest || (
+                         'assigned' == object.record.state &&
+                         'Unusable' != object.record.audio_status &&
+                         'Unavailable' != object.record.audio_status &&
+                         'Refused' != object.record.participant_status
                        )
                      );
             };
           }
 
-          angular.extend( self.parentModel, {
+          angular.extend( object.parentModel, {
             getStatusEditEnabled: function() {
-              return self.parentModel.$$getEditEnabled() &&
-                     ( !self.parentModel.isRole( 'typist' ) || 'assigned' == self.record.state );
+              return object.parentModel.$$getEditEnabled() &&
+                     ( !object.parentModel.isRole( 'typist' ) || 'assigned' == object.record.state );
             },
             getSubStatusEditEnabled: function( base ) {
-              return self.parentModel.$$getEditEnabled() &&
-                     'assigned' == self.record.state &&
-                     self.record.data_type && (
-                       self[self.record.data_type + 'DataModel'].getEditEnabled() ||
-                       self[self.record.data_type + 'DataModel'].getAddEnabled()
+              return object.parentModel.$$getEditEnabled() &&
+                     'assigned' == object.record.state &&
+                     object.record.data_type && (
+                       object[object.record.data_type + 'DataModel'].getEditEnabled() ||
+                       object[object.record.data_type + 'DataModel'].getAddEnabled()
                      );
             },
             getEditEnabled: function() {
-              return self.parentModel.$$getEditEnabled() && (
-                       !self.parentModel.isRole( 'typist' ) || (
-                         'assigned' == self.record.state &&
-                         'Unusable' != self.record.audio_status &&
-                         'Unavailable' != self.record.audio_status &&
-                         'Refused' != self.record.participant_status
+              return object.parentModel.$$getEditEnabled() && (
+                       !object.parentModel.isRole( 'typist' ) || (
+                         'assigned' == object.record.state &&
+                         'Unusable' != object.record.audio_status &&
+                         'Unavailable' != object.record.audio_status &&
+                         'Refused' != object.record.participant_status
                        )
                      ) &&
-                     self.record.data_type && (
-                       self[self.record.data_type + 'DataModel'].getEditEnabled() ||
-                       self[self.record.data_type + 'DataModel'].getAddEnabled()
+                     object.record.data_type && (
+                       object[object.record.data_type + 'DataModel'].getEditEnabled() ||
+                       object[object.record.data_type + 'DataModel'].getAddEnabled()
                      );
             }
           } );
         }
 
-        init();
+        init( this );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -651,22 +621,22 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
               }
             } ).get();
 
-            await self.$$transitionToParentViewState( subject, identifier );
+            await this.$$transitionToParentViewState( subject, identifier );
           } catch( error ) {
             // errors are handled in onError function above
           }
         };
 
-        async function init() {
+        async function init( object ) {
           await CnSession.promise;
 
-          if( !self.isRole( 'typist' ) ) {
-            self.addColumn( 'score', { title: 'Score', type: 'number' } );
-            self.addColumn( 'alt_score', { title: 'Alt Score', type: 'number' } );
+          if( !object.isRole( 'typist' ) ) {
+            object.addColumn( 'score', { title: 'Score', type: 'number' } );
+            object.addColumn( 'alt_score', { title: 'Alt Score', type: 'number' } );
           }
         }
 
-        init();
+        init( this );
       };
 
       return {
@@ -690,9 +660,8 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           allowEdit: angular.isDefined( noteModule.actions.edit )
         } );
 
-        var self = this;
-        async function init() {
-          await self.onView();
+        async function init( object ) {
+          await object.onView();
 
           var response = await CnHttpFactory.instance( {
             path: 'test_entry/' + $state.params.identifier,
@@ -711,20 +680,20 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
             }
           } ).get();
 
-          self.uid = response.data.transcription_uid;
-          self.test_type_name = response.data.test_type_name;
+          object.uid = response.data.transcription_uid;
+          object.test_type_name = response.data.test_type_name;
 
           CnSession.setBreadcrumbTrail(
             [ {
               title: 'Transcription',
               go: async function() { await $state.go( 'transcription.list' ); }
             }, {
-              title: self.uid,
-              go: async function() { await $state.go( 'transcription.view', { identifier: 'uid=' + self.uid } ); }
+              title: object.uid,
+              go: async function() { await $state.go( 'transcription.view', { identifier: 'uid=' + object.uid } ); }
             }, {
               title: 'Test Entries',
             }, {
-              title: self.test_type_name,
+              title: object.test_type_name,
               go: async function() { await $state.go( 'test_entry.view', $state.params ); }
             }, {
               title: 'Notes'
@@ -732,10 +701,11 @@ define( [ 'aft_data', 'fas_data', 'mat_data', 'premat_data', 'rey_data' ].reduce
           );
         }
         
-        init();
+        init( this );
       };
 
       return { instance: function() { return new object(); } };
     }
   ] );
-} );
+
+} } );

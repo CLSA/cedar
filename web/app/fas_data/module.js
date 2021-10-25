@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'fas_data', models: 'view', create: module => {
 
-  try { var module = cenozoApp.module( 'fas_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'FAS' );
 
   /* ######################################################################################################## */
@@ -17,15 +15,6 @@ define( function() {
           CnBaseRankDataViewDirectiveControllerFactory.construct( $scope );
         }
       }
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnFasDataViewFactory', [
-    'CnBaseDataViewFactory',
-    function( CnBaseDataViewFactory ) {
-      var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
-      return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
   ] );
 
@@ -48,4 +37,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

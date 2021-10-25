@@ -1,8 +1,7 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'rey_data', models: 'view', create: module => {
 
-  try { var module = cenozoApp.module( 'rey_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'REY' );
+
   module.addInputGroup( '', {
     drum: { type: 'boolean' },
     drum_rey_data_variant_id: { type: 'enum' },
@@ -166,9 +165,7 @@ define( function() {
           await $scope.model.metadata.getPromise();
           $scope.$watch( 'model.testEntryModel.viewModel.languageIdList', function( list ) {
             $scope.model.viewModel.onView();
-            $scope.model.variantList.forEach( function( variant ) {
-              variant.allowed = list.includes( variant.variant_language_id );
-            } );
+            $scope.model.variantList.forEach( variant => { variant.allowed = list.includes( variant.variant_language_id ); } );
           } );
         }
       }
@@ -180,7 +177,6 @@ define( function() {
     'CnBaseDataViewFactory', 'CnModalMessageFactory', 'CnModalConfirmFactory', 'CnModalNewWordFactory', 'CnHttpFactory',
     function( CnBaseDataViewFactory, CnModalMessageFactory, CnModalConfirmFactory, CnModalNewWordFactory, CnHttpFactory ) {
       var object = function( parentModel, root ) {
-        var self = this;
         CnBaseDataViewFactory.construct( this, parentModel, root );
         this.baseOnViewFn = this.onView;
 
@@ -207,9 +203,9 @@ define( function() {
             } else {
               // split the word up by spaces
               var text = angular.isString( word ) ? word : word.word;
-              text.split( / +/ ).getUnique().forEach( function( text ) {
+              text.split( / +/ ).getUnique().forEach( text => {
                 // check if the word is a sister word and convert to the parent if so
-                self.parentModel.sisterList.some( function( sisterWord ) {
+                this.parentModel.sisterList.some( sisterWord => {
                   if( sisterWord.sisterWordList.includes( text ) ) {
                     text = sisterWord.word;
                     return true;
@@ -223,11 +219,11 @@ define( function() {
             // the list with the input word object
             if( angular.isObject( word ) && 1 == newWordList.length && word.word == newWordList[0] ) newWordList = [ word ];
 
-            await Promise.all( newWordList.map( async function( word ) {
+            await Promise.all( newWordList.map( async word => {
               var text = angular.isString( word ) ? word : word.word;
 
               // convert sister words
-              self.parentModel.sisterList.some( function( sisterWord ) {
+              this.parentModel.sisterList.some( sisterWord => {
                 if( sisterWord.sisterWordList.includes( text ) ) {
                   text = sisterWord.word;
                   return true;
@@ -235,19 +231,18 @@ define( function() {
               } );
 
               // check if the word is one of the REY words
-              var label = self.wordList.findByProperty( 'label', text.ucWords() );
+              var label = this.wordList.findByProperty( 'label', text.ucWords() );
               if( label ) {
                 var data = {};
                 data[label.name] = 1;
-                await self.onPatch( data );
-                self.record[label.name] = 1;
-                self.record[label.name + '_rey_data_variant_id'] = '';
+                await this.onPatch( data );
+                this.record[label.name] = 1;
+                this.record[label.name + '_rey_data_variant_id'] = '';
                 label.value = 1;
               } else {
                 // check if the word is one of the REY variants
-                var variant = self.parentModel.variantList.filter( function( obj ) {
-                  return obj.language_id == self.record.language_id;
-                } ).findByProperty( 'name', text );
+                var variant = this.parentModel.variantList.filter( obj => obj.language_id == this.record.language_id )
+                                                          .findByProperty( 'name', text );
 
                 if( variant ) {
                   if( !variant.allowed ) {
@@ -260,10 +255,10 @@ define( function() {
                   } else {
                     var data = {};
                     data[variant.word + '_rey_data_variant_id'] = variant.value;
-                    await self.onPatch( data );
-                    self.record[variant.word + '_rey_data_variant_id'] = variant.value;
-                    self.record[variant.word] = '';
-                    self.wordList.findByProperty( 'name', variant.word ).value = 'variant' + variant.value;
+                    await this.onPatch( data );
+                    this.record[variant.word + '_rey_data_variant_id'] = variant.value;
+                    this.record[variant.word] = '';
+                    this.wordList.findByProperty( 'name', variant.word ).value = 'variant' + variant.value;
                   }
                 } else {
                   // the word is neither a REY primary or variant, so send it as a new word
@@ -275,15 +270,13 @@ define( function() {
                     // it's a new word, so double-check with the user before proceeding
                     var response = await CnModalNewWordFactory.instance( {
                       word: word,
-                      language_id: self.record.language_id,
-                      languageIdRestrictList: self.parentModel.testEntryModel.viewModel.languageIdList
+                      language_id: this.record.language_id,
+                      languageIdRestrictList: this.parentModel.testEntryModel.viewModel.languageIdList
                     } ).show();
 
                     if( null != response ) {
                       // make sure the intrusion doesn't already exist
-                      if( self.intrusionList.some( function( intrusion ) {
-                        return intrusion.language_id == response && intrusion.word == word;
-                      } ) ) {
+                      if( this.intrusionList.some( intrusion => intrusion.language_id == response && intrusion.word == word ) ) {
                         alreadyExists = true;
                       } else {
                         word = { language_id: response, word: word };
@@ -292,7 +285,7 @@ define( function() {
                     }
                   }
 
-                  if( alreadyExists || self.intrusionList.findByProperty( 'id', word.id ) ) {
+                  if( alreadyExists || this.intrusionList.findByProperty( 'id', word.id ) ) {
                     await CnModalMessageFactory.instance( {
                       title: 'Intrusion Already Exists',
                       message: 'The intrusion you have submitted has already been added to this REY test and does ' +
@@ -302,7 +295,7 @@ define( function() {
                     var data = { add: angular.isDefined( word.id ) ? word.id : word };
 
                     var response = await CnHttpFactory.instance( {
-                      path: self.parentModel.getServiceResourcePath() + '/word',
+                      path: this.parentModel.getServiceResourcePath() + '/word',
                       data: data,
                       onError: function( error ) {
                         if( 406 == error.status ) {
@@ -314,7 +307,7 @@ define( function() {
                         } else CnModalMessageFactory.httpError( error );
                       }
                     } ).post();
-                    self.intrusionList.push( response.data );
+                    this.intrusionList.push( response.data );
                   }
                 }
               }
@@ -332,10 +325,10 @@ define( function() {
             if( this.parentModel.getEditEnabled() ) {
               // convert the word-list value into a record value
               var data = {};
-              this.wordList.forEach( function( word ) {
+              this.wordList.forEach( word => {
                 var property = word.name;
                 var variantProperty = property + '_rey_data_variant_id';
-                if( "" === self.record[property] && "" === self.record[variantProperty] ) data[word.name] = 0;
+                if( "" === this.record[property] && "" === this.record[variantProperty] ) data[word.name] = 0;
               } );
 
               await this.onPatch( data );
@@ -388,11 +381,11 @@ define( function() {
               ];
             }
 
-            this.wordList.forEach( function( word ) {
+            this.wordList.forEach( word => {
               var variantProperty = word.name + '_rey_data_variant_id';
-              if( Number.isInteger( self.record[word.name] ) ) word.value = self.record[word.name];
-              else if( Number.isInteger( self.record[variantProperty] ) )
-                word.value = 'variant' + self.record[variantProperty];
+              if( Number.isInteger( this.record[word.name] ) ) word.value = this.record[word.name];
+              else if( Number.isInteger( this.record[variantProperty] ) )
+                word.value = 'variant' + this.record[variantProperty];
             } );
 
             // get the rey-data intrusions
@@ -413,12 +406,12 @@ define( function() {
             // first count the number of variants used and how many are of the test's language
             var variantCount = 0;
             var languageCount = 0;
-            this.wordList.forEach( function( word ) {
+            this.wordList.forEach( word => {
               var property = word.name + '_rey_data_variant_id';
-              if( self.record[property] ) {
+              if( this.record[property] ) {
                 variantCount++;
-                var variant = self.parentModel.variantList.findByProperty( 'value', self.record[property] );
-                if( variant.variant_language_id == self.record.language_id ) languageCount++;
+                var variant = this.parentModel.variantList.findByProperty( 'value', this.record[property] );
+                if( variant.variant_language_id == this.record.language_id ) languageCount++;
               }
             } );
 
@@ -458,7 +451,6 @@ define( function() {
         this.languageList = [];
 
         // extend getMetadata
-        var self = this;
         this.getMetadata = async function() {
           await this.$$getMetadata();
 
@@ -493,8 +485,8 @@ define( function() {
             } ).query()
           ] );
 
-          wordResponse.data.forEach( function( item ) {
-            self.sisterList.push( {
+          wordResponse.data.forEach( item => {
+            this.sisterList.push( {
               id: item.id,
               word: item.word,
               sisterWordList: null == item.sister_list ? [] : item.sister_list.split( ',' )
@@ -502,13 +494,13 @@ define( function() {
           } );
 
           // build a list of all primary, variant and sister words
-          this.sisterList.forEach( function( sisterWord ) {
-            sisterWord.sisterWordList.forEach( sister => self.fullWordList.push( sister ) );
-            self.fullWordList.push( sisterWord.word );
+          this.sisterList.forEach( sisterWord => {
+            sisterWord.sisterWordList.forEach( sister => this.fullWordList.push( sister ) );
+            this.fullWordList.push( sisterWord.word );
           } );
 
-          reyDataVariantResponse.data.forEach( function( item ) {
-            self.variantList.push( {
+          reyDataVariantResponse.data.forEach( item => {
+            this.variantList.push( {
               value: item.id,
               word: item.word,
               language_id: item.language_id,
@@ -518,9 +510,7 @@ define( function() {
             } );
           } );
 
-          languageResponse.data.forEach( function( item ) {
-            self.languageList.push( { value: item.id, name: item.name } );
-          } );
+          languageResponse.data.forEach( item => { this.languageList.push( { value: item.id, name: item.name } ); } );
         };
       };
 
@@ -531,4 +521,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'mat_data', models: 'view', create: module => {
 
-  try { var module = cenozoApp.module( 'mat_data', true ); } catch( err ) { console.warn( err ); return; }
   cenozoApp.initDataModule( module, 'MAT' );
 
   /* ######################################################################################################## */
@@ -156,7 +154,7 @@ define( function() {
                   } ).delete();
                   this.record.splice( index, 1, response.data );
                 } else {
-                  this.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                  this.record.forEach( word => { if( word.rank >= rank ) word.rank++; } );
                   this.record.splice( index, 0, response.data );
                 }
               } else {
@@ -212,4 +210,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

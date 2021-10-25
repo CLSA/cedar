@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'test_entry_activity', models: ['list', 'view'], create: module => {
 
-  try { var module = cenozoApp.module( 'test_entry_activity', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {
       parent: {
@@ -34,44 +32,4 @@ define( function() {
     }
   } );
 
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestEntryActivityList', [
-    'CnTestEntryActivityModelFactory',
-    function( CnTestEntryActivityModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestEntryActivityModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestEntryActivityListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestEntryActivityModelFactory', [
-    'CnBaseModelFactory', 'CnTestEntryActivityListFactory',
-    function( CnBaseModelFactory, CnTestEntryActivityListFactory ) {
-      var object = function( root ) {
-        CnBaseModelFactory.construct( this, module );
-        this.listModel = CnTestEntryActivityListFactory.instance( this );
-      };
-
-      return {
-        root: new object( true ),
-        instance: function() { return new object( false ); }
-      };
-    }
-  ] );
-
-} );
+} } );

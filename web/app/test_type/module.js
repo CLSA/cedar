@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'test_type', models: ['list', 'view'], create: module => {
 
-  try { var module = cenozoApp.module( 'test_type', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: { column: 'name' },
     name: {
@@ -68,36 +66,6 @@ define( function() {
       if( await model.viewModel.rescoreTestEntries() ) await model.viewModel.onView();
     }
   } );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestTypeList', [
-    'CnTestTypeModelFactory',
-    function( CnTestTypeModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestTypeModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTestTypeView', [
-    'CnTestTypeModelFactory',
-    function( CnTestTypeModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTestTypeModelFactory.root;
-        }
-      };
-    }
-  ] );
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnTestTypeListFactory', [
@@ -169,23 +137,4 @@ define( function() {
     }
   ] );
 
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnTestTypeModelFactory', [
-    'CnBaseModelFactory', 'CnTestTypeListFactory', 'CnTestTypeViewFactory', 'CnSession',
-    function( CnBaseModelFactory, CnTestTypeListFactory, CnTestTypeViewFactory, CnSession ) {
-      var object = function( root ) {
-        CnBaseModelFactory.construct( this, module );
-        this.listModel = CnTestTypeListFactory.instance( this );
-        this.viewModel = CnTestTypeViewFactory.instance( this, root );
-
-        this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
-      };
-
-      return {
-        root: new object( true ),
-        instance: function() { return new object( false ); }
-      };
-    }
-  ] );
-
-} );
+} } );

@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'compound', models: ['add', 'list'], create: module => {
 
-  try { var module = cenozoApp.module( 'compound', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {
       parent: {
@@ -51,36 +49,6 @@ define( function() {
   }
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnCompoundAdd', [
-    'CnCompoundModelFactory',
-    function( CnCompoundModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'add.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnCompoundModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnCompoundList', [
-    'CnCompoundModelFactory',
-    function( CnCompoundModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnCompoundModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnCompoundAddFactory', [
     'CnBaseAddFactory', 'CnHttpFactory', 'CnSession',
     function( CnBaseAddFactory, CnHttpFactory, CnSession ) {
@@ -113,21 +81,11 @@ define( function() {
         };
 
         this.transitionOnSave = async function( record ) {
-          var self = this;
-          await CnSession.workingTransition( async function() {
-            await self.parentModel.transitionToParentViewState( 'word', self.currentParentId );
+          await CnSession.workingTransition( async () => {
+            await this.parentModel.transitionToParentViewState( 'word', this.currentParentId );
           } );
         };
       };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnCompoundListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
       return { instance: function( parentModel ) { return new object( parentModel ); } };
     }
   ] );
@@ -205,4 +163,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

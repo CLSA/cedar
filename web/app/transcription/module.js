@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'transcription', models: ['add', 'list', 'view'], create: module => {
 
-  try { var module = cenozoApp.module( 'transcription', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: { column: 'uid' },
     name: {
@@ -133,36 +131,6 @@ define( function() {
   } );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTranscriptionAdd', [
-    'CnTranscriptionModelFactory',
-    function( CnTranscriptionModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'add.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTranscriptionList', [
-    'CnTranscriptionModelFactory',
-    function( CnTranscriptionModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.directive( 'cnTranscriptionMultiedit', [
     'CnTranscriptionMultieditFactory', 'CnSession', '$state', '$timeout',
     function( CnTranscriptionMultieditFactory, CnSession, $state, $timeout ) {
@@ -186,21 +154,6 @@ define( function() {
             await $scope.model.confirm();
             angular.element( '#uidListString' ).trigger( 'elastic' );
           };
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnTranscriptionView', [
-    'CnTranscriptionModelFactory',
-    function( CnTranscriptionModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnTranscriptionModelFactory.root;
         }
       };
     }
@@ -315,12 +268,8 @@ define( function() {
                         .replace( /[\s,;|\/]/g, ' ' ) // replace whitespace and separation chars with a space
                         .replace( /[^a-zA-Z0-9 ]/g, '' ) // remove anything that isn't a letter, number of space
                         .split( ' ' ) // delimite string by spaces and create array from result
-                        .filter( function( uid ) { // match UIDs (eg: A123456)
-                          return null != uid.match( uidRegex );
-                        } )
-                        .filter( function( uid, index, array ) { // make array unique
-                          return index <= array.indexOf( uid );
-                        } )
+                        .filter( uid => null != uid.match( uidRegex ) ) // match UIDs (eg: A123456)
+                        .filter( ( uid, index, array ) => index <= array.indexOf( uid ) ) // make array unique
                         .sort(); // sort the array
 
           // now confirm UID list with server
@@ -356,14 +305,13 @@ define( function() {
               }
             } ).query();
 
-            var self = this;
-            await Promise.all( response.data.map( async function( item ) {
+            await Promise.all( response.data.map( async item => {
               var currentSiteId = item.id;
-              self.siteList.push( {
+              this.siteList.push( {
                 name: item.name,
                 value: item.id,
                 userList: [ {
-                  name: 'no-import' == self.importRestriction ? '(Select Typist)' : '(empty)',
+                  name: 'no-import' == this.importRestriction ? '(Select Typist)' : '(empty)',
                   value: undefined
                 } ]
               } );
@@ -396,8 +344,9 @@ define( function() {
                 }
               } ).query();
 
-              response.data.forEach( function( item ) {
-                self.siteList.findByProperty( 'value', currentSiteId ).userList.push( {
+              var userList = this.siteList.findByProperty( 'value', currentSiteId ).userList;
+              response.data.forEach( item => {
+                userList.push( {
                   value: item.id,
                   name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')',
                   user: item.name
@@ -482,18 +431,17 @@ define( function() {
           }
         } );
 
-        var self = this;
-        async function init() {
+        async function init( object ) {
           // never allow the language list to be changed directly, this is done automatically by the database
-          await self.deferred;
+          await object.deferred;
 
-          if( angular.isDefined( self.languageModel ) ) {
-            self.languageModel.getChooseEnabled = function() { return false; };
-            self.languageModel.listModel.heading = 'Language List (based on all test-entries)';
+          if( angular.isDefined( object.languageModel ) ) {
+            object.languageModel.getChooseEnabled = function() { return false; };
+            object.languageModel.listModel.heading = 'Language List (based on all test-entries)';
           }
         }
 
-        init();
+        init( this );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -525,11 +473,10 @@ define( function() {
             }
           } ).query();
 
-          this.metadata.columnList.site_id = { enumList: [] };
-          var self = this;
-          response.data.forEach( function( item ) {
-            self.metadata.columnList.site_id.enumList.push( { value: item.id, name: item.name } );
-          } );
+          this.metadata.columnList.site_id = response.data.reduce( ( list, item ) => {
+            list.push( { value: item.id, name: item.name } );
+            return list;
+          }, { enumList: [] } );
         };
 
         this.canRescoreTestEntries = function() { return 2 < CnSession.role.tier; };
@@ -651,14 +598,10 @@ define( function() {
             }
           } ).query();
 
-          this.metadata.columnList.user_id.enumList = [];
-          var self = this;
-          response.data.forEach( function( item ) {
-            self.metadata.columnList.user_id.enumList.push( {
-              value: item.id,
-              name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
-            } );
-          } );
+          this.metadata.columnList.user_id.enumList = response.data.reduce( ( list, item ) => {
+            list.push( { value: item.id, name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')' } );
+            return list;
+          }, [] );
         };
       };
 
@@ -669,4 +612,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

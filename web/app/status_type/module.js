@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'status_type', models: ['add', 'list', 'view'], create: module => {
 
-  try { var module = cenozoApp.module( 'status_type', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {
       parent: {
@@ -91,54 +89,6 @@ define( function() {
   ] );
 
   /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnStatusTypeList', [
-    'CnStatusTypeModelFactory',
-    function( CnStatusTypeModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnStatusTypeModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnStatusTypeView', [
-    'CnStatusTypeModelFactory',
-    function( CnStatusTypeModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnStatusTypeModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnStatusTypeAddFactory', [
-    'CnBaseAddFactory',
-    function( CnBaseAddFactory ) {
-      var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnStatusTypeListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnStatusTypeViewFactory', [
     'CnBaseViewFactory', 'CnModalConfirmFactory',
     function( CnBaseViewFactory, CnModalConfirmFactory ) {
@@ -161,16 +111,14 @@ define( function() {
     function( CnBaseModelFactory, CnStatusTypeAddFactory, CnStatusTypeListFactory, CnStatusTypeViewFactory,
               CnHttpFactory, $state, $filter ) {
       var object = function( root ) {
-        var self = this;
         CnBaseModelFactory.construct( this, module );
         this.addModel = CnStatusTypeAddFactory.instance( this );
         this.listModel = CnStatusTypeListFactory.instance( this );
         this.viewModel = CnStatusTypeViewFactory.instance( this, root );
 
         // sets the rank's max value based on a category
-        this.setMaxRank = function( category ) {
-          self.metadata.columnList.rank.enumList = [];
-          return CnHttpFactory.instance( {
+        this.setMaxRank = async function( category ) {
+          var response = await CnHttpFactory.instance( {
             path: 'status_type',
             data: {
               select: {
@@ -189,19 +137,14 @@ define( function() {
               }
             },
             redirectOnError: true
-          } ).query().then( function( response ) {
-            if( 0 < response.data.length ) {
-              self.metadata.columnList.rank.enumList = [];
-              if( null !== response.data[0].max ) {
-                for( var rank = 1; rank <= parseInt( response.data[0].max ); rank++ ) {
-                  self.metadata.columnList.rank.enumList.push( {
-                    value: rank,
-                    name: $filter( 'cnOrdinal' )( rank )
-                  } );
-                }
-              }
+          } ).query();
+          
+          this.metadata.columnList.rank.enumList = [];
+          if( 0 < response.data.length && null !== response.data[0].max ) {
+            for( var rank = 1; rank <= parseInt( response.data[0].max ); rank++ ) {
+              this.metadata.columnList.rank.enumList.push( { value: rank, name: $filter( 'cnOrdinal' )( rank ) } );
             }
-          } );
+          }
         };
       };
 
@@ -212,4 +155,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );

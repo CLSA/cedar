@@ -1,7 +1,5 @@
-define( function() {
-  'use strict';
+cenozoApp.defineModule( { name: 'word', models: ['add', 'list', 'view'], create: module => {
 
-  try { var module = cenozoApp.module( 'word', true ); } catch( err ) { console.warn( err ); return; }
   angular.extend( module, {
     identifier: {},
     name: {
@@ -126,69 +124,6 @@ define( function() {
       type: 'text'
     }
   } );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnWordAdd', [
-    'CnWordModelFactory',
-    function( CnWordModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'add.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnWordModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnWordList', [
-    'CnWordModelFactory',
-    function( CnWordModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'list.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnWordModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.directive( 'cnWordView', [
-    'CnWordModelFactory',
-    function( CnWordModelFactory ) {
-      return {
-        templateUrl: module.getFileUrl( 'view.tpl.html' ),
-        restrict: 'E',
-        scope: { model: '=?' },
-        controller: function( $scope ) {
-          if( angular.isUndefined( $scope.model ) ) $scope.model = CnWordModelFactory.root;
-        }
-      };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnWordAddFactory', [
-    'CnBaseAddFactory',
-    function( CnBaseAddFactory ) {
-      var object = function( parentModel ) { CnBaseAddFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
-
-  /* ######################################################################################################## */
-  cenozo.providers.factory( 'CnWordListFactory', [
-    'CnBaseListFactory',
-    function( CnBaseListFactory ) {
-      var object = function( parentModel ) { CnBaseListFactory.construct( this, parentModel ); };
-      return { instance: function( parentModel ) { return new object( parentModel ); } };
-    }
-  ] );
 
   /* ######################################################################################################## */
   cenozo.providers.factory( 'CnWordViewFactory', [
@@ -332,12 +267,11 @@ define( function() {
         } );
 
         // warn if the new sister word is an intrusion
-        var self = this;
-        this.afterPatch( async function() {
-          if( self.sisterWordLastPatched ) {
-            if( self.record.sister_word_id ) {
+        this.afterPatch( async () => {
+          if( this.sisterWordLastPatched ) {
+            if( this.record.sister_word_id ) {
               var response = await CnHttpFactory.instance( {
-                path: 'word/' + self.record.sister_word_id,
+                path: 'word/' + this.record.sister_word_id,
                 data: { select: { column: 'fas' } }
               } ).get();
 
@@ -349,29 +283,28 @@ define( function() {
                 } ).show();
               }
             }
-            self.sisterWordLastPatched = false;
+            this.sisterWordLastPatched = false;
           }
         } );
 
-        var self = this;
-        async function init() {
-          await self.deferred.promise;
+        async function init( object ) {
+          await object.deferred.promise;
 
           // disable the choosing of test-entries using this word
-          if( angular.isDefined( self.testEntryModel ) )
-            self.testEntryModel.getChooseEnabled = function() { return false; };
+          if( angular.isDefined( object.testEntryModel ) )
+            object.testEntryModel.getChooseEnabled = function() { return false; };
 
           // only allow words with no animal code to be compounded
-          if( angular.isDefined( self.compoundModel ) ) {
-            self.compoundModel.getAddEnabled = function() {
-              return self.compoundModel.$$getAddEnabled() &&
-                     angular.isDefined( self.record.animal_code ) &&
-                     !self.record.animal_code;
+          if( angular.isDefined( object.compoundModel ) ) {
+            object.compoundModel.getAddEnabled = function() {
+              return object.compoundModel.$$getAddEnabled() &&
+                     angular.isDefined( object.record.animal_code ) &&
+                     !object.record.animal_code;
             };
           }
         }
 
-        init();
+        init( this );
       }
       return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
     }
@@ -405,11 +338,10 @@ define( function() {
             }
           } ).query();
 
-          this.metadata.columnList.language_id.enumList = [];
-          var self = this;
-          response.data.forEach( function( item ) {
-            self.metadata.columnList.language_id.enumList.push( { value: item.id, name: item.name } );
-          } );
+          this.metadata.columnList.language_id.enumList = response.data.reduce( ( list, item ) => {
+            list.push( { value: item.id, name: item.name } );
+            return list;
+          }, [] );
         };
       };
 
@@ -420,4 +352,4 @@ define( function() {
     }
   ] );
 
-} );
+} } );
