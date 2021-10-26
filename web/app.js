@@ -41,11 +41,11 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           this.isLoading = false;
           return 3 >= value.length ?
             this.valueCache :
-            this.valueCache.filter( function( word ) { return null != word.word.match( '^' + value ); } );
+            this.valueCache.filter( word => null != word.word.match( '^' + value ) );
         },
         getValidLetters: function() {
           var validLetters = '';
-          this.getLanguageIdRestrictList().forEach( function( languageId ) {
+          this.getLanguageIdRestrictList().forEach( languageId => {
             validLetters += CnSession.setting.specialLetter[languageId];
           } );
           return validLetters;
@@ -63,27 +63,26 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
           return null != word.match( re );
         },
         getValues: async function( value ) {
-          var self = this;
           var guid = cenozo.generateGUID();
 
           // convert to lower case
           value = value.toLowerCase();
 
           this.lastGUID = guid;
-          return await $timeout( async function() {
+          return await $timeout( async () => {
             // return an empty list if this isn't the last GUID
-            if( guid != self.lastGUID ) return [];
-            if( !self.isWordValid( value ) ) {
-              self.resolveList( value );
+            if( guid != this.lastGUID ) return [];
+            if( !this.isWordValid( value ) ) {
+              this.resolveList( value );
               return [];
             }
 
-            self.isLoading = true;
+            this.isLoading = true;
 
             // see if we have to rebuild the cache
             var value3 = value.substring( 0, 3 );
-            if( 0 == self.valueCache.length ||
-                3 > value.length || null == self.valueCache[0].word.match( '^' + value3 ) ) {
+            if( 0 == this.valueCache.length ||
+                3 > value.length || null == this.valueCache[0].word.match( '^' + value3 ) ) {
               var where = [ {
                 column: 'misspelled', operator: '=', value: false
               }, {
@@ -93,12 +92,12 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
               } ];
 
               // only restrict by language if there are any in the list
-              var list = self.getLanguageIdRestrictList();
+              var list = this.getLanguageIdRestrictList();
               if( 0 < list.length ) where.push( { column: 'language_id', operator: 'IN', value: list } );
 
               // restrict by test type, if required
-              if( null != self.testType )
-                where.push( { column: self.testType, operator: '!=', value: 'invalid' } );
+              if( null != this.testType )
+                where.push( { column: this.testType, operator: '!=', value: 'invalid' } );
 
               var response = await CnHttpFactory.instance( {
                 path: 'word',
@@ -108,10 +107,10 @@ cenozo.factory( 'CnWordTypeaheadFactory', [
                 }
               } ).query();
 
-              self.valueCache = angular.copy( response.data );
+              this.valueCache = angular.copy( response.data );
             }
 
-            return self.resolveList( value );
+            return this.resolveList( value );
           }, 200 );
         }
       } );
@@ -361,7 +360,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
                         } ).delete();
                         object.record.splice( index, 1, response.data );
                       } else {
-                        object.record.forEach( function( word ) { if( word.rank >= rank ) word.rank++; } );
+                        object.record.forEach( word => { if( word.rank >= rank ) word.rank++; } );
                         object.record.splice( index, 0, response.data );
                       }
                     } else {
@@ -399,7 +398,7 @@ cenozo.factory( 'CnBaseDataViewFactory', [
               var index = object.record.findIndexByProperty( 'id', wordRecord.id );
               if( null != index ) {
                 object.record.splice( index, 1 );
-                object.record.forEach( function( word ) { if( word.rank > wordRecord.rank ) word.rank--; } );
+                object.record.forEach( word => { if( word.rank > wordRecord.rank ) word.rank--; } );
               } else {
                 console.warn( 'Tried removing word which was not found in the list' );
               }
@@ -492,12 +491,10 @@ cenozo.service( 'CnModalNewWordFactory', [
           }
         } ).query();
 
-        var self = this;
         this.languageList = [];
-        response.data.forEach( function( item ) {
-          self.languageList.push( { value: item.id, name: item.name } );
-        } );
+        response.data.forEach( item => { this.languageList.push( { value: item.id, name: item.name } ); } );
 
+        var self = this;
         return $uibModal.open( {
           backdrop: 'static',
           keyboard: true,
@@ -559,14 +556,14 @@ cenozo.service( 'CnModalSelectTypistFactory', [
         } ).query();
 
         this.userList = [ { name: "(Select Typist)", value: undefined } ];
-        var self = this;
-        response.data.forEach( function( item ) {
-          self.userList.push( {
+        response.data.forEach( item => {
+          this.userList.push( {
             value: item.id,
             name: item.first_name + ' ' + item.last_name + ' (' + item.name + ')'
           } );
         } );
 
+        var self = this;
         return $uibModal.open( {
           backdrop: 'static',
           keyboard: true,
