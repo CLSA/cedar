@@ -1,8 +1,4 @@
-// extend the framework's module
-define( [ cenozoApp.module( 'user' ).getFileUrl( 'module.js' ) ], function() {
-  'use strict';
-
-  var module = cenozoApp.module( 'user' );
+cenozoApp.extendModule( { name: 'user', create: module => {
 
   // extend the view factory
   cenozo.providers.decorator( 'CnUserViewFactory', [
@@ -29,4 +25,4 @@ define( [ cenozoApp.module( 'user' ).getFileUrl( 'module.js' ) ], function() {
       return $delegate;
     }
   ] );
-} );
+} } );
