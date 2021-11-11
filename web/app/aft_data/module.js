@@ -19,6 +19,15 @@ cenozoApp.defineModule( { name: 'aft_data', models: 'view', create: module => {
   ] );
 
   /* ######################################################################################################## */
+  cenozo.providers.factory( 'CnAftDataViewFactory', [
+    'CnBaseDataViewFactory',
+    function( CnBaseDataViewFactory ) {
+      var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
+      return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
+    }
+  ] );
+
+  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnAftDataModelFactory', [
     'CnBaseDataModelFactory', 'CnAftDataViewFactory',
     function( CnBaseDataModelFactory, CnAftDataViewFactory ) {
