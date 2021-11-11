@@ -474,7 +474,7 @@ cenozoApp.defineModule( { name: 'transcription', models: ['add', 'list', 'view']
           } ).query();
 
           this.metadata.columnList.site_id = response.data.reduce( ( list, item ) => {
-            list.push( { value: item.id, name: item.name } );
+            list.enumList.push( { value: item.id, name: item.name } );
             return list;
           }, { enumList: [] } );
         };

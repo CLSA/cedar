@@ -19,6 +19,15 @@ cenozoApp.defineModule( { name: 'fas_data', models: 'view', create: module => {
   ] );
 
   /* ######################################################################################################## */
+  cenozo.providers.factory( 'CnFasDataViewFactory', [
+    'CnBaseDataViewFactory',
+    function( CnBaseDataViewFactory ) {
+      var object = function( parentModel, root ) { CnBaseDataViewFactory.construct( this, parentModel, root ); }
+      return { instance: function( parentModel, root ) { return new object( parentModel, root ); } };
+    }
+  ] );
+
+  /* ######################################################################################################## */
   cenozo.providers.factory( 'CnFasDataModelFactory', [
     'CnBaseDataModelFactory', 'CnFasDataViewFactory',
     function( CnBaseDataModelFactory, CnFasDataViewFactory ) {
