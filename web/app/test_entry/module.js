@@ -155,7 +155,7 @@ cenozoApp.defineModule( { name: 'test_entry',
                   var soundFile = $scope.model.viewModel.soundFileList.findByProperty( 'active', true );
 
                   if( soundFile ) {
-                    var soundEl = soundFile.element;
+                    var soundEl = document.getElementById( 'soundFile' + soundFile.id );
                     // now determine what to do
                     if( 'togglePlay' == action ) {
                       if( soundEl.paused ) soundEl.play(); else soundEl.pause();
@@ -183,17 +183,6 @@ cenozoApp.defineModule( { name: 'test_entry',
         link: async function( scope, element ) {
           // close the test entry activity
           scope.$on( '$stateChangeStart', function() { scope.model.viewModel.close(); } );
-
-          // attach the sound file elements to the view model's list of sound files
-          await scope.model.viewModel.onViewPromise;
-
-          $timeout( function() {
-            var audioList = element[0].querySelectorAll( 'audio' );
-            [].forEach.call( audioList, function( audioEl ) {
-              var id = audioEl.id.replace( 'soundFile', '' );
-              scope.model.viewModel.soundFileList.findByProperty( 'id', id ).element = audioEl;
-            } );
-          }, 200 );
         }
       };
     }
