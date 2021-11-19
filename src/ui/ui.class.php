@@ -91,6 +91,7 @@ class ui extends \cenozo\ui\ui
       $this->remove_listitem( 'Strata' );
       if( 2 < $db_role->tier )
       {
+        $this->add_listitem( 'Sound Files', 'sound_file' );
         $this->add_listitem( 'REY Variant', 'rey_data_variant' );
         $this->add_listitem( 'Status Types', 'status_type' );
       }
