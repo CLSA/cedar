@@ -120,8 +120,8 @@ class sound_file extends \cenozo\database\record
     $select = lib::create( 'database\select' );
     $select->from( 'participant' );
     $select->add_column( 'id' );
-    $select->add_constant( 0 );
-    $select->add_constant( 'UTC_TIMESTAMP()' );
+    $select->add_constant( 0, 'total' );
+    $select->add_constant( 'UTC_TIMESTAMP()', 'datetime', 'datetime', false );
     static::db()->execute( sprintf(
       'INSERT IGNORE INTO participant_sound_file_total( participant_id, total, datetime ) %s %s',
       $select->get_sql(),
