@@ -206,7 +206,7 @@ class post extends \cenozo\service\post
         }
 
         // assign transcriptions to the user if requested
-        if( !is_null( $site_id ) && !is_null( $user_id ) )
+        if( !is_null( $site_id ) || !is_null( $user_id ) )
         {
           $participant_sel = lib::create( 'database\select' );
           $participant_sel->from( 'participant' );
@@ -215,8 +215,7 @@ class post extends \cenozo\service\post
           $participant_mod->where( 'uid', 'IN', $uid_list );
           foreach( $participant_class_name::select( $participant_sel, $participant_mod ) as $participant )
           {
-            $db_transcription =
-              $transcription_class_name::get_unique_record( 'participant_id', $participant['id'] );
+            $db_transcription = $transcription_class_name::get_unique_record( 'participant_id', $participant['id'] );
             if( is_null( $db_transcription ) )
             {
               $db_transcription = lib::create( 'database\transcription' );
@@ -224,8 +223,8 @@ class post extends \cenozo\service\post
               $db_transcription->start_datetime = util::get_datetime_object();
             }
 
-            $db_transcription->site_id = $site_id;
-            $db_transcription->user_id = $user_id;
+            if( !is_null( $site_id ) ) $db_transcription->site_id = $site_id;
+            if( !is_null( $user_id ) ) $db_transcription->user_id = $user_id;
             $db_transcription->save();
           }
         }
