@@ -23,4 +23,4 @@ $SETTINGS['path']['RECORDINGS'] = $SETTINGS['path']['APPLICATION'].'/path/to/rec
 $SETTINGS['url']['RECORDINGS'] = 'recordings';
 
 // where to store the file which tracks when the last sync was performed
-$SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/web/last_sync';
+$SETTINGS['general']['last_sync_file'] = sprintf( '%s/last_sync', $SETTINGS['path']['APPLICATION'] );
