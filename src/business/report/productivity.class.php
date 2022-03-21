@@ -193,9 +193,9 @@ class productivity extends \cenozo\business\report\base_report
       foreach( $test_type_list as $db_test_type ) $overall[$db_test_type->name] = 0;
       $overall['Total Time'] = 0;
       foreach( $completed_type_list as $completed_type ) $overall[$completed_type] = 0;
-      $overall['Completes/Hour'] = '';
+      $overall['Completes/Hour'] = 0;
 
-      foreach( $user_list as $user_data ) foreach( $user_data as $key => $value ) $overall[$key] += floatval( $value );
+      foreach( $user_list as $user_data ) foreach( $user_data as $key => $value ) $overall[$key] += $value;
       $overall['Completes/Hour'] = 0 == $overall['Total Time'] ?
         'n/a' : sprintf( '%0.2f', $overall['Completed Transcriptions (Total)'] /
                                   ( $overall['Total Time'] / 3600 ) );
