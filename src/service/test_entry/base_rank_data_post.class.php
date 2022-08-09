@@ -52,7 +52,7 @@ abstract class base_rank_data_post extends \cenozo\service\post
           }
         }
 
-        if( 300 > $this->get_status()->get_code() )
+        if( $this->may_continue() )
         {
           $data_type = str_replace( '_data', '', $this->get_leaf_subject() );
           if( $db_word->misspelled ) $this->get_status()->set_code( 406 );

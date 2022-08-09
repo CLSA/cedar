@@ -50,7 +50,7 @@ class patch extends \cenozo\service\patch
   {
     parent::validate();
 
-    if( 300 > $this->status->get_code() )
+    if( $this->may_continue() )
     {
       // only admins can edit a word once misspelled, aft and fas have been set
       $db_word = $this->get_leaf_record();

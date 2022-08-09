@@ -24,7 +24,7 @@ class base_data_module extends \cenozo\service\site_restricted_participant_modul
     $db_role = $session->get_role();
     $db_user = $session->get_user();
 
-    if( 300 > $this->get_status()->get_code() )
+    if( $this->service->may_continue() )
     {
       // special restricts for typists
       $db_data = $this->get_resource();

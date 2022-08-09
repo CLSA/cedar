@@ -17,7 +17,7 @@ class post extends \cenozo\service\post
   {
     parent::validate();
 
-    if( 300 > $this->get_status()->get_code() )
+    if( $this->may_continue() )
     {
       $db_word = $this->get_parent_record();
       if( !is_null( $db_word->animal_code ) ) $this->get_status()->set_code( 400 );
