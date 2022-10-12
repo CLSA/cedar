@@ -13,7 +13,7 @@ global $SETTINGS;
 $SETTINGS['general']['application_name'] = 'cedar';
 $SETTINGS['general']['instance_name'] = $SETTINGS['general']['application_name'];
 $SETTINGS['general']['version'] = '2.8';
-$SETTINGS['general']['build'] = 'efb3dcf';
+$SETTINGS['general']['build'] = 'd2ea0e1';
 
 // the location of cedar internal path
 $SETTINGS['path']['APPLICATION'] = str_replace( '/settings.ini.php', '', __FILE__ );

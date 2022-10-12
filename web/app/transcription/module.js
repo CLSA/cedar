@@ -276,11 +276,13 @@ cenozoApp.defineModule({
 
     /* ############################################################################################## */
     cenozo.providers.factory("CnTranscriptionMultieditFactory", [
+      "CnTranscriptionModelFactory",
       "CnSession",
       "CnHttpFactory",
       "CnModalMessageFactory",
-      function (CnSession, CnHttpFactory, CnModalMessageFactory) {
+      function (CnTranscriptionModelFactory, CnSession, CnHttpFactory, CnModalMessageFactory) {
         var object = function () {
+          this.parentModel = CnTranscriptionModelFactory.root;
           this.module = module;
           this.confirmInProgress = false;
           this.confirmedCount = null;

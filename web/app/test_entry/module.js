@@ -826,15 +826,17 @@ cenozoApp.defineModule({
     /* ############################################################################################## */
     cenozo.providers.factory("CnTestEntryNotesFactory", [
       "CnBaseNoteFactory",
+      "CnTestEntryModelFactory",
       "CnSession",
       "CnHttpFactory",
       "$state",
-      function (CnBaseNoteFactory, CnSession, CnHttpFactory, $state) {
+      function (CnBaseNoteFactory, CnTestEntryModelFactory, CnSession, CnHttpFactory, $state) {
         var object = function () {
           CnBaseNoteFactory.construct(this, module);
 
           var noteModule = cenozoApp.module("test_entry_note");
           angular.extend(this, {
+            parentModel: CnTestEntryModelFactory.root,
             noteSubject: "test_entry_note",
             allowDelete: angular.isDefined(noteModule.actions.delete),
             allowEdit: angular.isDefined(noteModule.actions.edit),

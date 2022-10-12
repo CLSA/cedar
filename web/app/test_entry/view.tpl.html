@@ -8,6 +8,12 @@
              style="cursor:pointer;">
       <h4>
         <div class="pull-right">
+          <i class="glyphicon glyphicon-question-sign glyph-hover btn-primary btn-header"
+             ng-class="{'glyph-disabled':!model.module.hasNotation(model.viewModel.record.data_type)}"
+             ng-if="model.isRole('administrator') || model.module.hasNotation(model.viewModel.record.data_type)"
+             uib-tooltip="Click to view documentation"
+             tooltip-placement="left"
+             ng-click="model.showNotation(model.viewModel.record.data_type); $event.stopPropagation()"></i>
           <i class="glyphicon glyphicon-refresh glyph-hover btn-primary btn-header"
              ng-if="isComplete"
              ng-click="refresh(); $event.stopPropagation()"
