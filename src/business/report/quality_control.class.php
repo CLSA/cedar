@@ -97,6 +97,7 @@ class quality_control extends \cenozo\business\report\base_report
     $select->from( 'transcription' );
     $select->add_column( 'cohort.name', 'Cohort', false );
     $select->add_column( 'participant.uid', 'UID', false );
+    $this->add_application_identifier_columns( $select, $modifier );
     if( $this->db_role->all_sites ) $select->add_column( 'site.name', 'Site', false );
     $select->add_column(
       'GROUP_CONCAT('."\n".

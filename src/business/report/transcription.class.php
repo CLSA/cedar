@@ -21,9 +21,13 @@ class transcription extends \cenozo\business\report\base_report
   {
     $transcription_class_name = lib::get_class_name( 'database\transcription' );
 
+    $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
+
     $select = lib::create( 'database\select' );
     $select->from( 'transcription' );
     $select->add_column( 'participant.uid', 'UID', false );
+    $this->add_application_identifier_columns( $select, $modifier );
     $select->add_column( 'cohort.name', 'Cohort', false );
     $select->add_column( 'language.name', 'Preferred Language', false );
     $select->add_column(
@@ -34,8 +38,6 @@ class transcription extends \cenozo\business\report\base_report
     $select->add_column( 'site.name', 'Site', false );
     $select->add_column( 'GROUP_CONCAT( DISTINCT user.name ORDER BY user.name )', 'Users', false );
 
-    $modifier = lib::create( 'database\modifier' );
-    $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
     $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'language', 'participant.language_id', 'language.id' );
     $modifier->join( 'transcription_has_language', 'transcription.id', 'transcription_has_language.transcription_id' );
