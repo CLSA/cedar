@@ -4,6 +4,8 @@ SET AUTOCOMMIT=0;
 
 SOURCE service.sql
 SOURCE role_has_service.sql
+SOURCE sound_file.sql
+SOURCE filename_format.sql
 
 SOURCE update_version_number.sql
 

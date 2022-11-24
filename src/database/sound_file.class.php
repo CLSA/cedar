@@ -32,12 +32,13 @@ class sound_file extends \cenozo\database\record
         'filename varchar(255) NOT NULL, '.
         'datetime DATETIME NOT NULL, '.
         'KEY dk_uid ( uid )'.
-      ')' );
+      ')'
+    );
 
     // If the last sync file is present then only get files which were created after it was
-    // Note: we're reverse-grepping for "-in." to ignore asterisk-recorded interviewer recordings
+    // Note: we're reverse-grepping for "-operator." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f %s -printf "%s" | grep "/[A-Z][0-9]\\{6\\}/" | grep -v "\-in."',
+      'find -L %s*/[A-Z][0-9][0-9][0-9][0-9][0-9][0-9]/*.wav -type f %s -printf "%s" | grep -v "\-operator."',
       RECORDINGS_PATH,
       file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : '',
       '%p\t%TY-%Tm-%Td %TT\n'
@@ -46,63 +47,66 @@ class sound_file extends \cenozo\database\record
     exec( $command, $file_list );
 
     // organize files by participant
-    $count = 0;
-    $insert = '';
+    $insert_list = array();
     foreach( $file_list as $row )
     {
       $parts = explode( "\t", $row );
+      preg_match( '#.*/([A-Z][0-9]{6})/([^/]+).wav#', $parts[0], $matches );
+      $uid = $matches[1];
+      $filename = $matches[2];
       $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
-      $file = $parts[0];
-      $last_slash = strrpos( $file, '/' );
-      $second_last_slash = strrpos( $file, '/', $last_slash - strlen( $file ) - 1 );
-      $uid = substr( $file, $second_last_slash+1, $last_slash - $second_last_slash - 1 );
-      $filename = str_replace( RECORDINGS_PATH.'/', '', $file );
 
       // divide inserting data into groups of 1000 records
-      $count++;
-      if( 1000 <= $count )
+      if( 1000 <= count( $insert_list ) )
       {
-        static::db()->execute(
-          sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
-        $count = 0;
-        $insert = '';
+        static::db()->execute( sprintf(
+          'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s',
+          implode( ',', $insert_list )
+        ) );
+        $insert_list = array();
       }
       else
       {
-        $insert .= ( 1 < $count ? ',' : '' )
-                  .sprintf( '( %s, %s, %s )',
-                            static::db()->format_string( $uid ),
-                            static::db()->format_string( $filename ),
-                            static::db()->format_string( $datetime ) );
+        $insert_list[] = sprintf(
+          '( %s, %s, %s )',
+          static::db()->format_string( $uid ),
+          static::db()->format_string( $filename ),
+          static::db()->format_string( $datetime )
+        );
       }
     }
 
-    if( 0 < $count )
+    if( 0 < count( $insert_list ) )
     {
-      static::db()->execute(
-        sprintf( 'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s', $insert ) );
-
-      // now convert from temporary records into the sound_file table
-      $result = static::db()->execute(
-        'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
-        'SELECT participant.id, test_type.id, filename, datetime '.
-        'FROM temp_sound_file '.
-        'JOIN participant ON temp_sound_file.uid = participant.uid '.
-        'LEFT JOIN test_type ON filename RLIKE ( '.
-          'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
-          'FROM filename_format '.
-          'WHERE test_type_id = test_type.id '.
-        ')'
-      );
-
-      static::db()->execute( 'DROP TABLE temp_sound_file' );
+      static::db()->execute( sprintf(
+        'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s',
+        implode( ',', $insert_list )
+      ) );
     }
+
+    // now convert from temporary records into the sound_file table
+    $result = static::db()->execute(
+      'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
+      'SELECT participant.id, test_type.id, filename, datetime '.
+      'FROM temp_sound_file '.
+      'JOIN participant ON temp_sound_file.uid = participant.uid '.
+      'LEFT JOIN test_type ON filename RLIKE ( '.
+        'SELECT GROUP_CONCAT( format SEPARATOR "|" ) '.
+        'FROM filename_format '.
+        'WHERE test_type_id = test_type.id '.
+      ')'
+    );
+
+    static::db()->execute( 'DROP TABLE temp_sound_file' );
 
     // now update the sync file to track when the last sync was done
     if( !file_exists( $last_sync_file ) )
+    {
       file_put_contents(
         $last_sync_file,
-        'This file is used to track which sound files have been read into the database, DO NOT REMOVE.' );
+        'This file is used to track which sound files have been read into the database, DO NOT REMOVE.'
+      );
+    }
 
     touch( $last_sync_file );
 

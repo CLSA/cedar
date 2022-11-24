@@ -28,14 +28,13 @@ class module extends \cenozo\service\site_restricted_participant_module
   {
     parent::prepare_read( $select, $modifier );
 
+    $modifier->join( 'participant', 'sound_file.participant_id', 'participant.id' );
+
     if( $select->has_column( 'name' ) )
     {
       // convert filename into a name
       $select->add_column(
-        'CONCAT( '.
-          'REPLACE( REPLACE( SUBSTRING_INDEX( sound_file.filename, "/", -1 ), ".wav", "" ), "-out", "" ), '.
-          'IF( sound_file.test_type_id IS NULL, " (uncategorized)", "" ) '.
-        ')',
+        'CONCAT_WS( " ", REPLACE( filename, "_", " " ), IF( test_type_id IS NULL, "(uncategorized)", "" ) )',
         'name',
         false
       );
@@ -45,7 +44,11 @@ class module extends \cenozo\service\site_restricted_participant_module
     {
       // convert filename into a name
       $select->add_column(
-        sprintf( 'CONCAT( "%s/%s/", sound_file.filename )', str_replace( '/api', '', ROOT_URL ), RECORDINGS_URL ),
+        sprintf(
+          'CONCAT_WS( "/", "%s", "%s", participant.uid, CONCAT( sound_file.filename, ".wav" ) )',
+          str_replace( '/api', '', ROOT_URL ),
+          RECORDINGS_URL
+        ),
         'url',
         false
       );

@@ -135,7 +135,7 @@
               <span class="spacer">Forward: Ctrl+Shift+&gt;</span>
             </div>
             <div class="row" ng-repeat="soundFile in model.viewModel.soundFileList">
-              <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name }}</label>
+              <label for="{{ soundFile.id }}" class="col-sm-3 control-label">{{ soundFile.name | cnUCWords }}</label>
               <div class="col-sm-7">
                 <div id="soundFile{{ soundFile.id }}"
                      class="full-width"
