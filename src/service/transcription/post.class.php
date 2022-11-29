@@ -70,6 +70,7 @@ class post extends \cenozo\service\post
           {
             // the participant has to have sound files
             $participant_sel = lib::create( 'database\select' );
+            $participant_sel->set_distinct( true );
             $participant_sel->add_column( 'id' );
             $participant_mod = lib::create( 'database\modifier' );
             $participant_mod->join(
@@ -77,6 +78,17 @@ class post extends \cenozo\service\post
               'participant.id',
               'participant_sound_file_total.participant_id'
             );
+
+            // all cohort's event_types must exist
+            $participant_mod->join(
+              'transcription_event_type',
+              'participant.cohort_id',
+              'transcription_event_type.cohort_id'
+            );
+            $join_mod = lib::create( 'database\modifier' );
+            $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
+            $join_mod->where( 'transcription_event_type.event_type_id', '=', 'event.event_type_id', false );
+            $participant_mod->join_modifier( 'event', $join_mod );
 
             // the participant belongs to a cohort that the user had access to
             $participant_mod->join(

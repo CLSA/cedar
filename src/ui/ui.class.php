@@ -102,6 +102,7 @@ class ui extends \cenozo\ui\ui
 
     // add application-specific states to the base list
     $this->add_listitem( 'Transcriptions', 'transcription' );
+    $this->add_listitem( 'Transcription Event Types', 'transcription_event_type' );
 
     // remove list items that aren't necessary
     $this->remove_listitem( 'Consent Types' );
