@@ -39,7 +39,7 @@ class export
     require_once '../settings.ini.php';
     require_once '../settings.local.ini.php';
     require_once $SETTINGS['path']['CENOZO'].'/src/initial.class.php';
-    $initial = new \cenozo\initial();
+    $initial = new \cenozo\initial( true );
     $this->settings = $initial->get_settings();
     $this->cenozo_database_name = $this->settings['db']['database_prefix'].$this->settings['general']['framework_name'];
   }
