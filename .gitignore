@@ -1,6 +1,5 @@
 settings.local.ini.php
-last_sync
 *.swp
 !.gitkeep
-tmp
 log
+last_sync
