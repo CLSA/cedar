@@ -34,13 +34,7 @@ class query extends \cenozo\service\query
     // restrict to this participant's files
     $modifier->join( 'transcription', 'sound_file.participant_id', 'transcription.participant_id' );
     $modifier->where( 'transcription.id', '=', $db_test_entry->transcription_id );
-
-    // include the test entry's test type, or NULL types (putting null types last)
-    $modifier->where(
-      sprintf( 'IFNULL( sound_file.test_type_id, %d )', $db_test_entry->test_type_id ),
-      '=',
-      $db_test_entry->test_type_id
-    );
+    $modifier->where( 'sound_file.test_type_id', '=', $db_test_entry->test_type_id );
 
     return $sound_file_class_name::count( $modifier );
   }
@@ -60,13 +54,8 @@ class query extends \cenozo\service\query
     // restrict to this participant's files
     $modifier->join( 'transcription', 'sound_file.participant_id', 'transcription.participant_id' );
     $modifier->where( 'transcription.id', '=', $db_test_entry->transcription_id );
+    $modifier->where( 'sound_file.test_type_id', '=', $db_test_entry->test_type_id );
 
-    // include the test entry's test type, or NULL types (putting null types last)
-    $modifier->where(
-      sprintf( 'IFNULL( sound_file.test_type_id, %d )', $db_test_entry->test_type_id ),
-      '=',
-      $db_test_entry->test_type_id
-    );
     $modifier->order_desc( 'sound_file.test_type_id' );
     $modifier->order( 'sound_file.filename' );
 
