@@ -73,6 +73,7 @@ class progress extends \cenozo\business\overview\base_overview
         $submitted_node = $this->add_item( $cohort_node, 'Submitted' );
         $node_list[$site][$cohort['name']] = array(
           'overview' => array(
+            'waiting_for_events' => $this->add_item( $overview_node, 'Waiting for Events', 0 ),
             'assigned' => $this->add_item( $overview_node, 'Assigned', 0 ),
             'deferred' => $this->add_item( $overview_node, 'Deferred', 0 ),
             'submitted' => $this->add_item( $overview_node, 'Submitted', 0 ),
@@ -98,6 +99,7 @@ class progress extends \cenozo\business\overview\base_overview
     $select = lib::create( 'database\select' );
     $select->add_table_column( 'site', 'name', 'site' );
     $select->add_table_column( 'cohort', 'name', 'cohort' );
+    $select->add_column( 'SUM(event.id IS NULL)', 'waiting_for_events', false );
     $select->add_column( 'COUNT(*)', 'total', false );
 
     $modifier = lib::create( 'database\modifier' );
@@ -114,12 +116,24 @@ class progress extends \cenozo\business\overview\base_overview
       'participant_sound_file_total.participant_id'
     );
 
+    // separate participants waiting for a transcription event
+    $modifier->left_join( 'transcription_event_type', 'cohort.id', 'transcription_event_type.cohort_id' );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
+    $join_mod->where( 'transcription_event_type.event_type_id', '=', 'event.event_type_id', false );
+    $modifier->join_modifier( 'event', $join_mod, 'left' );
+
     if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
     $modifier->group( 'site.name' );
     $modifier->group( 'cohort.name' );
 
     foreach( $participant_class_name::select( $select, $modifier ) as $row )
+    {
       $node_list[$row['site']][$row['cohort']]['overview']['total']->set_value( $row['total'] );
+      $node_list[$row['site']][$row['cohort']]['overview']['waiting_for_events']->set_value(
+        $row['waiting_for_events']
+      );
+    }
 
     // fill in the test-type data
     $select = lib::create( 'database\select' );
@@ -150,6 +164,7 @@ class progress extends \cenozo\business\overview\base_overview
     $select->add_table_column( 'cohort', 'name', 'cohort' );
     $select->add_column( 'end_datetime IS NOT NULL', 'completed' );
     $select->add_column( 'assigned_count > 0', 'assigned' );
+    $select->add_column( 'deferred_count > 0', 'deferred' );
     $select->add_column( 'deferred_count > 0', 'deferred' );
     $select->add_column( 'COUNT(*)', 'total', false );
 
@@ -182,6 +197,7 @@ class progress extends \cenozo\business\overview\base_overview
             $node_list[$row['site']][$row['cohort']]['assigned']['transcription']->get_value() + $row['total']
           );
         }
+
         if( $row['deferred'] )
         {
           $node_list[$row['site']][$row['cohort']]['overview']['deferred']->set_value(
