@@ -309,6 +309,94 @@ class test_type extends \cenozo\database\record
 
     // MAT /////////////////////////////////////////////////////////////////////////////////////////
     // first update the sequence ranks
+    $base_temp_sel = lib::create( 'database\select' );
+    $base_temp_sel->from( 'test_entry' );
+    $base_temp_sel->add_table_column( 'mat_data', 'test_entry_id' );
+    $base_temp_sel->add_table_column( 'mat_data', 'rank' );
+
+    $base_temp_mod = clone $modifier;
+    $base_temp_mod->join( 'mat_data', 'test_entry.id', 'mat_data.test_entry_id' );
+    $base_temp_mod->order( 'test_entry_id' );
+    $base_temp_mod->order( 'rank' );
+
+    // load all number data into a temporary table by rank order
+    $temp_number_sel = clone $base_temp_sel;
+    $temp_number_mod = clone $base_temp_mod;
+    $temp_number_mod->where( 'value', 'RLIKE', '[0-9]' );
+    static::db()->execute( 'DROP TABLE IF EXISTS temp_number_rank' );
+    static::db()->execute( sprintf(
+      'CREATE TEMPORARY TABLE temp_number_rank( '.
+        'test_entry_id INT(10) UNSIGNED NOT NULL, '.
+        'rank INT(10) UNSIGNED NOT NULL '.
+      ')'."\n%s %s",
+      $temp_number_sel->get_sql(),
+      $temp_number_mod->get_sql()
+    ) );
+    static::db()->execute(
+      'ALTER TABLE temp_number_rank '.
+      'ADD UNIQUE KEY uq_test_entry_id_rank (test_entry_id, rank)'
+    );
+
+    // load all number data into a temporary table by rank order
+    $temp_letter_sel = clone $base_temp_sel;
+    $temp_letter_mod = clone $base_temp_mod;
+    $temp_letter_mod->where( 'value', 'RLIKE', '[a-z]' );
+    static::db()->execute( 'DROP TABLE IF EXISTS temp_letter_rank' );
+    static::db()->execute( sprintf(
+      'CREATE TEMPORARY TABLE temp_letter_rank( '.
+        'test_entry_id INT(10) UNSIGNED NOT NULL, '.
+        'rank INT(10) UNSIGNED NOT NULL '.
+      ')'."\n%s %s",
+      $temp_letter_sel->get_sql(),
+      $temp_letter_mod->get_sql()
+    ) );
+    static::db()->execute(
+      'ALTER TABLE temp_letter_rank '.
+      'ADD UNIQUE KEY uq_test_entry_id_rank (test_entry_id, rank)'
+    );
+
+    // determine and write all number sequence ranks
+    $base_sequence_sel = lib::create( 'database\select' );
+    $base_sequence_sel->add_column(
+      '( @sequence_rank := IF( @test_entry_id = test_entry_id, @sequence_rank + 1, 1 ) )',
+      'sequence_rank',
+      false
+    );
+    $base_sequence_sel->add_column(
+      '( @test_entry_id := test_entry_id )',
+      'test_entry_id',
+      false
+    );
+    $base_sequence_sel->add_column( 'rank' );
+    $base_sequence_mod = lib::create( 'database\modifier' );
+    $base_sequence_mod->order( 'test_entry_id' );
+    $base_sequence_mod->order( 'rank' );
+
+    $number_sequence_sel = clone $base_sequence_sel;
+    $number_sequence_sel->from( 'temp_number_rank' );
+    $number_sequence_mod = clone $base_sequence_mod;
+    static::db()->execute( 'SET @sequence_rank := 0' );
+    static::db()->execute( 'SET @test_entry_id := 0' );
+    static::db()->execute( sprintf(
+      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank ) %s %s'."\n".
+      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
+      $number_sequence_sel->get_sql(),
+      $number_sequence_mod->get_sql()
+    ) );
+
+    $letter_sequence_sel = clone $base_sequence_sel;
+    $letter_sequence_sel->from( 'temp_letter_rank' );
+    $letter_sequence_mod = clone $base_sequence_mod;
+    static::db()->execute( 'SET @sequence_rank := 0' );
+    static::db()->execute( 'SET @test_entry_id := 0' );
+    static::db()->execute( sprintf(
+      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank ) %s %s'."\n".
+      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
+      $letter_sequence_sel->get_sql(),
+      $letter_sequence_mod->get_sql()
+    ) );
+
+    /*
     $base_sequence_sel = lib::create( 'database\select' );
     $base_sequence_sel->from( 'test_entry' );
     $base_sequence_sel->add_column(
@@ -352,6 +440,7 @@ class test_type extends \cenozo\database\record
       $letter_sequence_sel->get_sql(),
       $letter_sequence_mod->get_sql()
     ) );
+    */
 
     // now score the test using the sequence ranks
     $mat_sel = clone $select;
