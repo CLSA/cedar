@@ -1,5 +1,5 @@
 cenozoApp.defineModule({
-  name: "filename_formate",
+  name: "filename_format",
   models: ["add", "list", "view"],
   create: (module) => {
     angular.extend(module, {

@@ -173,5 +173,38 @@ cenozoApp.defineModule({
         };
       },
     ]);
+
+    /* ############################################################################################## */
+    cenozo.providers.factory("CnTestTypeModelFactory", [
+      "CnBaseModelFactory",
+      "CnTestTypeListFactory",
+      "CnTestTypeViewFactory",
+      "CnSession",
+      "CnHttpFactory",
+      "CnModalMessageFactory",
+      function (
+        CnBaseModelFactory,
+        CnTestTypeListFactory,
+        CnTestTypeViewFactory,
+        CnSession,
+        CnHttpFactory,
+        CnModalMessageFactory
+      ) {
+        var object = function (root) {
+          CnBaseModelFactory.construct(this, module);
+
+          angular.extend(this, {
+            listModel: CnTestTypeListFactory.instance(this),
+            viewModel: CnTestTypeViewFactory.instance(this, root),
+            canRescoreTestEntries: function () { return 2 < CnSession.role.tier; },
+          });
+        };
+
+        return {
+          root: new object(true),
+          instance: function () { return new object(false); },
+        };
+      },
+    ]);
   },
 });
