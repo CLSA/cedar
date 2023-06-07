@@ -33,3 +33,6 @@ $SETTINGS['url']['RECORDINGS'] = NULL;
 
 // where to store the file which tracks when the last sync was performed
 $SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/last_sync';
+
+// add modules used by the application
+$SETTINGS['module']['relation'] = true;
