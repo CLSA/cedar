@@ -16,31 +16,29 @@ class patch extends \cenozo\service\patch
   /**
    * Override parent method
    */
-  public function get_file_as_array()
+  protected function prepare()
   {
-    // remove correct_word from the patch array
+    $this->extract_parameter_list = array_merge(
+      $this->extract_parameter_list,
+      ['correct_word', 'note']
+    );
+
+    parent::prepare();
+
     $patch_array = parent::get_file_as_array();
-    if( array_key_exists( 'misspelled', $patch_array ) && true == $patch_array['misspelled'] )
-    {
-      if( array_key_exists( 'correct_word', $patch_array ) )
-      {
-        $this->correct_word = $patch_array['correct_word'];
-        unset( $patch_array['correct_word'] );
-      }
-    }
 
-    if( ( array_key_exists( 'misspelled', $patch_array ) && true == $patch_array['misspelled'] ) ||
+    $this->correct_word =
+      !is_null( $this->get_argument( 'correct_word', NULL ) ) &&
+      array_key_exists( 'misspelled', $patch_array ) &&
+      true == $patch_array['misspelled'];
+
+    $this->note =
+      !is_null( $this->get_argument( 'note', NULL ) ) &&
+      (
+        ( array_key_exists( 'misspelled', $patch_array ) && true == $patch_array['misspelled'] ) ||
         ( array_key_exists( 'aft', $patch_array ) && 'invalid' == $patch_array['aft'] ) ||
-        ( array_key_exists( 'fas', $patch_array ) && 'invalid' == $patch_array['fas'] ) )
-    {
-      if( array_key_exists( 'note', $patch_array ) )
-      {
-        $this->note = $patch_array['note'];
-        unset( $patch_array['note'] );
-      }
-    }
-
-    return $patch_array;
+        ( array_key_exists( 'fas', $patch_array ) && 'invalid' == $patch_array['fas'] )
+      );
   }
 
   /**
@@ -165,22 +163,25 @@ class patch extends \cenozo\service\patch
   protected function execute()
   {
     $db_word = $this->get_leaf_record();
+    $db_correct_word = NULL;
 
     // add the corrected word if it exists
-    if( !is_null( $this->correct_word ) )
+    if( $this->correct_word )
     {
+      $correct_word = $this->get_argument( 'correct_word' );
+
       // convert correct word if it is provided as a string
-      if( is_string( $this->correct_word ) )
+      if( is_string( $correct_word ) )
       {
         $object = new \stdClass();
         $object->language_id = $db_word->language_id;
-        $object->word = $this->correct_word;
-        $this->correct_word = $object;
+        $object->word = $correct_word;
+        $correct_word = $object;
       }
 
-      if( property_exists( $this->correct_word, 'id' ) )
+      if( property_exists( $correct_word, 'id' ) )
       {
-        $this->correct_word = lib::create( 'database\word', $this->correct_word->id );
+        $db_correct_word = lib::create( 'database\word', $correct_word->id );
       }
       else
       {
@@ -188,14 +189,14 @@ class patch extends \cenozo\service\patch
         $word_class_name = lib::get_class_name( 'database\word' );
         $db_correct_word = $word_class_name::get_unique_record(
           array( 'language_id', 'word' ),
-          array( $this->correct_word->language_id, $this->correct_word->word )
+          array( $correct_word->language_id, $correct_word->word )
         );
 
         if( is_null( $db_correct_word ) )
         {
           $db_correct_word = lib::create( 'database\word' );
-          $db_correct_word->language_id = $this->correct_word->language_id;
-          $db_correct_word->word = $this->correct_word->word;
+          $db_correct_word->language_id = $correct_word->language_id;
+          $db_correct_word->word = $correct_word->word;
           $db_correct_word->misspelled = false;
           $db_correct_word->save();
         }
@@ -209,23 +210,21 @@ class patch extends \cenozo\service\patch
             __METHOD__
           );
         }
-
-        $this->correct_word = $db_correct_word;
       }
     }
 
     parent::execute();
 
     // if we have a corrected word then find all tests that use the misspelled and change it to the corrected
-    if( !is_null( $this->correct_word ) )
+    if( !is_null( $db_correct_word ) )
     {
       $aft_data_class_name = lib::get_class_name( 'database\aft_data' );
       $fas_data_class_name = lib::get_class_name( 'database\fas_data' );
       $rey_data_class_name = lib::get_class_name( 'database\rey_data' );
 
-      $aft_data_class_name::substitute_word( $db_word, $this->correct_word );
-      $fas_data_class_name::substitute_word( $db_word, $this->correct_word );
-      $rey_data_class_name::substitute_word( $db_word, $this->correct_word );
+      $aft_data_class_name::substitute_word( $db_word, $db_correct_word );
+      $fas_data_class_name::substitute_word( $db_word, $db_correct_word );
+      $rey_data_class_name::substitute_word( $db_word, $db_correct_word );
     }
   }
 
@@ -240,7 +239,7 @@ class patch extends \cenozo\service\patch
 
     // If there is no correction word but a note exists then this means we've made a word invalid and
     // all test-entries using it must be re-assigned
-    if( is_null( $this->correct_word ) && !is_null( $this->note ) )
+    if( !$this->correct_word && $this->note )
     {
       $db_word = $this->get_leaf_record();
 
@@ -262,7 +261,7 @@ class patch extends \cenozo\service\patch
         $db_test_entry_note->test_entry_id = $db_test_entry->id;
         $db_test_entry_note->user_id = $db_user->id;
         $db_test_entry_note->datetime = util::get_datetime_object();
-        $db_test_entry_note->note = $this->note;
+        $db_test_entry_note->note = $this->get_argument( 'note' );
         $db_test_entry_note->save();
 
         // re-assign the trascription if it isn't already assigned
@@ -286,16 +285,16 @@ class patch extends \cenozo\service\patch
   }
 
   /**
-   * The correct word which may have been provided when marking a word as misspelled
+   * Whether or not to use the correct_word argument
    * @var boolean
    * @access protected
    */
-  protected $correct_word = null;
+  protected $correct_word = false;
 
   /**
-   * The note to add to test-entries being reassigned as a result of a word being made invalid
+   * Whether or not to use the note argument
    * @var boolean
    * @access protected
    */
-  protected $note = null;
+  protected $note = false;
 }
