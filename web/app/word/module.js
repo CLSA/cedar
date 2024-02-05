@@ -79,6 +79,7 @@ cenozoApp.defineModule({
       word: {
         title: "Word",
         type: "string",
+        format: "identifier",
         isConstant: "view",
       },
       animal_code: {
