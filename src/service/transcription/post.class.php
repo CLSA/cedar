@@ -89,6 +89,7 @@ class post extends \cenozo\service\post
             $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
             $join_mod->where( 'transcription_event_type.event_type_id', '=', 'event.event_type_id', false );
             $participant_mod->join_modifier( 'event', $join_mod );
+            $participant_mod->where( 'event.datetime', '<', 'UTC_TIMESTAMP() - INTERVAL 1 DAY', false );
 
             // the participant belongs to a cohort that the user had access to
             $participant_mod->join(
