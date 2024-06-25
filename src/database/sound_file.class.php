@@ -56,6 +56,13 @@ class sound_file extends \cenozo\database\record
       $filename = $matches[2];
       $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
 
+      $insert_list[] = sprintf(
+        '( %s, %s, %s )',
+        static::db()->format_string( $uid ),
+        static::db()->format_string( $filename ),
+        static::db()->format_string( $datetime )
+      );
+
       // divide inserting data into groups of 1000 records
       if( 1000 <= count( $insert_list ) )
       {
@@ -64,15 +71,6 @@ class sound_file extends \cenozo\database\record
           implode( ',', $insert_list )
         ) );
         $insert_list = array();
-      }
-      else
-      {
-        $insert_list[] = sprintf(
-          '( %s, %s, %s )',
-          static::db()->format_string( $uid ),
-          static::db()->format_string( $filename ),
-          static::db()->format_string( $datetime )
-        );
       }
     }
 
