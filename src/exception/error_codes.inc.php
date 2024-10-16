@@ -11,7 +11,6 @@
  */
 define( 'ARGUMENT_CEDAR_BASE_ERRNO',   170000 );
 define( 'DATABASE_CEDAR_BASE_ERRNO',   270000 );
-define( 'LDAP_CEDAR_BASE_ERRNO',       370000 );
 define( 'NOTICE_CEDAR_BASE_ERRNO',     470000 );
 define( 'PERMISSION_CEDAR_BASE_ERRNO', 570000 );
 define( 'RUNTIME_CEDAR_BASE_ERRNO',    670000 );
@@ -29,12 +28,6 @@ define( 'ARGUMENT__CEDAR_DATABASE_WORD__GET_FAS__ERRNO',
  * "database" error codes
  * 
  * Since database errors already have codes this list is likely to stay empty.
- */
-
-/**
- * "ldap" error codes
- * 
- * Since ldap errors already have codes this list is likely to stay empty.
  */
 
 /**
