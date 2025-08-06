@@ -352,7 +352,7 @@ cenozoApp.defineModule({
                   "/test_entry_note",
               }).count();
 
-              this.noteCount = response.headers("Total");
+              this.noteCount = response.headers("X-Total");
 
               this.onViewPromise = await this.$$onView(force);
 

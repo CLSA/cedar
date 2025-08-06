@@ -171,7 +171,7 @@ cenozoApp.defineModule({
               var response = await CnHttpFactory.instance({
                 path: this.parentModel.getServiceResourcePath() + "/compound",
               }).count();
-              this.compoundWordCount = parseInt(response.headers("Total"));
+              this.compoundWordCount = parseInt(response.headers("X-Total"));
 
               // do not allow words to be edited by non-admins once misspelled, aft and fas has been defined
               await this.$$onView(force);
