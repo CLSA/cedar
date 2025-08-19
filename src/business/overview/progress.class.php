@@ -103,10 +103,18 @@ class progress extends \cenozo\business\overview\base_overview
     $select->add_column( 'COUNT(*)', 'total', false );
 
     $modifier = lib::create( 'database\modifier' );
+    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
     $modifier->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
     $modifier->left_join( 'transcription', 'participant.id', 'transcription.participant_id' );
-    $modifier->join( 'site', 'IFNULL( transcription.site_id, participant_site.site_id )', 'site.id' );
-    $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    $modifier->join(
+      'site',
+      'IF( '.
+        'assigned_count = 0 AND deferred_count = 0 AND transcription.site_id IS NOT NULL, '.
+        'transcription.site_id, '.
+        'participant_site.site_id '.
+      ')',
+      'site.id'
+    );
     $modifier->where( 'participant_site.application_id', '=', $db_application->id );
 
     // restrict to those participants who have a sound file
@@ -144,12 +152,22 @@ class progress extends \cenozo\business\overview\base_overview
     $select->add_column( 'COUNT(*)', 'total', false );
 
     $modifier = lib::create( 'database\modifier' );
-    $modifier->join( 'site', 'transcription.site_id', 'site.id' );
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
     $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    $modifier->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
     $modifier->join( 'test_entry', 'transcription.id', 'test_entry.transcription_id' );
     $modifier->join( 'test_type', 'test_entry.test_type_id', 'test_type.id' );
+    $modifier->join(
+      'site',
+      'IF( '.
+        '"submitted" = state AND transcription.site_id IS NOT NULL, '.
+        'transcription.site_id, '.
+        'participant_site.site_id '.
+      ')',
+      'site.id'
+    );
     if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
+    $modifier->where( 'participant_site.application_id', '=', $db_application->id );
     $modifier->group( 'site.name' );
     $modifier->group( 'cohort.name' );
     $modifier->group( 'test_entry.state' );
@@ -169,10 +187,20 @@ class progress extends \cenozo\business\overview\base_overview
     $select->add_column( 'COUNT(*)', 'total', false );
 
     $modifier = lib::create( 'database\modifier' );
-    $modifier->join( 'site', 'transcription.site_id', 'site.id' );
     $modifier->join( 'participant', 'transcription.participant_id', 'participant.id' );
     $modifier->join( 'cohort', 'participant.cohort_id', 'cohort.id' );
+    $modifier->join( 'participant_site', 'participant.id', 'participant_site.participant_id' );
+    $modifier->join(
+      'site',
+      'IF( '.
+        'assigned_count = 0 AND deferred_count = 0 AND transcription.site_id IS NOT NULL, '.
+        'transcription.site_id, '.
+        'participant_site.site_id '.
+      ')',
+      'site.id'
+    );
     if( !$db_role->all_sites ) $modifier->where( 'site.id', '=', $db_site->id );
+    $modifier->where( 'participant_site.application_id', '=', $db_application->id );
     $modifier->group( 'site.name' );
     $modifier->group( 'cohort.name' );
     $modifier->group( 'end_datetime IS NOT NULL' );
