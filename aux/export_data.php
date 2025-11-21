@@ -17,12 +17,12 @@ function error( $msg, $line ) { out( sprintf( "Error on line %s:\n%s\n", $line, 
 
 // used to convert raw strings to CSV format
 function to_csv( $value ) {
-  return sprintf(
-    '"%s"',
-    str_replace(
-      array( '"', "\n" ),
-      array( '""', '\\n' ),
-      $value
+  return (
+    is_null( $value ) ?
+    '' :
+    sprintf(
+      '"%s"',
+      str_replace( ['"', "\n"], ['""', '\\n'], $value )
     )
   );
 }
@@ -34,10 +34,14 @@ class export
    */
   public function read_settings()
   {
+    // make sure we're in the application's root directory
+    $cwd = exec( 'pwd' );
+    if( preg_match( '/\/aux$/', $cwd ) ) chdir( preg_replace( '/\/aux$/', '', $cwd ) );
+
     // include the initialization settings
     global $SETTINGS;
-    require_once '../settings.ini.php';
-    require_once '../settings.local.ini.php';
+    require_once 'settings.ini.php';
+    require_once 'settings.local.ini.php';
     require_once $SETTINGS['path']['CENOZO'].'/src/initial.class.php';
     $initial = new \cenozo\initial( true );
     $this->settings = $initial->get_settings();
@@ -112,20 +116,20 @@ class export
     out( 'Connecting to database' );
     $this->connect_database();
 
-    $cohort_list = array(
-      array( 'name' => 'comprehensive', 'code' => 'CO', 'suffix' => strtoupper( 'CO'.$this->study_phase ) ),
-      array( 'name' => 'tracking', 'code' => 'TR', 'suffix' => strtoupper( 'TR'.$this->study_phase ) )
-    );
+    $cohort_list = [
+      ['name' => 'comprehensive', 'code' => 'CO', 'suffix' => strtoupper( 'CO'.$this->study_phase )],
+      ['name' => 'tracking', 'code' => 'TR', 'suffix' => strtoupper( 'TR'.$this->study_phase )],
+    ];
 
-    $test_type_list = array(
-      array( 'name' => 'F-Word Fluency (FAS-F)', 'code' => 'FAS_F', 'type' => 'fas' ),
-      array( 'name' => 'A-Word Fluency (FAS-A)', 'code' => 'FAS_A', 'type' => 'fas' ),
-      array( 'name' => 'S-Word Fluency (FAS-S)', 'code' => 'FAS_S', 'type' => 'fas' ),
-      array( 'name' => 'Animal Fluency (AFT)', 'code' => 'AFT', 'type' => 'aft' ),
-      array( 'name' => 'Immediate Word List (REY1)', 'code' => 'REYI', 'type' => 'rey' ),
-      array( 'name' => 'Delayed Word List (REY2)', 'code' => 'REYII', 'type' => 'rey' ),
-      array( 'name' => 'Mental Alternation (MAT)', 'code' => 'MAT', 'type' => 'mat' ),
-    );
+    $test_type_list = [
+      ['name' => 'F-Word Fluency (FAS-F)', 'code' => 'FAS_F', 'type' => 'fas'],
+      ['name' => 'A-Word Fluency (FAS-A)', 'code' => 'FAS_A', 'type' => 'fas'],
+      ['name' => 'S-Word Fluency (FAS-S)', 'code' => 'FAS_S', 'type' => 'fas'],
+      ['name' => 'Animal Fluency (AFT)', 'code' => 'AFT', 'type' => 'aft'],
+      ['name' => 'Immediate Word List (REY1)', 'code' => 'REYI', 'type' => 'rey'],
+      ['name' => 'Delayed Word List (REY2)', 'code' => 'REYII', 'type' => 'rey'],
+      ['name' => 'Mental Alternation (MAT)', 'code' => 'MAT', 'type' => 'mat'],
+    ];
 
     foreach( $cohort_list as $cohort )
     {
@@ -176,7 +180,7 @@ class export
           die();
         }
 
-        $rows = array();
+        $rows = [];
         while( $row = $result->fetch_assoc() )
         {
           // convert audio_status codes
@@ -291,7 +295,7 @@ class export
           die();
         }
 
-        $array = array();
+        $array = [];
         while( $row = $result->fetch_assoc() ) $array[$row['entity_id']] = $row;
         $result->free();
 
@@ -637,7 +641,7 @@ class export
    * @var array
    * @access private
    */
-  private $settings = array();
+  private $settings = [];
 }
 
 $export = new export();
