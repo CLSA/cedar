@@ -29,6 +29,7 @@ class module extends \cenozo\service\site_restricted_participant_module
     parent::prepare_read( $select, $modifier );
 
     $modifier->join( 'participant', 'sound_file.participant_id', 'participant.id' );
+    $modifier->left_join( 'test_type', 'sound_file.test_type_id', 'test_type.id' );
 
     if( $select->has_column( 'name' ) )
     {

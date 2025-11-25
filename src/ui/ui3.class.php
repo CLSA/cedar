@@ -89,7 +89,7 @@ class ui3 extends \cenozo\ui\ui3
     unset( $data['menu']['lists']['Consent Types'] );
     unset( $data['menu']['lists']['Event Types'] );
     unset( $data['menu']['lists']['Hold Types'] );
-    unset( $data['menu']['lists']['States'] );
+    unset( $data['menu']['lists']['Identifiers'] );
     unset( $data['menu']['lists']['Proxy Types'] );
     unset( $data['menu']['utilities']['Participant Export'] );
     unset( $data['menu']['utilities']['Tracing'] );
@@ -111,7 +111,6 @@ class ui3 extends \cenozo\ui\ui3
       {
         $menu_list_items = array_merge( $menu_list_items, [
           ['subject' => 'sound_file', 'title' => 'Sound Files'],
-          ['subject' => 'rey_data_variant', 'title' => 'REY Variant'],
           ['subject' => 'status_type', 'title' => 'Status Types']
         ]);
         $data['menu']['utilities']['Transcription Multi-Edit'] = [

@@ -108,7 +108,7 @@ class ui extends \cenozo\ui\ui
     $this->remove_listitem( 'Consent Types' );
     $this->remove_listitem( 'Event Types' );
     $this->remove_listitem( 'Hold Types' );
-    $this->remove_listitem( 'States' );
+    $this->remove_listitem( 'Identifiers' );
     $this->remove_listitem( 'Proxy Types' );
   }
 

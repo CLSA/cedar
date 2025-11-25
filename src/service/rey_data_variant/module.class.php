@@ -21,6 +21,7 @@ class module extends \cenozo\service\module
     parent::prepare_read( $select, $modifier );
 
     $modifier->join( 'word', 'rey_data_variant.word_id', 'variant.id', '', 'variant' );
+    $modifier->join( 'language', 'rey_data_variant.language_id', 'language.id' );
     $modifier->join( 'language', 'variant.language_id', 'variant_language.id', '', 'variant_language' );
   }
 }
