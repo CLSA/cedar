@@ -22,8 +22,8 @@ export class CN_compound_model extends CN_base_model {
           title: "Subword",
           type: "typeahead",
           typeahead: CN_word_model.get_typeahead(),
-        },  
-        rank: { title: "Rank", type: "rank" },  
+        },
+        rank: { title: "Rank", type: "rank" },
       },
     });
   }

@@ -92,6 +92,7 @@ class ui3 extends \cenozo\ui\ui3
     unset( $data['menu']['lists']['Identifiers'] );
     unset( $data['menu']['lists']['Proxy Types'] );
     unset( $data['menu']['utilities']['Participant Export'] );
+    unset( $data['menu']['utilities']['Participant Multi-Edit'] );
     unset( $data['menu']['utilities']['Tracing'] );
 
     if( 'typist' != $db_role->name )

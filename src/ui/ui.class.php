@@ -120,13 +120,15 @@ class ui extends \cenozo\ui\ui
     $db_role = lib::create( 'business\session' )->get_role();
     $list = 'typist' == $db_role->name ? array() : parent::get_utility_items();
     
-    unset( $list['Tracing'] );
 
     if( 2 < $db_role->tier )
       $list['Transcription Multiedit'] = array( 'subject' => 'transcription', 'action' => 'multiedit' );
 
-    // remove export
+    // remove utilities
     if( array_key_exists( 'Participant Export', $list ) ) unset( $list['Participant Export'] );
+    if( array_key_exists( 'Participant Multiedit', $list ) ) unset( $list['Participant Multiedit'] );
+    if( array_key_exists( 'Tracing', $list ) ) unset( $list['Tracing'] );
+
     return $list;
   }
 }
