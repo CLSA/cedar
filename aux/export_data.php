@@ -449,7 +449,7 @@ class export
 
           $values = $result->fetch_array( MYSQLI_NUM );
           $result->free();
-          $max_number = current( $values );
+          $max_number = is_null( $values ) ? 0 : current( $values );
 
           // add column headers for all numbers
           foreach( $array as $index => $row )
@@ -544,7 +544,7 @@ class export
 
           $values = $result->fetch_array( MYSQLI_NUM );
           $result->free();
-          $max_number = current( $values );
+          $max_number = is_null( $values ) ? 0 : current( $values );
 
           // add column headers for all numbers
           foreach( $array as $index => $row )
