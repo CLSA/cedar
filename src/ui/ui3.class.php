@@ -114,6 +114,7 @@ class ui3 extends \cenozo\ui\ui3
           ['subject' => 'sound_file', 'title' => 'Sound Files'],
           ['subject' => 'status_type', 'title' => 'Status Types']
         ]);
+        $data['module_list']['transcription']->add_action( 'multiedit' );
         $data['menu']['utilities']['Transcription Multi-Edit'] = [
           'subject' => 'transcription',
           'action' => 'multiedit'

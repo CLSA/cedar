@@ -335,7 +335,7 @@ cenozoApp.defineModule({
               var response = await CnHttpFactory.instance({
                 path: "transcription",
                 data: {
-                  uid_list: fixedList,
+                  identifier_list: fixedList,
                   import_restriction: this.importRestriction,
                 },
               }).post();
@@ -456,7 +456,7 @@ cenozoApp.defineModule({
             await CnHttpFactory.instance({
               path: "transcription",
               data: {
-                uid_list: uidList,
+                identifier_list: uidList,
                 user_id: this.user_id,
                 site_id: this.site_id,
                 import_restriction: this.importRestriction,

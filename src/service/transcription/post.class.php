@@ -28,16 +28,16 @@ class post extends \cenozo\service\post
       $db_user = $session->get_user();
       $db_role = $session->get_role();
       $db_site = $session->get_site();
-      $file = $this->get_file_as_array();
+      $file = $this->get_file_as_object();
 
-      if( array_key_exists( 'uid_list', $file ) )
+      if( property_exists( $file, 'identifier_list' ) )
       {
-        // only tier-3 roles can process uid-lists
+        // only tier-3 roles can process identifier-lists
         if( 3 > $db_role->tier ) $this->status->set_code( 403 );
 
         // make sure the import restriction is valid
-        $import_restriction = array_key_exists( 'import_restriction', $file )
-                            ? $file['import_restriction']
+        $import_restriction = property_exists( $file, 'import_restriction' )
+                            ? $file->import_restriction
                             : 'no-import';
         if( !in_array( $import_restriction, array( 'no-import', 'import', 'any' ) ) )
           $this->status->set_code( 400 );
@@ -148,9 +148,9 @@ class post extends \cenozo\service\post
     $session = lib::create( 'business\session' );
     $db_user = $session->get_user();
     $db_site = $session->get_site();
-    $file = $this->get_file_as_array();
+    $file = $this->get_file_as_object();
 
-    if( !array_key_exists( 'uid_list', $file ) )
+    if( !property_exists( $file, 'identifier_list' ) )
     {
       $db_transcription = $this->get_leaf_record();
 
@@ -170,18 +170,18 @@ class post extends \cenozo\service\post
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $sound_file_class_name = lib::get_class_name( 'database\sound_file' );
     $transcription_class_name = lib::get_class_name( 'database\transcription' );
-    $file = $this->get_file_as_array();
+    $file = $this->get_file_as_object();
 
-    if( array_key_exists( 'uid_list', $file ) )
+    if( property_exists( $file, 'identifier_list' ) )
     {
       $modifier = lib::create( 'database\modifier' );
 
-      $import_restriction = array_key_exists( 'import_restriction', $file )
-                          ? $file['import_restriction']
+      $import_restriction = property_exists( $file, 'import_restriction' )
+                          ? $file->import_restriction
                           : 'no-import';
-      $site_id = array_key_exists( 'site_id', $file ) ? $file['site_id'] : NULL;
-      $user_id = array_key_exists( 'user_id', $file ) ? $file['user_id'] : NULL;
-      $process = array_key_exists( 'process', $file ) && $file['process'];
+      $site_id = property_exists( $file, 'site_id' ) ? $file->site_id : NULL;
+      $user_id = property_exists( $file, 'user_id' ) ? $file->user_id : NULL;
+      $process = property_exists( $file, 'process' ) && $file->process;
 
       // restrict the UID list based on the import restriction parameter
       if( 'import' == $import_restriction )
@@ -206,7 +206,13 @@ class post extends \cenozo\service\post
           'participant_sound_file_total', 'participant.id', 'participant_sound_file_total.participant_id' );
       }
 
-      $uid_list = $participant_class_name::get_valid_uid_list( $file['uid_list'], $modifier );
+      $identifier_id = property_exists( $file, 'identifier_id' ) ? $file->identifier_id : NULL;
+      $db_identifier = is_null( $identifier_id ) ? NULL : lib::create( 'database\identifier', $identifier_id );
+      $identifier_list = $participant_class_name::get_valid_identifier_list(
+        $db_identifier,
+        $file->identifier_list,
+        $modifier
+      );
 
       if( $process )
       {
@@ -214,7 +220,16 @@ class post extends \cenozo\service\post
         if( 'no-import' != $import_restriction )
         {
           $modifier = lib::create( 'database\modifier' );
-          $modifier->where( 'uid', 'IN', $uid_list );
+          if( is_null( $identifier_id ) )
+          {
+            $modifier->where( 'uid', 'IN', $identifier_list );
+          }
+          else
+          {
+            $modifier->join( 'participant_identifier', 'participant.id', 'participant_identifier.participant_id' );
+            $modifier->where( 'participant_identifier.identifier_id', '=', $identifier_id );
+            $modifier->where( 'participant_identifier.value', 'IN', $identifier_list );
+          }
           $sound_file_class_name::force_add_participant_list( $modifier );
         }
 
@@ -225,7 +240,22 @@ class post extends \cenozo\service\post
           $participant_sel->from( 'participant' );
           $participant_sel->add_column( 'id' );
           $participant_mod = lib::create( 'database\modifier' );
-          $participant_mod->where( 'uid', 'IN', $uid_list );
+
+          if( is_null( $identifier_id ) )
+          {
+            $participant_mod->where( 'uid', 'IN', $identifier_list );
+          }
+          else
+          {
+            $participant_mod->join(
+              'participant_identifier',
+              'participant.id',
+              'participant_identifier.participant_id'
+            );
+            $participant_mod->where( 'participant_identifier.identifier_id', '=', $identifier_id );
+            $participant_mod->where( 'participant_identifier.value', 'IN', $identifier_list );
+          }
+
           foreach( $participant_class_name::select( $participant_sel, $participant_mod ) as $participant )
           {
             $db_transcription = $transcription_class_name::get_unique_record( 'participant_id', $participant['id'] );
@@ -244,7 +274,7 @@ class post extends \cenozo\service\post
       }
       else
       {
-        $this->set_data( $uid_list );
+        $this->set_data( $identifier_list );
       }
     }
     else parent::execute();
