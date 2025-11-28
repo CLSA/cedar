@@ -52,6 +52,67 @@ export class CN_transcription_model extends CN_base_model {
           help: "Only set once all test entries have been submitted",
         },
       },
+      properties: {
+        uid: {
+          meta: { table: "participant", column: "uid" },
+          title: "Participant",
+          is_constant: () => true,
+        },  
+        user_id: {
+          title: "User",
+          type: "enum",
+          enum: {
+            path: "user",
+            get_enums: async (model) => {
+              const site_id = model.get_action().get_property("site_id").state.get();
+              const user_list = await CN_api.get( "user", {
+                select: { column: ["id", "name", "first_name", "last_name"] },
+                modifier: {
+                  join: [
+                    { table: "access", onleft: "user.id", onright: "access.user_id" },
+                    { table: "role", onleft: "access.role_id", onright: "role.id" },
+                  ],
+                  where: [
+                    { column: "access.site_id", operator: "=", value: site_id },
+                    { column: "role.name", operator: "=", value: "typist" },
+                  ],
+                  order: "user.name",
+                },
+              });
+              return user_list.map(u => ({ key: u.id, value: `${u.first_name} ${u.last_name} (${u.name})` }));
+            },
+          },
+          is_hidden: () => "typist" == CN_session.data.role.name,
+          help: "Which user the transcription is assigned to",
+        },  
+        site_id: {
+          title: "Credited Site",
+          type: "enum",
+          enum: { path: "site" },
+          is_constant: () => 3 > CN_session.data.role.tier,
+          is_hidden: () => "typist" == CN_session.data.role.name,
+        },  
+        state: {
+          meta: {},
+          title: "State",
+          is_constant: () => true,
+          is_hidden: () => "typist" == CN_session.data.role.name,
+          help: 'One of "assigned", "deferred" or "completed"',
+        },  
+        start_datetime: {
+          meta: {},
+          title: "Start Date & Time",
+          type: "datetimesecond",
+          is_constant: () => true,
+        },  
+        end_datetime: {
+          meta: {},
+          title: "End Date & Time",
+          type: "datetimesecond",
+          is_constant: () => true,
+          help: 'Only set when the state is "completed"',
+        },  
+      },
     });
   }
 }
@@ -272,7 +333,7 @@ export class CN_transcription_multiedit extends CN_base_action {
           process: true,
         });
       });
-      
+
       await CN_element.message_modal({
         static: true,
         title: "Transcription(s) Processed",

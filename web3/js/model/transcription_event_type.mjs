@@ -13,8 +13,8 @@ export class CN_transcription_event_type_model extends CN_base_model {
         event_type: { column: "event_type.name", title: "Event Type" },
       },
       properties: {
-        cohort_id: { title: "Cohort", type: "enum", enum: { path: "cohort" } },  
-        event_type_id: { title: "Event Type", type: "enum", enum: { path: "event_type" } },  
+        cohort_id: { title: "Cohort", type: "enum", enum: { path: "cohort" } },
+        event_type_id: { title: "Event Type", type: "enum", enum: { path: "event_type" } },
       },
     });
   }

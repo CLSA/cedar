@@ -14,7 +14,7 @@ export class CN_test_entry_model extends CN_base_model {
         transcription_uid: {
           column: "participant.uid",
           title: "UID",
-          // TODO hide when the parent is transcription
+          is_hidden: (model) => "transcription" == model.get_parent_model().get_name(),
         },
         test_type_name: { column: "test_type.name", title: "Type" },
         user_list: {
@@ -31,5 +31,12 @@ export class CN_test_entry_model extends CN_base_model {
         state: { title: "State" },
       },
     });
+  }
+
+  /**
+   * Never allow word to choose test-entries
+   */
+  allow_choose() {
+    return super.allow_choose() && "word" != this.get_parent_model().get_name();
   }
 }

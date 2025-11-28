@@ -1,7 +1,9 @@
 const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
+const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
 
 const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
 
 export class CN_word_model extends CN_base_model {
   constructor() {
@@ -36,9 +38,13 @@ export class CN_word_model extends CN_base_model {
               order: "language.name",
             },
           },
-          is_constant: () => true,
+          is_constant: (model) => "view" == model.get_action_name(),
         },
-        word: { title: "Word", format: "identifier", is_constant: () => true },
+        word: {
+          title: "Word",
+          format: "identifier",
+          is_constant: (model) => "view" == model.get_action_name(),
+        },
         animal_code: {
           title: "Animal Code",
           // regex is exactly 7 integers >= 0 delimited by a period (.)
@@ -48,38 +54,91 @@ export class CN_word_model extends CN_base_model {
           title: "Parent Sister Word",
           type: "typeahead",
           typeahead: CN_word_model.get_typeahead(),
-          is_constant: (model) => "view" == model.get_action_name(),
-          // TODO: implement based on old compoundWordCount value
+          on_change: async (control_el, valid, action) => {
+            const sister_word_id = await action.get_formatted_property("sister_word_id");
+
+            let proceed = true;
+            if (sister_word_id) {
+              // warn if the sister word is an intrusion
+              const response = await CN_api.get(`word/${sister_word_id}`, { select: { column: "fas" } });
+              if ("intrusion" == response.fas) {
+                proceed = await CN_element.confirm_modal({
+                  static: true,
+                  title: "Parent Sister Word is Intrusion",
+                  message: `
+                    Warning: the parent sister word you have selected, "${control_el.value}", is an FAS intrusion.
+                    Are you sure you have selected the correct word?
+                  `,
+                }).test();
+              }
+            }
+
+            await action.on_change("sister_word_id", proceed ? valid : false);
+          },
+          is_constant: (model) => 
+            "view" == model.get_action_name() &&
+            0 < model.get_action().get_property('compound_count').state.get(),
         },
-        misspelled: { title: "Misspelled", type: "boolean" },
+        misspelled: {
+          title: "Misspelled",
+          type: "boolean",
+          // misspelled must stay as false once either the aft or fas is set to intrusion or primary
+          is_constant: (model) => [
+            model.get_action().get_property("aft").state.get(),
+            model.get_action().get_property("fas").state.get()
+          ].some(value => ["intrusion", "primary"].includes(value)),
+        },
         aft: { title: "AFT Type", type: "enum" },
         fas: { title: "FAS Type", type: "enum" },
         description: { title: "Description", type: "text" },
+        compound_count: { meta: {}, is_hidden: () => true },
       },
     });
   }
 
   /**
+   * Non admins can only edit words under certain circumstances
+   */
+  allow_edit() {
+    return super.allow_edit() && !(
+      3 > CN_session.data.role.tier &&
+      null != this.get_action().get_property("misspelled").state.get() &&
+      null != this.get_action().get_property("aft").state.get() &&
+      null != this.get_action().get_property("fas").state.get()
+    );
+  }
+
+  /**
    * Returns a typeahead object for models that have a typeahead property referencing this model
+   * @param string language_id: Restricts words to the provided language id or leave empty for any
    * @return object
    * @static
    */
-  static get_typeahead() {
+  static get_typeahead(language_id = null) {
     return {
       get_list: async (value) => {
+        // build the where statement
+        const where = [
+          { column: 'word.word', operator: "LIKE", value: `%${value}%` },
+          { column: "word.fas", operator: "!=", value: "invalid" },
+          { column: "word.sister_word_id", operator: "=", value: null },
+        ];
+        if (language_id) where.push({ column: "word.language_id", operator: "=", value: language_id });
+
+        // put the exact match at the top of the returned list
+        const special_order = {};
+        special_order[`word="${value}"`] = true;
+
         return await CN_api.get("word", {
           select: {
             column: [
               { column: "id", alias: "key" },
-              { column: 'CONCAT( word.word, " [", language.code, "]" )', alias: "value" },
+              { column: 'CONCAT( word.word, " [", language.code, "]" )', alias: "value", table_prefix: false },
             ],
           },
           modifier: {
-            where: [
-              { column: "word.fas", operator: "!=", value: "invalid" },
-              { column: "word.sister_word_id", operator: "=", value: null },
-            ],
-            order: 'word.word',
+            where: where,
+            order: [special_order, "word"],
           },
         });
       },
@@ -87,4 +146,179 @@ export class CN_word_model extends CN_base_model {
   }
 }
 
-// TODO: implement v2 customizations
+/**
+ * Creates a word-selection modal
+ * TODO: move to element/modal directory once created in Cenozo framework
+ * @param object config: An object that has title, message, language_id, required and static properties
+ * @return bootstrap.Modal
+ *
+function word_modal (config) {
+  if (undefined === config.title) config.title = "Please Provide Input";
+  if (undefined === config.do_not_close) config.do_not_close = false;
+
+  const modal_el = this.create(`
+    <div class="modal fade" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header text-bg-primary">
+            <h1 class="modal-title fw-bold fs-5">${config.title}</h1>
+          </div>
+          <div class="modal-body">
+            <label class="form-label text-info-emphasis" for="cn_word_modal">
+              ${config.message}
+            </label>
+          </div>
+          <div class="modal-footer text-bg-secondary py-1">
+            <button
+              name="cancel"
+              type="button"
+              class="btn btn-primary col-2"
+              data-bs-dismiss="modal"
+            >Cancel</button>
+            <button
+              name="confirm"
+              type="button"
+              class="btn btn-primary col-2"
+            >Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  const word_el = this.create_form_element("typeahead", { id: "cn_word_modal", required: config.required });
+  modal_el.querySelector(".modal-body").append(word_el);
+
+  document.getElementById("main-content").append(modal_el);
+  if (config.static) {
+    modal_el.setAttribute("data-bs-backdrop", "static");
+    modal_el.setAttribute("data-bs-keyboard", "false");
+  }
+  const control_el = document.getElementById("cn_word_modal");
+  if (config.value) control_el.value = config.value;
+
+  const modal_bs = new bootstrap.Modal(modal_el);
+  modal_bs.get = () => {
+    return new Promise((resolve, reject) => {
+      modal_bs.show();
+      modal_el.querySelector("[name=cancel]").addEventListener("click", () => resolve(undefined));
+      modal_el.querySelector("[name=confirm]").addEventListener("click", () => {
+        if (word_el.validate()) {
+          resolve(control_el.value);
+          if (!config.do_not_close) modal_bs.hide();
+        }
+      });
+      // resolved undefined if closing any other way
+      modal_el.addEventListener("hidden.bs.modal", () => resolve(undefined));
+    });
+  };
+
+  modal_bs.set_error = (error) => {
+    word_el.querySelector("[name=error]").innerHTML = error;
+  };
+
+  // automatically dispose of the modal once finished
+  modal_el.addEventListener("hidden.bs.modal", () => {
+    modal_bs.dispose();
+    modal_el.remove();
+  });
+
+  return modal_bs;
+}
+*/
+
+export class CN_word_view extends CN_base_view {
+  /**
+   * Remove the compound model from the selector's child list when the animal code is defined
+   */
+  get_selector_child_list() {
+    const animal_code = this.get_property("animal_code").state.get();
+    return super.get_selector_child_list().filter(c => null == animal_code || "compound" != c.model.get_name());
+  }
+
+  /**
+   * Additional actions must be taken after changing some properties
+   */
+  async on_set_property(prop_name) {
+    if (!["misspelled", "aft", "fas"].includes(prop_name)) {
+      // no change in functionality required
+      await super.on_set_property(prop_name);
+      return;
+    }
+
+    const word = this.get_property("word").state.get();
+    const language_id = this.get_property("language_id").state.get();
+    const language = this.get_property("language_id").enum.values.find(option => option.key == language_id).value;
+
+    const data = { correct_word: null, note: null };
+
+    if ("misspelled" == prop_name) {
+      const typeahead = CN_word_model.get_typeahead(language_id);
+      data.correct_word = await CN_element.input_modal({
+        input: "typeahead",
+        typeahead: typeahead,
+        title: "Select Correct Word",
+        message: `
+          Please select the correct spelling for this word.<br/><br/>
+          If you provide a word then all test-entries using the misspelled word will be changed to the
+          selected word. You may leave the replacement word blank if you do want test-entries to be affected.
+        `,
+        language_id: language_id
+      }).get();
+
+      if (undefined === data.correct_word) {
+        this.get_property(prop_name).state.undo();
+        await this.run();
+        return; // the update has been cancelled, do not proceed
+      }
+
+      // if a word was selected then convert typeahead from value to key
+      if (data.correct_word) data.correct_word = typeahead.list.find(w => w.value = data.correct_word).key;
+    }
+
+    // determine which test entries will be affected by this change
+    let which = "All";
+    if ("invalid" == data.aft) {
+      which = "invalid" == this.get_property("fas").state.get() ? "All AFT and REY" : "All AFT";
+    } else if ("invalid" == data.fas) {
+      which = "invalid" == this.get_property("aft").state.get() ? "All FAS and REY" : "All FAS";
+    }
+
+    // get the message for updated test entries
+    data.note = await CN_element.input_modal({
+      input: "text",
+      title: "Test Entry Note",
+      message: `
+        ${which} test entries using this word will be re-assigned to the last user that it was assigned to.
+        Please provide a note that will be added to these test-entries:
+      `,
+      value:
+        `The ${language} word "${word}" which is used by this test-entry has been marked as invalid.  ` +
+        "Please replace this word with another valid word and re-submit.",
+    }).get();
+
+    if (undefined === data.note) {
+      this.get_property(prop_name).state.undo();
+      await this.run();
+      return; // the update has been cancelled, do not proceed
+    }
+
+    // we now re-implement the parent's on_set_property method but with customizations
+    try {
+      data[prop_name] = await this.get_formatted_property(prop_name);
+      await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
+    } catch (error) {
+      this.get_property(prop_name).state.undo();
+      if ("Conflict (409)" == error.name) {
+        JSON.parse(error.body).forEach(prop_name => {
+          this.get_property(prop_name).element.show_error("Conflicts with existing record", 5000);
+        });
+      } else {
+        this.run();
+        throw error;
+      }   
+    }
+
+    await this.run();
+  }
+}

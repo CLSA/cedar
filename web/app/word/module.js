@@ -161,7 +161,7 @@ cenozoApp.defineModule({
             updateWordLocked: function () {
               this.wordLocked =
                 "administrator" != CnSession.role.name &&
-                "" !== this.record.mispelled &&
+                "" !== this.record.misspelled &&
                 "" !== this.record.aft &&
                 "" !== this.record.fas;
             },
