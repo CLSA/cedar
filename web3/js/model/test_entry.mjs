@@ -1,5 +1,9 @@
+const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
+const CN_common = (await import(`${CENOZO_URL}/js/common.mjs`)).default;
+const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
 
+const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
 
 export class CN_test_entry_model extends CN_base_model {
@@ -30,6 +34,26 @@ export class CN_test_entry_model extends CN_base_model {
         },
         state: { title: "State" },
       },
+      properties: {
+        user_id: { meta: { table: "transcription", column: "user_id" } },
+        test_type_id: { meta: { table: "test_type", column: "id" } },
+        test_type_name: { meta: { table: "test_type", column: "name" } },
+        data_type: { meta: { table: "test_type", column: "data_type" } },
+        state: { type: "enum" },
+        audio_status_type_id: {},
+        audio_status_type: { meta: { table: "audio_status_type", column: "name" } },
+        audio_status_type_other: {},
+        participant_status_type_id: {},
+        participant_status_type: { meta: { table: "participant_status_type", column: "name" } },
+        participant_status_type_other: { },
+        admin_status_type_id: {},
+        admin_status_type: { meta: { table: "admin_status_type", column: "name" } },
+        admin_status_type_other: {},
+        participant_site_id: { meta: { table: "site", column: "id" } },
+        participant_language_id: { meta: { table: "participant", column: "language_id" } },
+        prev_test_entry_id: { meta: {} },
+        next_test_entry_id: { meta: {} },
+      },
     });
   }
 
@@ -38,5 +62,185 @@ export class CN_test_entry_model extends CN_base_model {
    */
   allow_choose() {
     return super.allow_choose() && "word" != this.get_parent_model().get_name();
+  }
+}
+
+export class CN_test_entry_view extends CN_base_view {
+  /*
+   * Sets the state of a test entry
+   * @param string state: One of "assigned", "deferred" or "submitted"
+   * @param boolean force_note: Will make sure the last note was left by the current user
+   */
+  async set_state(state, force_note = false) {
+    const test_entry_path = `test_entry/${this.get_model().get_identifier()}`;
+    if (force_note) {
+      // force a new message if the last one wasn't left by the current user
+      const response = await CN_api.get(`${test_entry_path}/test_entry_note`, {
+        select: { column: "user_id" },
+        modifier: { order: { "test_entry_note.datetime": true }, limit: 1 },
+      });
+
+      // don't proceed until the last note left was left by the current user
+      if (0 == response.length || CN_session.data.user.id != response[0].user_id) {
+        const note = await CN_element.input_modal({
+          input: "text",
+          min_length: 10,
+          title: "Test Entry Note",
+          message: "Please provide the reason you are changing the test entry's state.",
+        }).get();
+
+        if (undefined === note) return;
+
+        await CN_api.post(`${test_entry_path}/test_entry_note`, {
+          user_id: CN_session.data.user.id,
+          note: note,
+        });
+      }
+    }
+
+    // TODO: disable the working elements
+    try {
+      await CN_api.patch(test_entry_path, { state: state });
+
+      this.get_property("state").state.set(state);
+      if ("assigned" != state && "typist" == CN_session.data.role.name) await this.transition("next");
+    } catch (error) {
+      if (409 == error.response.status) {
+        await CN_element.message_modal({
+          title: "Conflict",
+          message: "The test-entry cannot be submitted if it " + (
+            "aft" == self.record.data_type || "fas" == self.record.data_type ?
+            "contains invalid words or placeholders." :
+            "rey" == self.record.data_type ?
+            "contains invalid words or there is missing data." :
+            "is missing data."
+          ),
+          type: "danger",
+        }).show();
+      } else {
+        throw error;
+      }
+    } finally {
+      // TODO: enable the working elements
+    }
+  }
+
+  /**
+   * Moves to the previous or next test entry
+   * @param string direction: Either "previous" or "next"
+   */
+  async transition(direction) {
+    console.log(direction);
+    const new_test_entry_column = `${"next" == direction ? "next" : "prev"}_test_entry_id`;
+    const new_test_entry_id = this.get_property(new_test_entry_column).state.get();
+    try {
+      // we still have access to the transcription so go to the next test-entry or parent transcription
+      await (
+        new_test_entry_id ?
+        CN_session.navigate_to(this.get_model().get_view_url(new_test_entry_id)) :
+        this.on_navigate_to_parent()
+      );
+    } catch (error) {
+      if (403 == error.response.status) {
+        // 403 means the user no longer has access to the transcription, so go back to the list instead
+        await this.on_navigate_to_parent();
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Replace parent method
+   */
+  update_element() {
+    super.update_element();
+
+    const footer_el = this.get_footer_element();
+    const state = this.get_property("state").state.get();
+    const options = [];
+    if ("assigned" == state) {
+      options.push({ name: "deferred", title: "Defer" });
+      options.push({ name: "submitted", title: "Force Submit" });
+    } else if ("deferred" == state) {
+      options.push({ name: "assigned", title: "Return to Typist" });
+      options.push({ name: "submitted", title: "Force Submit" });
+    } else if ("submitted" == state) {
+      options.push({ name: "assigned", title: "Un-submit and Return to Typist" });
+      options.push({ name: "deferred", title: "Un-submit and Defer" });
+    }
+
+    const state_btn_el = footer_el.querySelector("button[name=state]");
+    const dropdown_el = footer_el.querySelector("ul.dropdown-menu");
+    if (state_btn_el) {
+      state_btn_el.innerHTML = `State: ${CN_common.uc_words(state)}`;
+      dropdown_el.innerHTML = "";
+      options.forEach(option => {
+        dropdown_el.append(CN_element.create(
+          `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
+        ))
+        const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
+        btn_el.addEventListener("click", async () => {
+          await this.set_state(option.name, true);
+        });
+      });
+    }
+  }
+
+  /**
+   * Replace parent method
+   */
+  create_body_element() {
+    const form_el = CN_element.create("<form><fieldset></fieldset></form>");
+    return form_el;
+  }
+
+  /**
+   * Replace parent method
+   */
+  create_placeholder_element() {
+    const placeholder_el = CN_element.create('<div class="px-3"></div>');
+    return placeholder_el;
+  }
+
+  /**
+   * Extends parent method
+   */
+  create_footer_element() {
+    const footer_el = CN_element.create('<div></div>');
+
+    // add the prev/next test-entry buttons
+    const nav_btn_group_el = super.create_footer_element();
+    const prev_btn_el = CN_element.create(`
+      <button name="prev" type="button" class="btn btn-primary">
+        <i class="bi-chevron-left"></i> Prev
+      </button>
+    `);
+    prev_btn_el.addEventListener("click", async () => await this.transition("prev"));
+    nav_btn_group_el.prepend(prev_btn_el);
+    const next_btn_el = CN_element.create(`
+      <button name="next" type="button" class="btn btn-primary">
+        Next <i class="bi-chevron-right"></i>
+      </button>
+    `);
+    next_btn_el.addEventListener("click", async () => await this.transition("next"));
+    nav_btn_group_el.append(next_btn_el);
+    footer_el.append(nav_btn_group_el);
+
+    // add the state, reset and notes buttons
+    const command_btn_group_el = CN_element.create(`
+      <div class="btn-group ms-3" role="group">
+        <div class="btn-group" role="group">
+          <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
+          </button>
+          <ul class="dropdown-menu"></ul>
+        </div>
+        <button name="reset" type="button" class="btn btn-danger">Reset</button>
+        <button name="notes" type="button" class="btn btn-light btn-outline-primary">Notes</button>
+      </div>
+    `);
+    footer_el.append(command_btn_group_el);
+
+    return footer_el;
   }
 }

@@ -75,7 +75,7 @@ export class CN_word_model extends CN_base_model {
 
             await action.on_change("sister_word_id", proceed ? valid : false);
           },
-          is_constant: (model) => 
+          is_constant: (model) =>
             "view" == model.get_action_name() &&
             0 < model.get_action().get_property('compound_count').state.get(),
         },
@@ -145,87 +145,6 @@ export class CN_word_model extends CN_base_model {
     };
   }
 }
-
-/**
- * Creates a word-selection modal
- * TODO: move to element/modal directory once created in Cenozo framework
- * @param object config: An object that has title, message, language_id, required and static properties
- * @return bootstrap.Modal
- *
-function word_modal (config) {
-  if (undefined === config.title) config.title = "Please Provide Input";
-  if (undefined === config.do_not_close) config.do_not_close = false;
-
-  const modal_el = this.create(`
-    <div class="modal fade" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header text-bg-primary">
-            <h1 class="modal-title fw-bold fs-5">${config.title}</h1>
-          </div>
-          <div class="modal-body">
-            <label class="form-label text-info-emphasis" for="cn_word_modal">
-              ${config.message}
-            </label>
-          </div>
-          <div class="modal-footer text-bg-secondary py-1">
-            <button
-              name="cancel"
-              type="button"
-              class="btn btn-primary col-2"
-              data-bs-dismiss="modal"
-            >Cancel</button>
-            <button
-              name="confirm"
-              type="button"
-              class="btn btn-primary col-2"
-            >Confirm</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `);
-
-  const word_el = this.create_form_element("typeahead", { id: "cn_word_modal", required: config.required });
-  modal_el.querySelector(".modal-body").append(word_el);
-
-  document.getElementById("main-content").append(modal_el);
-  if (config.static) {
-    modal_el.setAttribute("data-bs-backdrop", "static");
-    modal_el.setAttribute("data-bs-keyboard", "false");
-  }
-  const control_el = document.getElementById("cn_word_modal");
-  if (config.value) control_el.value = config.value;
-
-  const modal_bs = new bootstrap.Modal(modal_el);
-  modal_bs.get = () => {
-    return new Promise((resolve, reject) => {
-      modal_bs.show();
-      modal_el.querySelector("[name=cancel]").addEventListener("click", () => resolve(undefined));
-      modal_el.querySelector("[name=confirm]").addEventListener("click", () => {
-        if (word_el.validate()) {
-          resolve(control_el.value);
-          if (!config.do_not_close) modal_bs.hide();
-        }
-      });
-      // resolved undefined if closing any other way
-      modal_el.addEventListener("hidden.bs.modal", () => resolve(undefined));
-    });
-  };
-
-  modal_bs.set_error = (error) => {
-    word_el.querySelector("[name=error]").innerHTML = error;
-  };
-
-  // automatically dispose of the modal once finished
-  modal_el.addEventListener("hidden.bs.modal", () => {
-    modal_bs.dispose();
-    modal_el.remove();
-  });
-
-  return modal_bs;
-}
-*/
 
 export class CN_word_view extends CN_base_view {
   /**
@@ -309,14 +228,14 @@ export class CN_word_view extends CN_base_view {
       await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
     } catch (error) {
       this.get_property(prop_name).state.undo();
-      if ("Conflict (409)" == error.name) {
+      if (409 == error.response.status) {
         JSON.parse(error.body).forEach(prop_name => {
           this.get_property(prop_name).element.show_error("Conflicts with existing record", 5000);
         });
       } else {
         this.run();
         throw error;
-      }   
+      }
     }
 
     await this.run();

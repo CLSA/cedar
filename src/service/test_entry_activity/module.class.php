@@ -52,6 +52,7 @@ class module extends \cenozo\service\site_restricted_participant_module
 
     $modifier->join( 'test_entry', 'test_entry_activity.test_entry_id', 'test_entry.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
+    $modifier->join( 'user', 'test_entry_activity.user_id', 'user.id' );
 
     // special restricts for typists
     if( 'typist' == $db_role->name )

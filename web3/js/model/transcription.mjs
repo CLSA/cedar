@@ -57,7 +57,7 @@ export class CN_transcription_model extends CN_base_model {
           meta: { table: "participant", column: "uid" },
           title: "Participant",
           is_constant: () => true,
-        },  
+        },
         user_id: {
           title: "User",
           type: "enum",
@@ -84,34 +84,34 @@ export class CN_transcription_model extends CN_base_model {
           },
           is_hidden: () => "typist" == CN_session.data.role.name,
           help: "Which user the transcription is assigned to",
-        },  
+        },
         site_id: {
           title: "Credited Site",
           type: "enum",
           enum: { path: "site" },
           is_constant: () => 3 > CN_session.data.role.tier,
           is_hidden: () => "typist" == CN_session.data.role.name,
-        },  
+        },
         state: {
           meta: {},
           title: "State",
           is_constant: () => true,
           is_hidden: () => "typist" == CN_session.data.role.name,
           help: 'One of "assigned", "deferred" or "completed"',
-        },  
+        },
         start_datetime: {
           meta: {},
           title: "Start Date & Time",
           type: "datetimesecond",
           is_constant: () => true,
-        },  
+        },
         end_datetime: {
           meta: {},
           title: "End Date & Time",
           type: "datetimesecond",
           is_constant: () => true,
           help: 'Only set when the state is "completed"',
-        },  
+        },
       },
     });
   }
