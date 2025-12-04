@@ -63,7 +63,6 @@ export class CN_word_model extends CN_base_model {
               const response = await CN_api.get(`word/${sister_word_id}`, { select: { column: "fas" } });
               if ("intrusion" == response.fas) {
                 proceed = await CN_element.confirm_modal({
-                  static: true,
                   title: "Parent Sister Word is Intrusion",
                   message: `
                     Warning: the parent sister word you have selected, "${control_el.value}", is an FAS intrusion.

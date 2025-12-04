@@ -335,7 +335,6 @@ export class CN_transcription_multiedit extends CN_base_action {
       });
 
       await CN_element.message_modal({
-        static: true,
         title: "Transcription(s) Processed",
         message: (
           `A total of ${identifier_list.length} transcription(s) have been processed` +
