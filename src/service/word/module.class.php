@@ -23,7 +23,7 @@ class module extends \cenozo\service\module
     $db = lib::create( 'business\session' )->get_database();
 
     // we must always join to the language table (for the word module's typeaheads)
-    $modifier->left_join( 'language', 'word.language_id', 'language.id' );
+    $modifier->join( 'language', 'word.language_id', 'language.id' );
 
     // we must always join to the word_test_type_total table (for test type usage totals)
     $modifier->join( 'word_test_type_total', 'word.id', 'word_test_type_total.word_id' );

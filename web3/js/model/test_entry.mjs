@@ -66,7 +66,12 @@ export class CN_test_entry_model extends CN_base_model {
 }
 
 export class CN_test_entry_view extends CN_base_view {
-  /*
+  #data_model = null;
+  #data_id = null
+
+  // TODO: update the data_model's action after the test-entry's language list changes
+
+  /**
    * Sets the state of a test entry
    * @param string state: One of "assigned", "deferred" or "submitted"
    * @param boolean force_note: Will make sure the last note was left by the current user
@@ -101,9 +106,11 @@ export class CN_test_entry_view extends CN_base_view {
     // TODO: disable the working elements
     try {
       await CN_api.patch(test_entry_path, { state: state });
-
-      this.get_property("state").state.set(state);
-      if ("assigned" != state && "typist" == CN_session.data.role.name) await this.transition("next");
+      if ("assigned" != state && "typist" == CN_session.data.role.name) {
+        await this.transition("next");
+      } else {
+        await this.run();
+      }
     } catch (error) {
       if (409 == error.response.status) {
         await CN_element.message_modal({
@@ -130,7 +137,6 @@ export class CN_test_entry_view extends CN_base_view {
    * @param string direction: Either "previous" or "next"
    */
   async transition(direction) {
-    console.log(direction);
     const new_test_entry_column = `${"next" == direction ? "next" : "prev"}_test_entry_id`;
     const new_test_entry_id = this.get_property(new_test_entry_column).state.get();
     try {
@@ -180,9 +186,7 @@ export class CN_test_entry_view extends CN_base_view {
           `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
         ))
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
-        btn_el.addEventListener("click", async () => {
-          await this.set_state(option.name, true);
-        });
+        btn_el.addEventListener("click", this.set_state.bind(this, option.name, true));
       });
     }
   }
@@ -190,17 +194,16 @@ export class CN_test_entry_view extends CN_base_view {
   /**
    * Replace parent method
    */
-  create_body_element() {
-    const form_el = CN_element.create("<form><fieldset></fieldset></form>");
-    return form_el;
+  create_placeholder_element() {
+    return CN_element.create_loading_box();
   }
 
   /**
    * Replace parent method
    */
-  create_placeholder_element() {
-    const placeholder_el = CN_element.create('<div class="px-3"></div>');
-    return placeholder_el;
+  create_body_element() {
+    // add the data model's action as part of the test-entry's body element
+    return this.#data_model.render();
   }
 
   /**
@@ -216,14 +219,14 @@ export class CN_test_entry_view extends CN_base_view {
         <i class="bi-chevron-left"></i> Prev
       </button>
     `);
-    prev_btn_el.addEventListener("click", async () => await this.transition("prev"));
+    prev_btn_el.addEventListener("click", this.transition.bind(this, "prev"));
     nav_btn_group_el.prepend(prev_btn_el);
     const next_btn_el = CN_element.create(`
       <button name="next" type="button" class="btn btn-primary">
         Next <i class="bi-chevron-right"></i>
       </button>
     `);
-    next_btn_el.addEventListener("click", async () => await this.transition("next"));
+    next_btn_el.addEventListener("click", this.transition.bind(this, "next"));
     nav_btn_group_el.append(next_btn_el);
     footer_el.append(nav_btn_group_el);
 
@@ -242,5 +245,68 @@ export class CN_test_entry_view extends CN_base_view {
     footer_el.append(command_btn_group_el);
 
     return footer_el;
+  }
+
+  /**
+   * Extends parent model
+   */
+  async prepare() {
+    await super.prepare();
+
+    // create and configure the data model
+    if (null == this.#data_model) {
+      const model = this.get_model();
+
+      // get the data type
+      const response = await CN_api.get(model.get_view_url(null, "api"), {
+        select: { column: { table: "test_type", column: "data_type" } }
+      });
+
+      const data_module = CN_session.get_module(`${response.data_type}_data`);
+      await data_module.load_classes();
+      this.#data_model = data_module.create_model();
+      this.#data_model.configure("view", `test_entry_id=${model.get_identifier()}`, model);
+    }
+  }
+
+  /**
+   * Replace parent method
+   */
+  async run(children = false) {
+    if (null == this.get_model().get_action_name()) return;
+
+    // create and configure the data model
+    if (null == this.#data_model) {
+      const model = this.get_model();
+
+      // get the data type
+      const response = await CN_api.get(model.get_view_url(null, "api"), {
+        select: { column: { table: "test_type", column: "data_type" } }
+      });
+
+      const data_module = CN_session.get_module(`${response.data_type}_data`);
+      await data_module.load_classes();
+      this.#data_model = data_module.create_model();
+      this.#data_model.configure("view", `test_entry_id=${model.get_identifier()}`, model);
+    }
+
+    const data_action = this.#data_model.get_action();
+
+    this.on_pre_loading();
+    // the data action doesn't have a placeholder
+
+    await this.on_load();
+    await data_action.on_load();
+
+    this.on_post_loading();
+    data_action.on_post_loading();
+
+    this.update_element();
+    data_action.update_element();
+
+    if (children) {
+      // run all children as well
+      this.get_model().get_child_model_list().forEach(model => model.run());
+    }   
   }
 }
