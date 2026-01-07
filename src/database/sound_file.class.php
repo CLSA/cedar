@@ -22,6 +22,8 @@ class sound_file extends \cenozo\database\record
   {
     $participant_class_name = lib::get_class_name( 'database\participant' );
     $setting_manager = lib::create( 'business\setting_manager' );
+    // remove the start and end delimiters from the uid regex (^ and $)
+    $uid_regex = preg_replace( '/(^\\^)|(\\$$)/', '', $setting_manager->get_setting( 'general', 'uid_regex' ) );
     $last_sync_file = $setting_manager->get_setting( 'general', 'last_sync_file' );
     $result = 0;
 
@@ -38,10 +40,11 @@ class sound_file extends \cenozo\database\record
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-operator." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f %s -printf "%s" | grep "/[A-Z][0-9]\{6\}/.*\.wav" | grep -v "\-operator."',
+      'find -L %s -type f %s -printf "%s" | grep "/%s/.*\.wav" | grep -v "\-operator."',
       RECORDINGS_PATH,
       file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : '',
-      '%p\t%TY-%Tm-%Td %TT\n'
+      '%p\t%TY-%Tm-%Td %TT\n',
+      preg_replace( '/([{}])/', '\\\\$1', $uid_regex ) // backslashes before curly braces
     );
     $file_list = array();
     exec( $command, $file_list );
@@ -51,7 +54,7 @@ class sound_file extends \cenozo\database\record
     foreach( $file_list as $row )
     {
       $parts = explode( "\t", $row );
-      preg_match( '#.*/([A-Z][0-9]{6})/([^/]+).wav#', $parts[0], $matches );
+      preg_match( sprintf( '#.*/(%s)/([^/]+).wav#', $uid_regex ), $parts[0], $matches );
       $uid = $matches[1];
       $filename = $matches[2];
       $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
