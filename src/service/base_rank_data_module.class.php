@@ -18,6 +18,8 @@ abstract class base_rank_data_module extends \cedar\service\base_data_module
    */
   public function prepare_read( $select, $modifier )
   {
+    $db = lib::create( 'business\session' )->get_database();
+
     parent::prepare_read( $select, $modifier );
 
     $subject = $this->get_subject();
@@ -37,7 +39,7 @@ abstract class base_rank_data_module extends \cedar\service\base_data_module
           '        IF('."\n".
           '          LOWER( SUBSTRING( word.word, 1, 1 ) ) = '."\n".
           '            LOWER( SUBSTRING( test_type.name, 1, 1 ) )'."\n".
-          '            COLLATE utf8_general_ci,'."\n".
+          '            COLLATE %s,'."\n".
           '          "primary",'."\n".
           '          "intrusion"'."\n".
           '        )'."\n".
@@ -49,7 +51,8 @@ abstract class base_rank_data_module extends \cedar\service\base_data_module
           $type,
           $type,
           $type,
-          $type
+          $type,
+          $db->get_table_collation( 'word' )
         ),
         'word_type',
         false

@@ -23,6 +23,8 @@ class post extends \cenozo\service\post
     if( $this->may_continue() )
     {
       $participant_class_name = lib::get_class_name( 'database\participant' );
+      $transcription_event_type_class_name = lib::get_class_name( 'database\transcription_event_type' );
+
       $session = lib::create( 'business\session' );
       $db_application = $session->get_application();
       $db_user = $session->get_user();
@@ -79,17 +81,20 @@ class post extends \cenozo\service\post
               'participant_sound_file_total.participant_id'
             );
 
-            // all cohort's event_types must exist
-            $participant_mod->join(
-              'transcription_event_type',
-              'participant.cohort_id',
-              'transcription_event_type.cohort_id'
-            );
-            $join_mod = lib::create( 'database\modifier' );
-            $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
-            $join_mod->where( 'transcription_event_type.event_type_id', '=', 'event.event_type_id', false );
-            $participant_mod->join_modifier( 'event', $join_mod );
-            $participant_mod->where( 'event.datetime', '<', 'UTC_TIMESTAMP() - INTERVAL 1 WEEK', false );
+            // all cohort's event_types must exist (only if a transcript_event_type exists)
+            if( 0 < $transcription_event_type_class_name::count() )
+            {
+              $participant_mod->join(
+                'transcription_event_type',
+                'participant.cohort_id',
+                'transcription_event_type.cohort_id'
+              );
+              $join_mod = lib::create( 'database\modifier' );
+              $join_mod->where( 'participant.id', '=', 'event.participant_id', false );
+              $join_mod->where( 'transcription_event_type.event_type_id', '=', 'event.event_type_id', false );
+              $participant_mod->join_modifier( 'event', $join_mod );
+              $participant_mod->where( 'event.datetime', '<', 'UTC_TIMESTAMP() - INTERVAL 1 WEEK', false );
+            }
 
             // the participant belongs to a cohort that the user had access to
             $participant_mod->join(
