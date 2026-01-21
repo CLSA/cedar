@@ -366,6 +366,8 @@ cenozoApp.defineModule({
                     this.parentModel.getServiceResourcePath() + "/sound_file",
                   data: {
                     select: { column: ["id", "name", "url", "identifying"] },
+                    // this order is only because the pre-MAT test type has counting come before alphabet
+                    modifier: { order: { name: true } }
                   },
                   onError: function (error) {
                     // don't show error message for missing recordings (too disruptive)
