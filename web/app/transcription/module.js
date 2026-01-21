@@ -582,34 +582,194 @@ cenozoApp.defineModule({
       ) {
         var object = function (root) {
           CnBaseModelFactory.construct(this, module);
-          this.addModel = CnTranscriptionAddFactory.instance(this);
-          this.listModel = CnTranscriptionListFactory.instance(this);
-          this.viewModel = CnTranscriptionViewFactory.instance(this, root);
+          angular.extend(this, {
+            addModel: CnTranscriptionAddFactory.instance(this),
+            listModel: CnTranscriptionListFactory.instance(this),
+            viewModel: CnTranscriptionViewFactory.instance(this, root),
 
-          // extend getMetadata
-          this.getMetadata = async function () {
-            await this.$$getMetadata();
+            // extend getMetadata
+            getMetadata: async function () {
+              await this.$$getMetadata();
 
-            var response = await CnHttpFactory.instance({
-              path: "site",
-              data: {
-                select: { column: ["id", "name"] },
-                modifier: { order: "name", limit: 1000 },
-              },
-            }).query();
+              var response = await CnHttpFactory.instance({
+                path: "site",
+                data: {
+                  select: { column: ["id", "name"] },
+                  modifier: { order: "name", limit: 1000 },
+                },
+              }).query();
 
-            this.metadata.columnList.site_id = response.data.reduce(
-              (list, item) => {
-                list.enumList.push({ value: item.id, name: item.name });
-                return list;
-              },
-              { enumList: [] }
-            );
-          };
+              this.metadata.columnList.site_id = response.data.reduce(
+                (list, item) => {
+                  list.enumList.push({ value: item.id, name: item.name });
+                  return list;
+                },
+                { enumList: [] }
+              );
+            },
 
-          this.canRescoreTestEntries = function () {
-            return 2 < CnSession.role.tier;
-          };
+            getServiceCollectionPath: function (ignoreParent) {
+              return (
+                "root" == this.getSubjectFromState() ?
+                "transcription" :
+                this.$$getServiceCollectionPath(ignoreParent)
+              );
+            },
+
+            canRescoreTestEntries: function () {
+              return 2 < CnSession.role.tier;
+            },
+
+            // only show the add transcription button for typists
+            // (the participant module will add it manually for other roles when necessary)
+            getAddEnabled: function () {
+              if ("typist" == CnSession.role.name) {
+                return (
+                  this.$$getAddEnabled() &&
+                  "transcription" == this.getSubjectFromState() &&
+                  CnSession.setting.maxWorkingTranscriptions >
+                    this.listModel.cache.length
+                );
+              } else {
+                return (
+                  this.$$getAddEnabled() &&
+                  "participant" == this.getSubjectFromState() &&
+                  "add_transcription" == this.getActionFromState()
+                );
+              }
+            },
+
+            // adding transcriptions is different for typists and everyone else
+            getEditEnabled: function () {
+              return (
+                this.$$getEditEnabled() &&
+                "completed" != this.viewModel.record.state
+              );
+            },
+
+            // override transitionToAddState
+            transitionToAddState: async function () {
+              // typists immediately get a new transcription (no add state required)
+              if ("typist" == CnSession.role.name) {
+                try {
+                  var response = await CnHttpFactory.instance({
+                    path: "transcription",
+                    data: { user_id: CnSession.user.id },
+                    onError: async function (error) {
+                      if (408 == error.status) {
+                        // 408 means there are currently no participants available
+                        CnModalMessageFactory.instance({
+                          title: "No Participants Available",
+                          message: error.data,
+                          error: true,
+                        }).show();
+                      } else if (409 == error.status) {
+                        // 409 means there is a conflict (user cannot start new transcriptions)
+                        await CnModalMessageFactory.instance({
+                          title: "Cannot Begin New Transcription",
+                          message: error.data,
+                          error: true,
+                        }).show();
+                      } else CnModalMessageFactory.httpError(error);
+                    },
+                  }).post();
+
+                  // immediately view the new transcription
+                  await this.transitionToViewState({
+                    getIdentifier: function () {
+                      return response.data;
+                    },
+                  });
+                } catch (error) {
+                  // handled by onError above
+                }
+              } else {
+                await this.$$transitionToAddState(); // everyone else gets the default behaviour
+              }
+            },
+
+            // special function to update the user list
+            updateUserList: async function (participantIdentifier) {
+              var response = await CnHttpFactory.instance({
+                path: "participant/" + participantIdentifier,
+                data: {
+                  select: {
+                    column: [{ table: "site", column: "id", alias: "site_id" }],
+                  },
+                },
+              }).get();
+
+              // show a warning if the user doesn't have a site
+              if (null == response.data.site_id) {
+                await CnModalMessageFactory.instance({
+                  title: "Participant Has No Site",
+                  message:
+                    "This transcription's participant is not associated with a site. Transcriptions " +
+                    "cannot be added or viewed until the participant is assigned to a site.",
+                  error: true,
+                }).show();
+
+                this.transitionToLastState();
+              }
+
+              var modifier = {
+                join: [
+                  {
+                    table: "access",
+                    onleft: "user.id",
+                    onright: "access.user_id",
+                  },
+                  {
+                    table: "role",
+                    onleft: "access.role_id",
+                    onright: "role.id",
+                  },
+                ],
+                where: [
+                  {
+                    column: "role.name",
+                    operator: "=",
+                    value: "typist",
+                  },
+                ],
+                order: "name",
+              };
+
+              // restrict non all-site roles to the participant's site
+              if (!CnSession.role.allSites) {
+                modifier.where.push({
+                  column: "access.site_id",
+                  operator: "=",
+                  value: response.data.site_id,
+                });
+              }
+
+              var response = await CnHttpFactory.instance({
+                path: "user",
+                data: {
+                  select: { column: ["id", "name", "first_name", "last_name"] },
+                  modifier: modifier,
+                },
+              }).query();
+
+              this.metadata.columnList.user_id.enumList = response.data.reduce(
+                (list, item) => {
+                  list.push({
+                    value: item.id,
+                    name:
+                      item.first_name +
+                      " " +
+                      item.last_name +
+                      " (" +
+                      item.name +
+                      ")",
+                  });
+                  return list;
+                },
+                []
+              );
+            },
+          });
 
           if (!this.isRole("typist")) {
             var inputList = module.inputGroupList.findByProperty(
@@ -620,156 +780,6 @@ cenozoApp.defineModule({
             inputList.site_id.type = "enum";
             inputList.state.type = "string";
           }
-
-          // only show the add transcription button for typists
-          // (the participant module will add it manually for other roles when necessary)
-          this.getAddEnabled = function () {
-            if ("typist" == CnSession.role.name) {
-              return (
-                this.$$getAddEnabled() &&
-                "transcription" == this.getSubjectFromState() &&
-                CnSession.setting.maxWorkingTranscriptions >
-                  this.listModel.cache.length
-              );
-            } else {
-              return (
-                this.$$getAddEnabled() &&
-                "participant" == this.getSubjectFromState() &&
-                "add_transcription" == this.getActionFromState()
-              );
-            }
-          };
-
-          // adding transcriptions is different for typists and everyone else
-          this.getEditEnabled = function () {
-            return (
-              this.$$getEditEnabled() &&
-              "completed" != this.viewModel.record.state
-            );
-          };
-
-          // override transitionToAddState
-          this.transitionToAddState = async function () {
-            // typists immediately get a new transcription (no add state required)
-            if ("typist" == CnSession.role.name) {
-              try {
-                var response = await CnHttpFactory.instance({
-                  path: "transcription",
-                  data: { user_id: CnSession.user.id },
-                  onError: async function (error) {
-                    if (408 == error.status) {
-                      // 408 means there are currently no participants available
-                      CnModalMessageFactory.instance({
-                        title: "No Participants Available",
-                        message: error.data,
-                        error: true,
-                      }).show();
-                    } else if (409 == error.status) {
-                      // 409 means there is a conflict (user cannot start new transcriptions)
-                      await CnModalMessageFactory.instance({
-                        title: "Cannot Begin New Transcription",
-                        message: error.data,
-                        error: true,
-                      }).show();
-                    } else CnModalMessageFactory.httpError(error);
-                  },
-                }).post();
-
-                // immediately view the new transcription
-                await this.transitionToViewState({
-                  getIdentifier: function () {
-                    return response.data;
-                  },
-                });
-              } catch (error) {
-                // handled by onError above
-              }
-            } else {
-              await this.$$transitionToAddState(); // everyone else gets the default behaviour
-            }
-          };
-
-          // special function to update the user list
-          this.updateUserList = async function (participantIdentifier) {
-            var response = await CnHttpFactory.instance({
-              path: "participant/" + participantIdentifier,
-              data: {
-                select: {
-                  column: [{ table: "site", column: "id", alias: "site_id" }],
-                },
-              },
-            }).get();
-
-            // show a warning if the user doesn't have a site
-            if (null == response.data.site_id) {
-              await CnModalMessageFactory.instance({
-                title: "Participant Has No Site",
-                message:
-                  "This transcription's participant is not associated with a site. Transcriptions " +
-                  "cannot be added or viewed until the participant is assigned to a site.",
-                error: true,
-              }).show();
-
-              this.transitionToLastState();
-            }
-
-            var modifier = {
-              join: [
-                {
-                  table: "access",
-                  onleft: "user.id",
-                  onright: "access.user_id",
-                },
-                {
-                  table: "role",
-                  onleft: "access.role_id",
-                  onright: "role.id",
-                },
-              ],
-              where: [
-                {
-                  column: "role.name",
-                  operator: "=",
-                  value: "typist",
-                },
-              ],
-              order: "name",
-            };
-
-            // restrict non all-site roles to the participant's site
-            if (!CnSession.role.allSites) {
-              modifier.where.push({
-                column: "access.site_id",
-                operator: "=",
-                value: response.data.site_id,
-              });
-            }
-
-            var response = await CnHttpFactory.instance({
-              path: "user",
-              data: {
-                select: { column: ["id", "name", "first_name", "last_name"] },
-                modifier: modifier,
-              },
-            }).query();
-
-            this.metadata.columnList.user_id.enumList = response.data.reduce(
-              (list, item) => {
-                list.push({
-                  value: item.id,
-                  name:
-                    item.first_name +
-                    " " +
-                    item.last_name +
-                    " (" +
-                    item.name +
-                    ")",
-                });
-                return list;
-              },
-              []
-            );
-          };
         };
 
         return {
