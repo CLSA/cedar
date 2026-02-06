@@ -3,8 +3,8 @@ const CN_common = (await import(`${CENOZO_URL}/js/common.mjs`)).default;
 const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
 
-const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 
 export class CN_test_entry_model extends CN_base_model {
   constructor() {
@@ -65,7 +65,7 @@ export class CN_test_entry_model extends CN_base_model {
   }
 }
 
-export class CN_test_entry_view extends CN_base_view {
+export class CN_test_entry_view extends CN_action_view {
   #data_model = null;
   #data_id = null
 
@@ -138,7 +138,7 @@ export class CN_test_entry_view extends CN_base_view {
    */
   async transition(direction) {
     const new_test_entry_column = `${"next" == direction ? "next" : "prev"}_test_entry_id`;
-    const new_test_entry_id = this.get_property(new_test_entry_column).state.get();
+    const new_test_entry_id = this.get_property_value(new_test_entry_column);
     try {
       // we still have access to the transcription so go to the next test-entry or parent transcription
       await (
@@ -163,7 +163,7 @@ export class CN_test_entry_view extends CN_base_view {
     super.update_element();
 
     const footer_el = this.get_footer_element();
-    const state = this.get_property("state").state.get();
+    const state = this.get_property_value("state");
     const options = [];
     if ("assigned" == state) {
       options.push({ name: "deferred", title: "Defer" });
@@ -307,6 +307,6 @@ export class CN_test_entry_view extends CN_base_view {
     if (children) {
       // run all children as well
       this.get_model().get_child_model_list().forEach(model => model.run());
-    }   
+    }
   }
 }

@@ -1,8 +1,8 @@
 const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
 const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
-const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 import { CN_word_model } from "./word.mjs"
 
 export class CN_mat_data_model extends CN_base_model {
@@ -25,7 +25,7 @@ export class CN_mat_data_model extends CN_base_model {
   }
 }
 
-export class CN_mat_data_view extends CN_base_view {
+export class CN_mat_data_view extends CN_action_view {
   #word_list = [];
   #intrusion_list = [];
 
@@ -44,7 +44,7 @@ export class CN_mat_data_view extends CN_base_view {
     await super.on_load();
 
     // get the current test_entry_id
-    const test_entry_id = this.get_property("test_entry_id").state.get();
+    const test_entry_id = this.get_property_value("test_entry_id");
   }
 
   /**

@@ -1,8 +1,8 @@
 const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
 const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
-const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 import { CN_word_model } from "./word.mjs"
 
 export class CN_rey_data_model extends CN_base_model {
@@ -24,12 +24,12 @@ export class CN_rey_data_model extends CN_base_model {
               order: "language.name",
             },
           },
-          on_change: async (control_el, valid, action) => {
+          on_change: async (form_input, valid) => {
             // run the default behaviour
-            await action.on_change("language_id", valid);
+            await form_input.get_action().on_change("language_id", valid);
 
             // then update the element to propagate the changed property
-            if (valid) action.update_element();
+            if (valid) form_input.get_action().update_element();
           },
         },
         supplementary: {
@@ -74,7 +74,7 @@ export class CN_rey_data_model extends CN_base_model {
   }
 }
 
-export class CN_rey_data_view extends CN_base_view {
+export class CN_rey_data_view extends CN_action_view {
   #language_list = [];
   #word_list = [];
   #intrusion_list = [];
@@ -94,8 +94,8 @@ export class CN_rey_data_view extends CN_base_view {
     await super.on_load();
 
     // get the current test_entry_id and language
-    const test_entry_id = this.get_property("test_entry_id").state.get();
-    const lang = this.get_property("language_code").state.get();
+    const test_entry_id = this.get_property_value("test_entry_id");
+    const lang = this.get_property_value("language_code");
 
     // build the word list based on all boolean properties
     this.#word_list = this.get_all_properties().reduce((list, p) => {
@@ -275,14 +275,14 @@ export class CN_rey_data_view extends CN_base_view {
     const word_element_el = CN_element.create_form_element("typeahead", {
       id: "new_word_id",
       typeahead: CN_word_model.get_typeahead(),
-      set_postfix: () => {
+      postfix: (el) => {
         const btn_el = CN_element.create(
           '<button type="button" class="btn btn-outline-primary ms-2">Mark Remaining As No</button>'
         );
         btn_el.addEventListener("click", async () => {
           // TODO: implement
         });
-        return btn_el;
+        el.append(btn_el);
       },
       required: true,
     });

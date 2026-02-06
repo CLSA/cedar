@@ -2,8 +2,8 @@ const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
 const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
 
-const { CN_base_action } = await import(`${CENOZO_URL}/js/base_action.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
 
 export class CN_transcription_model extends CN_base_model {
@@ -64,7 +64,7 @@ export class CN_transcription_model extends CN_base_model {
           enum: {
             path: "user",
             get_enums: async (model) => {
-              const site_id = model.get_action().get_property("site_id").state.get();
+              const site_id = model.get_action().get_property_value("site_id");
               const user_list = await CN_api.get( "user", {
                 select: { column: ["id", "name", "first_name", "last_name"] },
                 modifier: {
@@ -246,10 +246,10 @@ export class CN_transcription_multiedit extends CN_base_action {
     const restrict_element_el = CN_element.create_form_element("enum", {
       id: "import_restriction",
       required: true,
-      on_change: control_el => {
+      on_change: form_input => {
         // set the import_restriction data when the dropdown changes
         this.#participant_selection.reset_confirmation();
-        this.#participant_selection.set_data({ import_restriction: control_el.value } );
+        this.#participant_selection.set_data({ import_restriction: form_input.get_value() } );
       },
     });
     restrict_element_el.classList.add("col-sm-9");
@@ -269,13 +269,13 @@ export class CN_transcription_multiedit extends CN_base_action {
     assignment_body_el.append(site_label_el);
     const site_element_el = CN_element.create_form_element("enum", {
       id: "site_id",
-      on_change: async control_el => {
+      on_change: async form_input => {
         // update user list based on new site selection
         const user_el = this.get_body_element().querySelector("#user_id");
 
         user_el.innerHTML = "";
         user_el.append(CN_element.create('<option value="null" selected>(empty)</option>'));
-        if ("null" != control_el.value) {
+        if ("null" != form_input.get_value()) {
           const user_list = await CN_api.get( "user", {
             select: { column: ["id", "name", "first_name", "last_name"] },
             modifier: {
@@ -284,7 +284,7 @@ export class CN_transcription_multiedit extends CN_base_action {
                 { table: "role", onleft: "access.role_id", onright: "role.id" },
               ],
               where: [
-                { column: "access.site_id", operator: "=", value: control_el.value },
+                { column: "access.site_id", operator: "=", value: form_input.get_value() },
                 { column: "role.name", operator: "=", value: "typist" },
                 { column: "user.active", operator: "=", value: true },
               ],

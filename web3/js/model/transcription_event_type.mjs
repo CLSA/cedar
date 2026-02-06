@@ -1,4 +1,4 @@
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 
 export class CN_transcription_event_type_model extends CN_base_model {
   constructor() {
