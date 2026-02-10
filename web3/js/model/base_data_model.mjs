@@ -24,12 +24,12 @@ export class CN_base_data_model extends CN_base_model {
               order: "language.name",
             },
           },
-          on_change: async (control_el, valid, action) => {
+          on_change: async (form_input, valid) => {
             // run the default behaviour
-            await action.on_change("language_id", valid);
+            await form_input.get_action().on_change("language_id", valid);
 
             // then update the element to propagate the changed property
-            if (valid) action.update_element();
+            if (valid) form_input.get_action().update_element();
           },
         },
         supplementary: {
@@ -127,7 +127,7 @@ export class CN_base_data_view extends CN_action_view {
           }));
           el.append(CN_element.create_form_element("enum", {
             id: status_type.category,
-            on_change: async (control_el) => {
+            on_change: async (form_input, valid) => {
               // TODO: implement using status_type and control_el.value
             },
           }));
@@ -168,7 +168,7 @@ export class CN_base_data_view extends CN_action_view {
         ));
         const identifying_el = CN_element.create_form_element("boolean", {
           id: sound_file_id,
-          on_change: async (control_el, success) => {
+          on_change: async (form_input, valid) => {
             // TODO
           },
         });

@@ -246,7 +246,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     const restrict_element_el = CN_element.create_form_element("enum", {
       id: "import_restriction",
       required: true,
-      on_change: form_input => {
+      on_change: (form_input) => {
         // set the import_restriction data when the dropdown changes
         this.#participant_selection.reset_confirmation();
         this.#participant_selection.set_data({ import_restriction: form_input.get_value() } );
@@ -269,7 +269,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     assignment_body_el.append(site_label_el);
     const site_element_el = CN_element.create_form_element("enum", {
       id: "site_id",
-      on_change: async form_input => {
+      on_change: async (form_input) => {
         // update user list based on new site selection
         const user_el = this.get_body_element().querySelector("#user_id");
 
