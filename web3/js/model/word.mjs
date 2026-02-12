@@ -72,7 +72,7 @@ export class CN_word_model extends CN_base_model {
               }
             }
 
-            await form_input.get_action().on_change("sister_word_id", proceed ? valid : false);
+            await form_input.get_action().on_property_change("sister_word_id", proceed ? valid : false);
           },
           is_constant: (model) =>
             "view" == model.get_action_name() &&

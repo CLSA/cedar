@@ -26,7 +26,7 @@ export class CN_base_data_model extends CN_base_model {
           },
           on_change: async (form_input, valid) => {
             // run the default behaviour
-            await form_input.get_action().on_change("language_id", valid);
+            await form_input.get_action().on_property_change("language_id", valid);
 
             // then update the element to propagate the changed property
             if (valid) form_input.get_action().update_element();
