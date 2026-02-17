@@ -1,8 +1,9 @@
 const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
 
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 
 export class CN_word_model extends CN_base_model {
@@ -62,13 +63,13 @@ export class CN_word_model extends CN_base_model {
               // warn if the sister word is an intrusion
               const response = await CN_api.get(`word/${sister_word_id}`, { select: { column: "fas" } });
               if ("intrusion" == response.fas) {
-                proceed = await CN_element.confirm_modal({
+                proceed = await (new CN_modal_confirm({
                   title: "Parent Sister Word is Intrusion",
                   message: `
                     Warning: the parent sister word you have selected, "${form_input.get_value()}",
                     is an FAS intrusion.  Are you sure you have selected the correct word?
                   `,
-                }).test();
+                })).open();
               }
             }
 
@@ -172,7 +173,7 @@ export class CN_word_view extends CN_action_view {
 
     if ("misspelled" == prop_name) {
       const typeahead = CN_word_model.get_typeahead(language_id);
-      data.correct_word = await CN_element.input_modal({
+      data.correct_word = await (new CN_modal_input({
         input: "typeahead",
         typeahead: typeahead,
         title: "Select Correct Word",
@@ -182,7 +183,7 @@ export class CN_word_view extends CN_action_view {
           selected word. You may leave the replacement word blank if you do want test-entries to be affected.
         `,
         language_id: language_id
-      }).get();
+      })).open();
 
       if (undefined === data.correct_word) {
         this.get_property(prop_name).form_input.undo_value();
@@ -203,7 +204,7 @@ export class CN_word_view extends CN_action_view {
     }
 
     // get the message for updated test entries
-    data.note = await CN_element.input_modal({
+    data.note = await (new CN_modal_input({
       input: "text",
       title: "Test Entry Note",
       message: `
@@ -213,7 +214,7 @@ export class CN_word_view extends CN_action_view {
       value:
         `The ${language} word "${word}" which is used by this test-entry has been marked as invalid.  ` +
         "Please replace this word with another valid word and re-submit.",
-    }).get();
+    })).open();
 
     if (undefined === data.note) {
       this.get_property(prop_name).form_input.undo_value();

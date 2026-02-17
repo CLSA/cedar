@@ -1,6 +1,5 @@
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
-
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 
 export class CN_mat_data_model extends CN_base_model {
@@ -36,7 +35,7 @@ export class CN_mat_data_view extends CN_action_view {
    * Replace parent method
    */
   create_body_element() {
-    const body_el = CN_element.create(`
+    const body_el = CN_base_element.html(`
       <div class="conatiner-fluid">
         <div name="record"></div>
       </div>

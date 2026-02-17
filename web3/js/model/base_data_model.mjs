@@ -1,8 +1,11 @@
 const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
 const CN_common = (await import(`${CENOZO_URL}/js/common.mjs`)).default;
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
 
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
+const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
+const { CN_input_boolean } = await import(`${CENOZO_URL}/js/element/input/boolean.mjs`);
+const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 
 export class CN_base_data_model extends CN_base_model {
@@ -112,16 +115,17 @@ export class CN_base_data_view extends CN_action_view {
 
     // build the status_type dropdowns
     if (0 < this.#status_type_list.length) {
-      status_el.before(CN_element.create("<hr></hr>"));
+      status_el.before(CN_base_element.html("<hr></hr>"));
 
+      /* TODO: re-implement using CN_input_enum
       const dropdown_list = {};
       this.#status_type_list.forEach(status_type => {
         let el = dropdown_list[status_type.category];
 
         // create the dropdown if it hasn't been created yet
         if (!el) {
-          el = CN_element.create('<div class="flex-fill m-2"></div>');
-          el.append(CN_element.create_form_label({
+          el = CN_base_element.html('<div class="flex-fill m-2"></div>');
+          el.append(CN_element_label.create({
             for: status_type.category,
             value: `${CN_common.uc_words(status_type.category)} Status`,
           }));
@@ -137,16 +141,17 @@ export class CN_base_data_view extends CN_action_view {
 
         // add the status to the dropdown
         el.querySelector(".form-select").append(
-          CN_element.create(`<option value="${status_type.id}">${status_type.name}</option>`)
+          CN_base_element.html(`<option value="${status_type.id}">${status_type.name}</option>`)
         );
       });
+      */
     }
 
     // build the sound_file dropdowns
     if (0 == this.#sound_file_list.length) {
       audio_el.innerHTML = "There are no sound files available for this test.";
     } else {
-      audio_el.append(CN_element.create(`
+      audio_el.append(CN_base_element.html(`
         <div class="d-flex justify-content-center pb-2">
           <div class="mx-2 fst-italic"><span class="fw-bold">Play/Pause:</span> Ctrl⋅Shift⋅L</div>
           <div class="mx-2 fst-italic"><span class="fw-bold">Backward:</span> Ctrl⋅Shift⋅&lt;</div>
@@ -154,16 +159,17 @@ export class CN_base_data_view extends CN_action_view {
         </div>
       `));
 
+      /* TODO: reimplement using CN_input_boolean
       this.#sound_file_list.forEach(sound_file => {
         const sound_file_id = `sound_file_${sound_file.id}`;
-        const row_el = CN_element.create('<div class="row pb-2"></div>');
-        const label_el = CN_element.create_form_label({
+        const row_el = CN_base_element.html('<div class="row pb-2"></div>');
+        const label_el = CN_element_label.create({
           for: sound_file_id,
           value: CN_common.uc_words(sound_file.name),
         });
         label_el.classList.add("col-sm-2");
         row_el.append(label_el);
-        row_el.append(CN_element.create(
+        row_el.append(CN_base_element.html(
           `<audio class="col-sm-7" type="audio/wav" src="${sound_file.url}" controls=""></audio>`
         ));
         const identifying_el = CN_element.create_form_element("boolean", {
@@ -185,6 +191,7 @@ export class CN_base_data_view extends CN_action_view {
         row_el.append(identifying_el);
         audio_el.append(row_el);
       });
+      */
     }
   }
 
@@ -192,7 +199,7 @@ export class CN_base_data_view extends CN_action_view {
    * Replace parent method
    */
   create_body_element() {
-    const body_el = CN_element.create(`
+    const body_el = CN_base_element.html(`
       <div class="conatiner-fluid">
         <div name="record"></div>
         <div name="test_entry"></div>
