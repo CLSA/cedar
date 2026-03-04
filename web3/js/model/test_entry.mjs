@@ -4,7 +4,6 @@ const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
-const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
 const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
@@ -185,7 +184,7 @@ export class CN_test_entry_view extends CN_action_view {
       state_btn_el.innerHTML = `State: ${CN_common.uc_words(state)}`;
       dropdown_el.innerHTML = "";
       options.forEach(option => {
-        dropdown_el.append(CN_base_element.html(
+        dropdown_el.append(this.constructor.html(
           `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
         ))
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
@@ -213,18 +212,18 @@ export class CN_test_entry_view extends CN_action_view {
    * Extends parent method
    */
   create_footer_element() {
-    const footer_el = CN_base_element.html('<div></div>');
+    const footer_el = this.constructor.html('<div></div>');
 
     // add the prev/next test-entry buttons
     const nav_btn_group_el = super.create_footer_element();
-    const prev_btn_el = CN_base_element.html(`
+    const prev_btn_el = this.constructor.html(`
       <button name="prev" type="button" class="btn btn-primary">
         <i class="bi-chevron-left"></i> Prev
       </button>
     `);
     prev_btn_el.addEventListener("click", this.transition.bind(this, "prev"));
     nav_btn_group_el.prepend(prev_btn_el);
-    const next_btn_el = CN_base_element.html(`
+    const next_btn_el = this.constructor.html(`
       <button name="next" type="button" class="btn btn-primary">
         Next <i class="bi-chevron-right"></i>
       </button>
@@ -234,7 +233,7 @@ export class CN_test_entry_view extends CN_action_view {
     footer_el.append(nav_btn_group_el);
 
     // add the state, reset and notes buttons
-    const command_btn_group_el = CN_base_element.html(`
+    const command_btn_group_el = this.constructor.html(`
       <div class="btn-group ms-3" role="group">
         <div class="btn-group" role="group">
           <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">

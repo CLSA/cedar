@@ -1,7 +1,6 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
-const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
@@ -217,7 +216,7 @@ export class CN_rey_data_view extends CN_action_view {
     // build the intrusion list
     if (0 == this.#intrusion_list.length) {
       if (!this.get_model().allow_edit()) {
-        intrusion_el.innerHTML = CN_base_element.html(
+        intrusion_el.innerHTML = this.constructor.html(
           '<div class="text-info">No intrusions have been entered.</div>'
         );
       }
@@ -226,7 +225,7 @@ export class CN_rey_data_view extends CN_action_view {
       this.#intrusion_list.forEach((intrusion, index) => {
         if (0 == index%4) {
           if (buttons_el) intrusion_el.append(buttons_el);
-          buttons_el = CN_base_element.html('<div class="row"></div>');
+          buttons_el = this.constructor.html('<div class="row"></div>');
         }
 
         let btn_class = (
@@ -234,7 +233,7 @@ export class CN_rey_data_view extends CN_action_view {
           "intrusion" == intrusion.word_type ? "success" :
           "danger" // "invalid" == intrusion.word_type
         );
-        buttons_el.append(CN_base_element.html(`
+        buttons_el.append(this.constructor.html(`
           <div class="pb-1 px-2 w-25">
             <button type="button" class="btn btn-${btn_class} w-100">
               [${intrusion.code}] ${intrusion.word}
@@ -251,7 +250,7 @@ export class CN_rey_data_view extends CN_action_view {
    * Replace parent method
    */
   create_body_element() {
-    const body_el = CN_base_element.html(`
+    const body_el = this.constructor.html(`
       <div class="conatiner-fluid">
         <div name="record"></div>
         <div name="words">
@@ -270,7 +269,7 @@ export class CN_rey_data_view extends CN_action_view {
     body_el.querySelector("[name=record]").append(super.create_body_element());
 
     // add the intrusion word entry
-    const word_row_el = CN_base_element.html('<div class="row mb-3"></div>');
+    const word_row_el = this.constructor.html('<div class="row mb-3"></div>');
     const word_label_el = CN_element_label.create({ for: "new_word_id", value: "Enter Word" });
     word_label_el.classList.add("col-sm-3");
     word_row_el.append(word_label_el);
@@ -279,7 +278,7 @@ export class CN_rey_data_view extends CN_action_view {
       class: "d-flex align-items-center col-sm-9",
       typeahead: CN_word_model.get_typeahead(),
       postfix: (el) => {
-        const btn_el = CN_base_element.html(
+        const btn_el = this.constructor.html(
           '<button type="button" class="btn btn-outline-primary ms-2">Mark Remaining As No</button>'
         );
         btn_el.addEventListener("click", async () => {

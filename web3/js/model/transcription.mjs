@@ -3,7 +3,6 @@ const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
-const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
@@ -181,22 +180,22 @@ export class CN_transcription_multiedit extends CN_base_action {
     // populate the site and user selection list
     const site_el = this.get_body_element().querySelector("#site_id");
     site_el.innerHTML = "";
-    site_el.append(CN_base_element.html('<option value="null" selected>(empty)</option>'));
+    site_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
     const site_list = await CN_api.get( "site", { select: { column: ["id", "name"] } });
     site_list.forEach(site => {
-      site_el.append(CN_base_element.html(`<option value="${site.id}">${site.name}</option>`));
+      site_el.append(this.constructor.html(`<option value="${site.id}">${site.name}</option>`));
     });
 
     const user_el = this.get_body_element().querySelector("#user_id");
     user_el.innerHTML = "";
-    user_el.append(CN_base_element.html('<option value="null" selected>(empty)</option>'));
+    user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
   }
 
   /**
    * Extend parent method
    */
   create_body_element() {
-    const body_el = CN_base_element.html(`
+    const body_el = this.constructor.html(`
       <div class="container-fluid text-info-emphasis">
         <div class="pb-2">
           In order to edit multiple transcriptions at once you must first select them by participant UID.
@@ -242,7 +241,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     });
 
     const participant_selection_el = this.#participant_selection.get_element();
-    const restrict_row_el = CN_base_element.html('<div class="row"></div>');
+    const restrict_row_el = this.constructor.html('<div class="row"></div>');
 
     const restrict_label_el = CN_element_label.create({ for: "import_restriction", value: "Restrict to" });
     restrict_label_el.classList.add("col-sm-3");
@@ -265,7 +264,7 @@ export class CN_transcription_multiedit extends CN_base_action {
 
     body_el.querySelector("[name=participant-list]").append(participant_selection_el);
 
-    const assignment_body_el = CN_base_element.html('<div class="row"></div>');
+    const assignment_body_el = this.constructor.html('<div class="row"></div>');
     const site_label_el = CN_element_label.create({ for: "site_id", value: "Assign to Site" });
     site_label_el.classList.add("col-sm-3");
     assignment_body_el.append(site_label_el);
@@ -277,7 +276,7 @@ export class CN_transcription_multiedit extends CN_base_action {
         const user_el = this.get_body_element().querySelector("#user_id");
 
         user_el.innerHTML = "";
-        user_el.append(CN_base_element.html('<option value="null" selected>(empty)</option>'));
+        user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
         if ("null" != form_input.get_value()) {
           const user_list = await CN_api.get( "user", {
             select: { column: ["id", "name", "first_name", "last_name"] },
@@ -295,7 +294,7 @@ export class CN_transcription_multiedit extends CN_base_action {
             },
           });
           user_list.forEach(user => {
-            user_el.append(CN_base_element.html(
+            user_el.append(this.constructor.html(
               `<option value="${user.id}">${user.first_name} ${user.last_name} (${user.name})</option>`
             ));
           });
@@ -316,8 +315,8 @@ export class CN_transcription_multiedit extends CN_base_action {
     user_form_input.set_parent_element(assignment_body_el);
     assignment_body_el.append(user_form_input.render());
 
-    const assignment_footer_el = CN_base_element.html('<div class="row"></div>');
-    const proceed_btn_el = CN_base_element.html(
+    const assignment_footer_el = this.constructor.html('<div class="row"></div>');
+    const proceed_btn_el = this.constructor.html(
       '<button name="proceed" type="button" class="btn btn-primary">Proceed</button>'
     );
     proceed_btn_el.addEventListener("click", async () => {
@@ -328,7 +327,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       const identifier_list = this.#participant_selection.get_identifier_list();
 
       let response = null;
-      await CN_base_element.wait_for(async () => {
+      await this.constructor.wait_for(async () => {
         response = await CN_api.post("transcription", {
           identifier_id: this.#participant_selection.get_idtype(),
           identifier_list: identifier_list,
@@ -367,7 +366,7 @@ export class CN_transcription_multiedit extends CN_base_action {
    * Extend parent method
    */
   create_footer_element() {
-    const footer_el = CN_base_element.html(`
+    const footer_el = this.constructor.html(`
       <div class="btn-group" role="group">
         <button name="back" type="button" class="btn btn-primary">View Application</button>
       </div>
