@@ -167,7 +167,9 @@ export class CN_word_view extends CN_action_view {
 
     const word = this.get_property_value("word");
     const language_id = this.get_property_value("language_id");
-    const language = this.get_property("language_id").enum.values.find(option => option.key == language_id).value;
+    const language = this.get_property("language_id").form_input.enum.values.find(
+      option => option.key == language_id
+    ).value;
 
     const data = { correct_word: null, note: null };
 
