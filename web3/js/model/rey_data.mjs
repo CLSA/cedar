@@ -1,10 +1,10 @@
-const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+import { CN_word_model } from "./word.mjs"
 
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
-import { CN_word_model } from "./word.mjs"
 
 export class CN_rey_data_model extends CN_base_model {
   constructor() {
@@ -270,9 +270,11 @@ export class CN_rey_data_view extends CN_action_view {
 
     // add the intrusion word entry
     const word_row_el = this.constructor.html('<div class="row mb-3"></div>');
-    const word_label_el = CN_element_label.create({ for: "new_word_id", value: "Enter Word" });
-    word_label_el.classList.add("col-sm-3");
-    word_row_el.append(word_label_el);
+    CN_element_label.create_element(word_row_el, {
+      for: "new_word_id",
+      value: "Enter Word",
+      class: "col-sm-3",
+    });
     const word_form_input = new CN_input_typeahead({
       id: "new_word_id",
       class: "d-flex align-items-center col-sm-9",

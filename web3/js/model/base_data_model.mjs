@@ -1,11 +1,10 @@
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
-
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_boolean } = await import(`${CENOZO_URL}/js/element/input/boolean.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 
 export class CN_base_data_model extends CN_base_model {
   constructor(data_name) {
@@ -124,16 +123,16 @@ export class CN_base_data_view extends CN_action_view {
         // create the dropdown if it hasn't been created yet
         if (!el) {
           el = this.constructor.html('<div class="flex-fill m-2"></div>');
-          el.append(CN_element_label.create({
+          CN_element_label.create_element(el, {
             for: status_type.category,
             value: `${CN_common.uc_words(status_type.category)} Status`,
-          }));
-          el.append(CN_element.create_form_element("enum", {
+          });
+          CN_element.create_form_element(el, "enum", {
             id: status_type.category,
             on_change: async (form_input, valid) => {
               // TODO: implement using status_type and control_el.value
             },
-          }));
+          });
           status_el.append(el);
           dropdown_list[status_type.category] = el;
         }
@@ -162,22 +161,21 @@ export class CN_base_data_view extends CN_action_view {
       this.#sound_file_list.forEach(sound_file => {
         const sound_file_id = `sound_file_${sound_file.id}`;
         const row_el = this.constructor.html('<div class="row pb-2"></div>');
-        const label_el = CN_element_label.create({
+        const label_el = CN_element_label.create_element(row_el, {
           for: sound_file_id,
           value: CN_common.uc_words(sound_file.name),
+          class: "col-sm-2",
         });
-        label_el.classList.add("col-sm-2");
-        row_el.append(label_el);
         row_el.append(this.constructor.html(
           `<audio class="col-sm-7" type="audio/wav" src="${sound_file.url}" controls=""></audio>`
         ));
-        const identifying_el = CN_element.create_form_element("boolean", {
+        const identifying_el = CN_element.create_form_element(row_el, "boolean", {
           id: sound_file_id,
           on_change: async (form_input, valid) => {
             // TODO
           },
+          class: "col-sm-2",
         });
-        identifying_el.classList.add("col-sm-2");
         identifying_el.querySelector("[value='']").innerHTML = "(select identifying)";
         identifying_el.querySelector("[value='1']").innerHTML = "Identifying";
         identifying_el.querySelector("[value='0']").innerHTML =  "Not Identifying";
@@ -187,7 +185,6 @@ export class CN_base_data_view extends CN_action_view {
           sound_file.identifying ? "1" :
           "0"
         }']`).selected = true;
-        row_el.append(identifying_el);
         audio_el.append(row_el);
       });
       */

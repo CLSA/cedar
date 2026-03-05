@@ -1,7 +1,6 @@
-const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
-
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_homophone_model extends CN_base_model {
   constructor() {

@@ -1,12 +1,11 @@
-const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
-const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
-
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_test_entry_model extends CN_base_model {
   constructor() {
@@ -197,7 +196,7 @@ export class CN_test_entry_view extends CN_action_view {
    * Replace parent method
    */
   create_placeholder_element() {
-    return CN_element_loading_box.create();
+    return CN_element_loading_box.create_element();
   }
 
   /**

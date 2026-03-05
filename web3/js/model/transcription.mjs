@@ -1,13 +1,12 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
-
 const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_transcription_model extends CN_base_model {
   constructor() {
@@ -243,9 +242,11 @@ export class CN_transcription_multiedit extends CN_base_action {
     const participant_selection_el = this.#participant_selection.get_element();
     const restrict_row_el = this.constructor.html('<div class="row"></div>');
 
-    const restrict_label_el = CN_element_label.create({ for: "import_restriction", value: "Restrict to" });
-    restrict_label_el.classList.add("col-sm-3");
-    restrict_row_el.append(restrict_label_el);
+    CN_element_label.create_element(restrict_row_el, {
+      for: "import_restriction",
+      value: "Restrict to",
+      class: "col-sm-3",
+    });
     const restrict_form_input = new CN_input_enum({
       id: "import_restriction",
       class: "d-flex align-items-center col-sm-9",
@@ -265,9 +266,11 @@ export class CN_transcription_multiedit extends CN_base_action {
     body_el.querySelector("[name=participant-list]").append(participant_selection_el);
 
     const assignment_body_el = this.constructor.html('<div class="row"></div>');
-    const site_label_el = CN_element_label.create({ for: "site_id", value: "Assign to Site" });
-    site_label_el.classList.add("col-sm-3");
-    assignment_body_el.append(site_label_el);
+    CN_element_label.create_element(assignment_body_el, {
+      for: "site_id",
+      value: "Assign to Site",
+      class: "col-sm-3",
+    });
     const site_form_input = new CN_input_enum({
       id: "site_id",
       class: "d-flex align-items-center col-sm-9",
@@ -304,9 +307,11 @@ export class CN_transcription_multiedit extends CN_base_action {
     });
     site_form_input.set_parent_element(assignment_body_el);
     assignment_body_el.append(site_form_input.render());
-    const user_label_el = CN_element_label.create({ for: "user_id", value: "Assign to User" });
-    user_label_el.classList.add("col-sm-3");
-    assignment_body_el.append(user_label_el);
+    CN_element_label.create_element(assignment_body_el, {
+      for: "user_id",
+      value: "Assign to User",
+      class: "col-sm-3",
+    });
     const user_form_input = new CN_input_enum({
       id: "user_id",
       class: "d-flex align-items-center col-sm-9",
@@ -351,13 +356,14 @@ export class CN_transcription_multiedit extends CN_base_action {
     });
     assignment_footer_el.append(proceed_btn_el);
 
-    const assignment_el = CN_element_card.create({
-      header: "Transcription Assignment",
-      body: assignment_body_el,
-      footer: assignment_footer_el,
-    });
-
-    body_el.querySelector("[name=transcription-assignment]").append(assignment_el);
+    const assignment_el = CN_element_card.create_element(
+      body_el.querySelector("[name=transcription-assignment]"),
+      {
+        header: "Transcription Assignment",
+        body: assignment_body_el,
+        footer: assignment_footer_el,
+      }
+    );
 
     return body_el;
   }
