@@ -1,9 +1,9 @@
-const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
-const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
-
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
-const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_word_model extends CN_base_model {
   constructor() {
@@ -54,37 +54,37 @@ export class CN_word_model extends CN_base_model {
           title: "Parent Sister Word",
           type: "typeahead",
           typeahead: CN_word_model.get_typeahead(),
-          on_change: async (control_el, valid, action) => {
-            const sister_word_id = await action.get_formatted_property("sister_word_id");
+          on_change: async (form_input, valid) => {
+            const sister_word_id = await form_input.get_action().get_formatted_property("sister_word_id");
 
             let proceed = true;
             if (sister_word_id) {
               // warn if the sister word is an intrusion
               const response = await CN_api.get(`word/${sister_word_id}`, { select: { column: "fas" } });
               if ("intrusion" == response.fas) {
-                proceed = await CN_element.confirm_modal({
+                proceed = await (new CN_modal_confirm({
                   title: "Parent Sister Word is Intrusion",
                   message: `
-                    Warning: the parent sister word you have selected, "${control_el.value}", is an FAS intrusion.
-                    Are you sure you have selected the correct word?
+                    Warning: the parent sister word you have selected, "${form_input.get_value()}",
+                    is an FAS intrusion.  Are you sure you have selected the correct word?
                   `,
-                }).test();
+                })).open();
               }
             }
 
-            await action.on_change("sister_word_id", proceed ? valid : false);
+            await form_input.get_action().on_property_change("sister_word_id", proceed ? valid : false);
           },
           is_constant: (model) =>
             "view" == model.get_action_name() &&
-            0 < model.get_action().get_property('compound_count').state.get(),
+            0 < model.get_action().get_property_value('compound_count'),
         },
         misspelled: {
           title: "Misspelled",
           type: "boolean",
           // misspelled must stay as false once either the aft or fas is set to intrusion or primary
           is_constant: (model) => [
-            model.get_action().get_property("aft").state.get(),
-            model.get_action().get_property("fas").state.get()
+            model.get_action().get_property_value("aft"),
+            model.get_action().get_property_value("fas")
           ].some(value => ["intrusion", "primary"].includes(value)),
         },
         aft: { title: "AFT Type", type: "enum" },
@@ -101,9 +101,9 @@ export class CN_word_model extends CN_base_model {
   allow_edit() {
     return super.allow_edit() && !(
       3 > CN_session.data.role.tier &&
-      null != this.get_action().get_property("misspelled").state.get() &&
-      null != this.get_action().get_property("aft").state.get() &&
-      null != this.get_action().get_property("fas").state.get()
+      null != this.get_action().get_property_value("misspelled") &&
+      null != this.get_action().get_property_value("aft") &&
+      null != this.get_action().get_property_value("fas")
     );
   }
 
@@ -145,12 +145,12 @@ export class CN_word_model extends CN_base_model {
   }
 }
 
-export class CN_word_view extends CN_base_view {
+export class CN_word_view extends CN_action_view {
   /**
    * Remove the compound model from the selector's child list when the animal code is defined
    */
   get_selector_child_list() {
-    const animal_code = this.get_property("animal_code").state.get();
+    const animal_code = this.get_property_value("animal_code");
     return super.get_selector_child_list().filter(c => null == animal_code || "compound" != c.model.get_name());
   }
 
@@ -164,15 +164,17 @@ export class CN_word_view extends CN_base_view {
       return;
     }
 
-    const word = this.get_property("word").state.get();
-    const language_id = this.get_property("language_id").state.get();
-    const language = this.get_property("language_id").enum.values.find(option => option.key == language_id).value;
+    const word = this.get_property_value("word");
+    const language_id = this.get_property_value("language_id");
+    const language = this.get_property("language_id").form_input.enum.values.find(
+      option => option.key == language_id
+    ).value;
 
     const data = { correct_word: null, note: null };
 
     if ("misspelled" == prop_name) {
       const typeahead = CN_word_model.get_typeahead(language_id);
-      data.correct_word = await CN_element.input_modal({
+      data.correct_word = await (new CN_modal_input({
         input: "typeahead",
         typeahead: typeahead,
         title: "Select Correct Word",
@@ -182,10 +184,10 @@ export class CN_word_view extends CN_base_view {
           selected word. You may leave the replacement word blank if you do want test-entries to be affected.
         `,
         language_id: language_id
-      }).get();
+      })).open();
 
       if (undefined === data.correct_word) {
-        this.get_property(prop_name).state.undo();
+        this.get_property(prop_name).form_input.undo_value();
         await this.run();
         return; // the update has been cancelled, do not proceed
       }
@@ -197,13 +199,13 @@ export class CN_word_view extends CN_base_view {
     // determine which test entries will be affected by this change
     let which = "All";
     if ("invalid" == data.aft) {
-      which = "invalid" == this.get_property("fas").state.get() ? "All AFT and REY" : "All AFT";
+      which = "invalid" == this.get_property_value("fas") ? "All AFT and REY" : "All AFT";
     } else if ("invalid" == data.fas) {
-      which = "invalid" == this.get_property("aft").state.get() ? "All FAS and REY" : "All FAS";
+      which = "invalid" == this.get_property_value("aft") ? "All FAS and REY" : "All FAS";
     }
 
     // get the message for updated test entries
-    data.note = await CN_element.input_modal({
+    data.note = await (new CN_modal_input({
       input: "text",
       title: "Test Entry Note",
       message: `
@@ -213,10 +215,10 @@ export class CN_word_view extends CN_base_view {
       value:
         `The ${language} word "${word}" which is used by this test-entry has been marked as invalid.  ` +
         "Please replace this word with another valid word and re-submit.",
-    }).get();
+    })).open();
 
     if (undefined === data.note) {
-      this.get_property(prop_name).state.undo();
+      this.get_property(prop_name).form_input.undo_value();
       await this.run();
       return; // the update has been cancelled, do not proceed
     }
@@ -226,7 +228,7 @@ export class CN_word_view extends CN_base_view {
       data[prop_name] = await this.get_formatted_property(prop_name);
       await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
     } catch (error) {
-      this.get_property(prop_name).state.undo();
+      this.get_property(prop_name).form_input.undo_value();
       if (409 == error.response.status) {
         JSON.parse(error.body).forEach(prop_name => {
           this.get_property(prop_name).element.show_error("Conflicts with existing record", 5000);

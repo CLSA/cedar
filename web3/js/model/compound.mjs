@@ -1,8 +1,8 @@
-const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
-
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
-const { CN_base_list } = await import(`${CENOZO_URL}/js/base_list.mjs`);
 import { CN_word_model } from "./word.mjs"
+
+const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_compound_model extends CN_base_model {
   constructor() {
@@ -29,7 +29,7 @@ export class CN_compound_model extends CN_base_model {
   }
 }
 
-export class CN_compound_list extends CN_base_list {
+export class CN_compound_list extends CN_action_list {
   /**
    * Extend parent method to make clicking on a compound bring you to the word
    */

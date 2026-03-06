@@ -1,10 +1,11 @@
-const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
-const CN_common = (await import(`${CENOZO_URL}/js/common.mjs`)).default;
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
-const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
-
-const { CN_base_view } = await import(`${CENOZO_URL}/js/base_view.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_test_entry_model extends CN_base_model {
   constructor() {
@@ -65,7 +66,7 @@ export class CN_test_entry_model extends CN_base_model {
   }
 }
 
-export class CN_test_entry_view extends CN_base_view {
+export class CN_test_entry_view extends CN_action_view {
   #data_model = null;
   #data_id = null
 
@@ -87,12 +88,12 @@ export class CN_test_entry_view extends CN_base_view {
 
       // don't proceed until the last note left was left by the current user
       if (0 == response.length || CN_session.data.user.id != response[0].user_id) {
-        const note = await CN_element.input_modal({
+        const note = await (new CN_modal_input({
           input: "text",
           min_length: 10,
           title: "Test Entry Note",
           message: "Please provide the reason you are changing the test entry's state.",
-        }).get();
+        })).open();
 
         if (undefined === note) return;
 
@@ -113,7 +114,7 @@ export class CN_test_entry_view extends CN_base_view {
       }
     } catch (error) {
       if (409 == error.response.status) {
-        await CN_element.message_modal({
+        await (new CN_modal_message({
           title: "Conflict",
           message: "The test-entry cannot be submitted if it " + (
             "aft" == self.record.data_type || "fas" == self.record.data_type ?
@@ -123,7 +124,7 @@ export class CN_test_entry_view extends CN_base_view {
             "is missing data."
           ),
           type: "danger",
-        }).show();
+        })).open();
       } else {
         throw error;
       }
@@ -138,7 +139,7 @@ export class CN_test_entry_view extends CN_base_view {
    */
   async transition(direction) {
     const new_test_entry_column = `${"next" == direction ? "next" : "prev"}_test_entry_id`;
-    const new_test_entry_id = this.get_property(new_test_entry_column).state.get();
+    const new_test_entry_id = this.get_property_value(new_test_entry_column);
     try {
       // we still have access to the transcription so go to the next test-entry or parent transcription
       await (
@@ -163,7 +164,7 @@ export class CN_test_entry_view extends CN_base_view {
     super.update_element();
 
     const footer_el = this.get_footer_element();
-    const state = this.get_property("state").state.get();
+    const state = this.get_property_value("state");
     const options = [];
     if ("assigned" == state) {
       options.push({ name: "deferred", title: "Defer" });
@@ -182,7 +183,7 @@ export class CN_test_entry_view extends CN_base_view {
       state_btn_el.innerHTML = `State: ${CN_common.uc_words(state)}`;
       dropdown_el.innerHTML = "";
       options.forEach(option => {
-        dropdown_el.append(CN_element.create(
+        dropdown_el.append(this.constructor.html(
           `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
         ))
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
@@ -195,7 +196,7 @@ export class CN_test_entry_view extends CN_base_view {
    * Replace parent method
    */
   create_placeholder_element() {
-    return CN_element.create_loading_box();
+    return CN_element_loading_box.create_element();
   }
 
   /**
@@ -210,18 +211,18 @@ export class CN_test_entry_view extends CN_base_view {
    * Extends parent method
    */
   create_footer_element() {
-    const footer_el = CN_element.create('<div></div>');
+    const footer_el = this.constructor.html('<div></div>');
 
     // add the prev/next test-entry buttons
     const nav_btn_group_el = super.create_footer_element();
-    const prev_btn_el = CN_element.create(`
+    const prev_btn_el = this.constructor.html(`
       <button name="prev" type="button" class="btn btn-primary">
         <i class="bi-chevron-left"></i> Prev
       </button>
     `);
     prev_btn_el.addEventListener("click", this.transition.bind(this, "prev"));
     nav_btn_group_el.prepend(prev_btn_el);
-    const next_btn_el = CN_element.create(`
+    const next_btn_el = this.constructor.html(`
       <button name="next" type="button" class="btn btn-primary">
         Next <i class="bi-chevron-right"></i>
       </button>
@@ -231,7 +232,7 @@ export class CN_test_entry_view extends CN_base_view {
     footer_el.append(nav_btn_group_el);
 
     // add the state, reset and notes buttons
-    const command_btn_group_el = CN_element.create(`
+    const command_btn_group_el = this.constructor.html(`
       <div class="btn-group ms-3" role="group">
         <div class="btn-group" role="group">
           <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
@@ -307,6 +308,6 @@ export class CN_test_entry_view extends CN_base_view {
     if (children) {
       // run all children as well
       this.get_model().get_child_model_list().forEach(model => model.run());
-    }   
+    }
   }
 }

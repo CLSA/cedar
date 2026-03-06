@@ -1,10 +1,12 @@
-const CN_api = (await import(`${CENOZO_URL}/js/api.mjs`)).default;
-const CN_element = (await import(`${CENOZO_URL}/js/element.mjs`)).default;
-const CN_session = (await import(`${CENOZO_URL}/js/session.mjs`)).default;
-
-const { CN_base_action } = await import(`${CENOZO_URL}/js/base_action.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/base_model.mjs`);
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
+const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
+const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_transcription_model extends CN_base_model {
   constructor() {
@@ -64,7 +66,7 @@ export class CN_transcription_model extends CN_base_model {
           enum: {
             path: "user",
             get_enums: async (model) => {
-              const site_id = model.get_action().get_property("site_id").state.get();
+              const site_id = model.get_action().get_property_value("site_id");
               const user_list = await CN_api.get( "user", {
                 select: { column: ["id", "name", "first_name", "last_name"] },
                 modifier: {
@@ -119,18 +121,18 @@ export class CN_transcription_model extends CN_base_model {
 
 export class CN_transcription_multiedit extends CN_base_action {
   #import_restrictions = [{
-    value: "no-import",
-    text: "NO-IMPORT: Participants already available to the application",
+    key: "no-import",
+    value: "NO-IMPORT: Participants already available to the application",
   }, {
-    value: "import",
-    text: "IMPORT-ONLY: Participants who are not available to the application (all will be imported)",
+    key: "import",
+    value: "IMPORT-ONLY: Participants who are not available to the application (all will be imported)",
   }, {
-    value: "any",
-    text: "ANY: Do not restrict participants (unavailable participants will be imported)",
+    key: "any",
+    value: "ANY: Do not restrict participants (unavailable participants will be imported)",
   }];
   #participant_selection = new CN_participant_selection({
     path: "transcription",
-    data: { import_restriction: this.#import_restrictions[0].value },
+    data: { import_restriction: this.#import_restrictions[0].key },
   });
 
   /**
@@ -170,29 +172,29 @@ export class CN_transcription_multiedit extends CN_base_action {
     const model = this.get_model();
 
     // reset the list and transcription components
-    this.#participant_selection.set_data({ import_restriction: this.#import_restrictions[0].value });
+    this.#participant_selection.set_data({ import_restriction: this.#import_restrictions[0].key });
     this.#participant_selection.reset();
     this.get_body_element().querySelector("[name=transcription-assignment]").style.display = "none";
 
     // populate the site and user selection list
     const site_el = this.get_body_element().querySelector("#site_id");
     site_el.innerHTML = "";
-    site_el.append(CN_element.create('<option value="null" selected>(empty)</option>'));
+    site_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
     const site_list = await CN_api.get( "site", { select: { column: ["id", "name"] } });
     site_list.forEach(site => {
-      site_el.append(CN_element.create(`<option value="${site.id}">${site.name}</option>`));
+      site_el.append(this.constructor.html(`<option value="${site.id}">${site.name}</option>`));
     });
 
     const user_el = this.get_body_element().querySelector("#user_id");
     user_el.innerHTML = "";
-    user_el.append(CN_element.create('<option value="null" selected>(empty)</option>'));
+    user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
   }
 
   /**
    * Extend parent method
    */
   create_body_element() {
-    const body_el = CN_element.create(`
+    const body_el = this.constructor.html(`
       <div class="container-fluid text-info-emphasis">
         <div class="pb-2">
           In order to edit multiple transcriptions at once you must first select them by participant UID.
@@ -238,44 +240,47 @@ export class CN_transcription_multiedit extends CN_base_action {
     });
 
     const participant_selection_el = this.#participant_selection.get_element();
-    const restrict_row_el = CN_element.create('<div class="row"></div>');
+    const restrict_row_el = this.constructor.html('<div class="row"></div>');
 
-    const restrict_label_el = CN_element.create_form_label({ for: "import_restriction", value: "Restrict to" });
-    restrict_label_el.classList.add("col-sm-3");
-    restrict_row_el.append(restrict_label_el);
-    const restrict_element_el = CN_element.create_form_element("enum", {
+    CN_element_label.create_element(restrict_row_el, {
+      for: "import_restriction",
+      value: "Restrict to",
+      class: "col-sm-3",
+    });
+    const restrict_form_input = new CN_input_enum({
       id: "import_restriction",
+      class: "d-flex align-items-center col-sm-9",
       required: true,
-      on_change: control_el => {
+      enum: { values: this.#import_restrictions, },
+      on_change: (form_input) => {
         // set the import_restriction data when the dropdown changes
         this.#participant_selection.reset_confirmation();
-        this.#participant_selection.set_data({ import_restriction: control_el.value } );
+        this.#participant_selection.set_data({ import_restriction: form_input.get_value() } );
       },
     });
-    restrict_element_el.classList.add("col-sm-9");
-    this.#import_restrictions.forEach((restriction, index) => {
-      restrict_element_el.querySelector("select").append(CN_element.create(
-        `<option value="${restriction.value}" ${0 == index ? "selected" : ""}>${restriction.text}</option>`
-      ));
-      restrict_row_el.append(restrict_element_el);
-    });
+    restrict_form_input.set_parent_element(restrict_row_el);
+    restrict_row_el.append(restrict_form_input.render());
+    restrict_form_input.set_value("no-import");
     participant_selection_el.querySelector(".card-footer").prepend(restrict_row_el);
 
     body_el.querySelector("[name=participant-list]").append(participant_selection_el);
 
-    const assignment_body_el = CN_element.create('<div class="row"></div>');
-    const site_label_el = CN_element.create_form_label({ for: "site_id", value: "Assign to Site" });
-    site_label_el.classList.add("col-sm-3");
-    assignment_body_el.append(site_label_el);
-    const site_element_el = CN_element.create_form_element("enum", {
+    const assignment_body_el = this.constructor.html('<div class="row"></div>');
+    CN_element_label.create_element(assignment_body_el, {
+      for: "site_id",
+      value: "Assign to Site",
+      class: "col-sm-3",
+    });
+    const site_form_input = new CN_input_enum({
       id: "site_id",
-      on_change: async control_el => {
+      class: "d-flex align-items-center col-sm-9",
+      on_change: async (form_input) => {
         // update user list based on new site selection
         const user_el = this.get_body_element().querySelector("#user_id");
 
         user_el.innerHTML = "";
-        user_el.append(CN_element.create('<option value="null" selected>(empty)</option>'));
-        if ("null" != control_el.value) {
+        user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
+        if ("null" != form_input.get_value()) {
           const user_list = await CN_api.get( "user", {
             select: { column: ["id", "name", "first_name", "last_name"] },
             modifier: {
@@ -284,7 +289,7 @@ export class CN_transcription_multiedit extends CN_base_action {
                 { table: "role", onleft: "access.role_id", onright: "role.id" },
               ],
               where: [
-                { column: "access.site_id", operator: "=", value: control_el.value },
+                { column: "access.site_id", operator: "=", value: form_input.get_value() },
                 { column: "role.name", operator: "=", value: "typist" },
                 { column: "user.active", operator: "=", value: true },
               ],
@@ -292,7 +297,7 @@ export class CN_transcription_multiedit extends CN_base_action {
             },
           });
           user_list.forEach(user => {
-            user_el.append(CN_element.create(
+            user_el.append(this.constructor.html(
               `<option value="${user.id}">${user.first_name} ${user.last_name} (${user.name})</option>`
             ));
           });
@@ -300,20 +305,23 @@ export class CN_transcription_multiedit extends CN_base_action {
         update_proceed_button();
       },
     });
-    site_element_el.classList.add("col-sm-9");
-    assignment_body_el.append(site_element_el);
-    const user_label_el = CN_element.create_form_label({ for: "user_id", value: "Assign to User" });
-    user_label_el.classList.add("col-sm-3");
-    assignment_body_el.append(user_label_el);
-    const user_element_el = CN_element.create_form_element("enum", {
+    site_form_input.set_parent_element(assignment_body_el);
+    assignment_body_el.append(site_form_input.render());
+    CN_element_label.create_element(assignment_body_el, {
+      for: "user_id",
+      value: "Assign to User",
+      class: "col-sm-3",
+    });
+    const user_form_input = new CN_input_enum({
       id: "user_id",
+      class: "d-flex align-items-center col-sm-9",
       on_change: update_proceed_button,
     });
-    user_element_el.classList.add("col-sm-9");
-    assignment_body_el.append(user_element_el);
+    user_form_input.set_parent_element(assignment_body_el);
+    assignment_body_el.append(user_form_input.render());
 
-    const assignment_footer_el = CN_element.create('<div class="row"></div>');
-    const proceed_btn_el = CN_element.create(
+    const assignment_footer_el = this.constructor.html('<div class="row"></div>');
+    const proceed_btn_el = this.constructor.html(
       '<button name="proceed" type="button" class="btn btn-primary">Proceed</button>'
     );
     proceed_btn_el.addEventListener("click", async () => {
@@ -324,7 +332,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       const identifier_list = this.#participant_selection.get_identifier_list();
 
       let response = null;
-      await CN_element.wait_for(async () => {
+      await this.constructor.wait_for(async () => {
         response = await CN_api.post("transcription", {
           identifier_id: this.#participant_selection.get_idtype(),
           identifier_list: identifier_list,
@@ -334,7 +342,7 @@ export class CN_transcription_multiedit extends CN_base_action {
         });
       });
 
-      await CN_element.message_modal({
+      await (new CN_modal_message({
         title: "Transcription(s) Processed",
         message: (
           `A total of ${identifier_list.length} transcription(s) have been processed` +
@@ -342,19 +350,20 @@ export class CN_transcription_multiedit extends CN_base_action {
           (site_id ? ` at site "${site_el.options[site_el.selectedIndex].text}"` : "" ) +
           "."
         ),
-      }).block();
+      })).open();
 
       await this.#participant_selection.reset();
     });
     assignment_footer_el.append(proceed_btn_el);
 
-    const assignment_el = CN_element.create_card({
-      header: "Transcription Assignment",
-      body: assignment_body_el,
-      footer: assignment_footer_el,
-    });
-
-    body_el.querySelector("[name=transcription-assignment]").append(assignment_el);
+    const assignment_el = CN_element_card.create_element(
+      body_el.querySelector("[name=transcription-assignment]"),
+      {
+        header: "Transcription Assignment",
+        body: assignment_body_el,
+        footer: assignment_footer_el,
+      }
+    );
 
     return body_el;
   }
@@ -363,7 +372,7 @@ export class CN_transcription_multiedit extends CN_base_action {
    * Extend parent method
    */
   create_footer_element() {
-    const footer_el = CN_element.create(`
+    const footer_el = this.constructor.html(`
       <div class="btn-group" role="group">
         <button name="back" type="button" class="btn btn-primary">View Application</button>
       </div>
