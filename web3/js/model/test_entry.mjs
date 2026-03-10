@@ -217,14 +217,14 @@ export class CN_test_entry_view extends CN_action_view {
     const nav_btn_group_el = super.create_footer_element();
     const prev_btn_el = this.constructor.html(`
       <button name="prev" type="button" class="btn btn-primary">
-        <i class="bi-chevron-left"></i> Prev
+        <i class="bi bi-chevron-left"></i> Prev
       </button>
     `);
     prev_btn_el.addEventListener("click", this.transition.bind(this, "prev"));
     nav_btn_group_el.prepend(prev_btn_el);
     const next_btn_el = this.constructor.html(`
       <button name="next" type="button" class="btn btn-primary">
-        Next <i class="bi-chevron-right"></i>
+        Next <i class="bi bi-chevron-right"></i>
       </button>
     `);
     next_btn_el.addEventListener("click", this.transition.bind(this, "next"));
