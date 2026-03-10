@@ -228,7 +228,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       }
     }
 
-    this.#participant_selection.on_selection_changed(() => {
+    this.#participant_selection.add_event_listener("selectionchanged", () => {
       update_proceed_button();
       const assignment_el = body_el.querySelector("[name=transcription-assignment]");
       if (this.#participant_selection.get_identifier_list().length) {
