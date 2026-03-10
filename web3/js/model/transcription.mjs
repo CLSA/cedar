@@ -174,7 +174,6 @@ export class CN_transcription_multiedit extends CN_base_action {
     // reset the list and transcription components
     this.#participant_selection.set_data({ import_restriction: this.#import_restrictions[0].key });
     this.#participant_selection.reset();
-    this.get_body_element().querySelector("[name=transcription-assignment]").style.display = "none";
 
     // populate the site and user selection list
     const site_el = this.get_body_element().querySelector("#site_id");
@@ -211,7 +210,7 @@ export class CN_transcription_multiedit extends CN_base_action {
           to the typist before it can be re-assigned.
         </div>
         <div name="participant-list" class="py-1"></div>
-        <div name="transcription-assignment" class="py-1" style="display: none;"></div>
+        <div name="transcription-assignment" class="py-1 d-none"></div>
       </div>
     `);
 
@@ -233,9 +232,9 @@ export class CN_transcription_multiedit extends CN_base_action {
       update_proceed_button();
       const assignment_el = body_el.querySelector("[name=transcription-assignment]");
       if (this.#participant_selection.get_identifier_list().length) {
-        assignment_el.style.removeProperty("display");
+        assignment_el.classList.remove("d-none");
       } else {
-        assignment_el.style.display = "none";
+        assignment_el.classList.add("d-none");
       }
     });
 
