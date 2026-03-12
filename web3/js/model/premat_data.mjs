@@ -25,8 +25,8 @@ export class CN_premat_data_view extends CN_action_view {
   /**
    * Extends parent method
    */
-  constructor(model) {
-    super(model);
+  constructor(parent_el, model) {
+    super(parent_el, model);
     this.set_simple_mode(true);
   }
 

@@ -35,6 +35,42 @@ class ui3 extends \cenozo\ui\ui3
       $module->add_child( 'sound_file', 'address' );
     }
 
+    if( array_key_exists( 'aft_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['aft_data'];
+      $module->add_action( 'test' );
+    }
+
+    if( array_key_exists( 'fas_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['fas_data'];
+      $module->add_action( 'test' );
+    }
+
+    if( array_key_exists( 'mat_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['mat_data'];
+      $module->add_action( 'test' );
+    }
+
+    if( array_key_exists( 'premat_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['premat_data'];
+      $module->add_action( 'test' );
+    }
+
+    if( array_key_exists( 'rey_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['rey_data'];
+      $module->add_action( 'test' );
+    }
+
+    if( array_key_exists( 'fas_data', $data['module_list'] ) )
+    {
+      $module = $data['module_list']['fas_data'];
+      $module->add_action( 'test' );
+    }
+
     if( array_key_exists( 'test_entry', $data['module_list'] ) )
     {
       $module = $data['module_list']['test_entry'];

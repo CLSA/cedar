@@ -139,7 +139,7 @@ export class CN_transcription_multiedit extends CN_base_action {
    * Constructor
    * @param base_model model: The model that the action belongs to
    */
-  constructor(model) {
+  constructor(parent_el, model) {
     super("multiedit", model);
   }
 
@@ -258,7 +258,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       },
     });
     restrict_form_input.set_parent_element(restrict_row_el);
-    restrict_row_el.append(restrict_form_input.render());
+    restrict_row_el.append(restrict_form_input.get_element());
     restrict_form_input.set_value("no-import");
     participant_selection_el.querySelector(".card-footer").prepend(restrict_row_el);
 
@@ -305,7 +305,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       },
     });
     site_form_input.set_parent_element(assignment_body_el);
-    assignment_body_el.append(site_form_input.render());
+    assignment_body_el.append(site_form_input.get_element());
     CN_element_label.create_element(assignment_body_el, {
       for: "user_id",
       value: "Assign to User",
@@ -317,7 +317,7 @@ export class CN_transcription_multiedit extends CN_base_action {
       on_change: update_proceed_button,
     });
     user_form_input.set_parent_element(assignment_body_el);
-    assignment_body_el.append(user_form_input.render());
+    assignment_body_el.append(user_form_input.get_element());
 
     const assignment_footer_el = this.constructor.html('<div class="row"></div>');
     const proceed_btn_el = this.constructor.html(

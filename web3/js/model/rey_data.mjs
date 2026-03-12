@@ -83,8 +83,8 @@ export class CN_rey_data_view extends CN_action_view {
   /**
    * Extends parent method
    */
-  constructor(model) {
-    super(model);
+  constructor(parent_el, model) {
+    super(parent_el, model);
     this.set_simple_mode(true);
   }
 
@@ -291,7 +291,7 @@ export class CN_rey_data_view extends CN_action_view {
       required: true,
     });
     word_form_input.set_parent_element(word_row_el);
-    word_row_el.append(word_form_input.render());
+    word_row_el.append(word_form_input.get_element());
     body_el.querySelector("[name=intrusion-add]").append(word_row_el);
 
     return body_el;

@@ -68,9 +68,18 @@ export class CN_test_entry_model extends CN_base_model {
 
 export class CN_test_entry_view extends CN_action_view {
   #data_model = null;
-  #data_id = null
 
   // TODO: update the data_model's action after the test-entry's language list changes
+
+  /**
+   * Extend parent method
+   */
+  async on_dom_remove() {
+    // remove the data model's action before removing from the DOM
+    this.get_body_element().innerHTML = "";
+
+    await super.on_dom_remove();
+  }
 
   /**
    * Sets the state of a test entry
@@ -163,6 +172,11 @@ export class CN_test_entry_view extends CN_action_view {
   update_element() {
     super.update_element();
 
+    const body_el = this.get_body_element();
+    if (this.#data_model && 0 == body_el.children.length) {
+      body_el.append(this.#data_model.get_element());
+    }
+
     const footer_el = this.get_footer_element();
     const state = this.get_property_value("state");
     const options = [];
@@ -203,36 +217,36 @@ export class CN_test_entry_view extends CN_action_view {
    * Replace parent method
    */
   create_body_element() {
-    // add the data model's action as part of the test-entry's body element
-    return this.#data_model.render();
+    return this.constructor.html("<div></div>");
   }
 
   /**
    * Extends parent method
    */
   create_footer_element() {
-    const footer_el = this.constructor.html('<div></div>');
+    const footer_el = super.create_footer_element();
+    const right_btn_group_el = footer_el.querySelector("div[name=right-btn-group]");
+    const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
 
     // add the prev/next test-entry buttons
-    const nav_btn_group_el = super.create_footer_element();
     const prev_btn_el = this.constructor.html(`
       <button name="prev" type="button" class="btn btn-primary">
         <i class="bi bi-chevron-left"></i> Prev
       </button>
     `);
     prev_btn_el.addEventListener("click", this.transition.bind(this, "prev"));
-    nav_btn_group_el.prepend(prev_btn_el);
+    right_btn_group_el.prepend(prev_btn_el);
+
     const next_btn_el = this.constructor.html(`
       <button name="next" type="button" class="btn btn-primary">
         Next <i class="bi bi-chevron-right"></i>
       </button>
     `);
     next_btn_el.addEventListener("click", this.transition.bind(this, "next"));
-    nav_btn_group_el.append(next_btn_el);
-    footer_el.append(nav_btn_group_el);
+    right_btn_group_el.append(next_btn_el);
 
     // add the state, reset and notes buttons
-    const command_btn_group_el = this.constructor.html(`
+    left_btn_group_el.append(this.constructor.html(`
       <div class="btn-group ms-3" role="group">
         <div class="btn-group" role="group">
           <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
@@ -242,32 +256,9 @@ export class CN_test_entry_view extends CN_action_view {
         <button name="reset" type="button" class="btn btn-danger">Reset</button>
         <button name="notes" type="button" class="btn btn-light btn-outline-primary">Notes</button>
       </div>
-    `);
-    footer_el.append(command_btn_group_el);
+    `));
 
     return footer_el;
-  }
-
-  /**
-   * Extends parent model
-   */
-  async prepare() {
-    await super.prepare();
-
-    // create and configure the data model
-    if (null == this.#data_model) {
-      const model = this.get_model();
-
-      // get the data type
-      const response = await CN_api.get(model.get_view_url(null, "api"), {
-        select: { column: { table: "test_type", column: "data_type" } }
-      });
-
-      const data_module = CN_session.get_module(`${response.data_type}_data`);
-      await data_module.load_classes();
-      this.#data_model = data_module.create_model();
-      this.#data_model.configure("view", `test_entry_id=${model.get_identifier()}`, model);
-    }
   }
 
   /**
@@ -288,7 +279,8 @@ export class CN_test_entry_view extends CN_action_view {
       const data_module = CN_session.get_module(`${response.data_type}_data`);
       await data_module.load_classes();
       this.#data_model = data_module.create_model();
-      this.#data_model.configure("view", `test_entry_id=${model.get_identifier()}`, model);
+      // note that we set the identifier to an empty string because data models are customized to not use them
+      this.#data_model.configure(this.get_body_element(), "test", null, model);
     }
 
     const data_action = this.#data_model.get_action();

@@ -1,48 +1,20 @@
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+import { CN_base_data_model, CN_base_data_test } from "./base_data_model.mjs"
 
-export class CN_fas_data_model extends CN_base_model {
+export class CN_fas_data_model extends CN_base_data_model {
   constructor() {
-    super({
-      wording: {
-        singular: "FAS data",
-        plural: "FAS datas",
-        posessive: "FAS data's",
-      },
-      properties: {
-        supplementary: {
-          is_hidden: () => true,
-          properties: {
-            test_entry_id: { is_hidden: () => true },
-          }
-        },
-      },
-    });
+    super("FAS");
   }
 }
 
-export class CN_fas_data_view extends CN_action_view {
-  /**
-   * Extends parent method
-   */
-  constructor(model) {
-    super(model);
-    this.set_simple_mode(true);
+export class CN_fas_data_test extends CN_base_data_test {
+  constructor(parent_el, model) {
+    super(parent_el, model);
   }
 
   /**
-   * Replace parent method
+   * Extends parent method
    */
-  create_body_element() {
-    const body_el = this.constructor.html(`
-      <div class="conatiner-fluid">
-        <div name="record"></div>
-      </div>
-    `);
-
-    // add the record details
-    body_el.querySelector("[name=record]").append(super.create_body_element());
-
-    return body_el;
+  update_element() {
+    super.update_element();
   }
 }

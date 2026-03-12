@@ -18,10 +18,10 @@ class module extends \cedar\service\base_data_module
    */
   public function prepare_read( $select, $modifier )
   {
-    parent::prepare_read( $select, $modifier );
-
     $modifier->join( 'test_entry', 'rey_data.test_entry_id', 'test_entry.id' );
     $modifier->join( 'transcription', 'test_entry.transcription_id', 'transcription.id' );
     $modifier->join( 'language', 'rey_data.language_id', 'language.id' );
+
+    parent::prepare_read( $select, $modifier );
   }
 }
