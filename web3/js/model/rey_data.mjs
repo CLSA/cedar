@@ -1,96 +1,56 @@
-import { CN_word_model } from "./word.mjs"
+import { CN_base_data_model, CN_base_data_test } from "./base_data_model.mjs"
 
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
-const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
-const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
-
-export class CN_rey_data_model extends CN_base_model {
+export class CN_rey_data_model extends CN_base_data_model {
   constructor() {
-    super({
-      wording: {
-        singular: "REY data",
-        plural: "REY datas",
-        posessive: "REY data's",
-      },
-      properties: {
-        language_id: {
-          title: "Language",
-          type: "enum",
-          enum: {
-            path: "language",
-            modifier: {
-              where: { column: "active", operator: "=", value: true },
-              order: "language.name",
-            },
-          },
-          on_change: async (form_input, valid) => {
-            // run the default behaviour
-            await form_input.get_action().on_property_change("language_id", valid);
-
-            // then update the element to propagate the changed property
-            if (valid) form_input.get_action().update_element();
-          },
-        },
-        supplementary: {
-          is_hidden: () => true,
-          properties: {
-            language_code: { meta: { table: "language", column: "code" }, is_hidden: () => true },
-            drum: { title: "Drum;Tambour", type: "boolean", is_hidden: () => true },
-            drum_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            curtain: { title: "Curtain;Rideau", type: "boolean", is_hidden: () => true },
-            curtain_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            bell: { title: "Bell;Cloche", type: "boolean", is_hidden: () => true },
-            bell_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            coffee: { title: "Coffee;Café", type: "boolean", is_hidden: () => true },
-            coffee_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            school: { title: "School:École", type: "boolean", is_hidden: () => true },
-            school_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            parent: { title: "Parent;Parent", type: "boolean", is_hidden: () => true },
-            parent_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            moon: { title: "Moon;Lune", type: "boolean", is_hidden: () => true },
-            moon_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            garden: { title: "Garden;Jardin", type: "boolean", is_hidden: () => true },
-            garden_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            hat: { title: "Hat;Chapeau", type: "boolean", is_hidden: () => true },
-            hat_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            farmer: { title: "Farmer;Fermier", type: "boolean", is_hidden: () => true },
-            farmer_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            nose: { title: "Nose;Nez", type: "boolean", is_hidden: () => true },
-            nose_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            turkey: { title: "Turkey;Dinde", type: "boolean", is_hidden: () => true },
-            turkey_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            colour: { title: "Colour;Couleur", type: "boolean", is_hidden: () => true },
-            colour_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            house: { title: "House;Maison", type: "boolean", is_hidden: () => true },
-            house_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            river: { title: "River;Rivière", type: "boolean", is_hidden: () => true },
-            river_rey_data_variant_id: { type: "integer", is_hidden: () => true },
-            test_entry_id: { is_hidden: () => true },
-          }
-        },
-      },
-    });
+    super("REY");
   }
 }
 
-export class CN_rey_data_view extends CN_action_view {
+export class CN_rey_data_test extends CN_base_data_test {
+  constructor(parent_el, model) {
+    super(parent_el, model);
+  }
+
+  /**
+   * Extends parent method
+   */
+  update_element() {
+    super.update_element();
+  }
+}
+
+/*
+// stuff we'll need to load from the rey_data record
+language_id
+language_code: language.code
+drum: "Drum;Tambour" drum_rey_data_variant_id
+curtain: "Curtain;Rideau" curtain_rey_data_variant_id
+bell: "Bell;Cloche" bell_rey_data_variant_id
+coffee: "Coffee;Café" coffee_rey_data_variant_id
+school: "School:École" school_rey_data_variant_id
+parent: "Parent;Parent" parent_rey_data_variant_id
+moon: "Moon;Lune" moon_rey_data_variant_id
+garden: "Garden;Jardin" garden_rey_data_variant_id
+hat: "Hat;Chapeau" hat_rey_data_variant_id
+farmer: "Farmer;Fermier" farmer_rey_data_variant_id
+nose: "Nose;Nez" nose_rey_data_variant_id
+turkey: "Turkey;Dinde" turkey_rey_data_variant_id
+colour: "Colour;Couleur" colour_rey_data_variant_id
+house: "House;Maison" house_rey_data_variant_id
+river: "River;Rivière" river_rey_data_variant_id
+
+export class CN_rey_data_test extends CN_action_base_test {
   #language_list = [];
   #word_list = [];
   #intrusion_list = [];
 
-  /**
-   * Extends parent method
-   */
   constructor(parent_el, model) {
     super(parent_el, model);
-    this.set_simple_mode(true);
   }
 
   /**
    * Extends parent method
-   */
+   *
   async on_load() {
     await super.on_load();
 
@@ -159,7 +119,7 @@ export class CN_rey_data_view extends CN_action_view {
 
   /**
    * Extends parent method
-   */
+   *
   update_element() {
     super.update_element();
 
@@ -248,7 +208,7 @@ export class CN_rey_data_view extends CN_action_view {
 
   /**
    * Replace parent method
-   */
+   *
   create_body_element() {
     const body_el = this.constructor.html(`
       <div class="conatiner-fluid">
@@ -297,3 +257,4 @@ export class CN_rey_data_view extends CN_action_view {
     return body_el;
   }
 }
+*/

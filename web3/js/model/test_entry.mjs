@@ -36,24 +36,18 @@ export class CN_test_entry_model extends CN_base_model {
         state: { title: "State" },
       },
       properties: {
-        user_id: { meta: { table: "transcription", column: "user_id" } },
-        test_type_id: { meta: { table: "test_type", column: "id" } },
-        test_type_name: { meta: { table: "test_type", column: "name" } },
         data_type: { meta: { table: "test_type", column: "data_type" } },
         state: { type: "enum" },
-        audio_status_type_id: {},
-        audio_status_type: { meta: { table: "audio_status_type", column: "name" } },
-        audio_status_type_other: {},
-        participant_status_type_id: {},
-        participant_status_type: { meta: { table: "participant_status_type", column: "name" } },
-        participant_status_type_other: { },
-        admin_status_type_id: {},
-        admin_status_type: { meta: { table: "admin_status_type", column: "name" } },
-        admin_status_type_other: {},
-        participant_site_id: { meta: { table: "site", column: "id" } },
-        participant_language_id: { meta: { table: "participant", column: "language_id" } },
         prev_test_entry_id: { meta: {} },
         next_test_entry_id: { meta: {} },
+
+        // used by the data type test actions
+        audio_status_type_id: {},
+        audio_status_type_other: {},
+        participant_status_type_id: {},
+        participant_status_type_other: { },
+        admin_status_type_id: {},
+        admin_status_type_other: {},
       },
     });
   }
