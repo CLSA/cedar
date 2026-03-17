@@ -138,6 +138,7 @@ export class CN_word_model extends CN_base_model {
           modifier: {
             where: where,
             order: [special_order, "word"],
+            limit: 20,
           },
         });
       },
