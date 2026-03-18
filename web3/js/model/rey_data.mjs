@@ -1,4 +1,11 @@
 import { CN_base_data_model, CN_base_data_test } from "./base_data_model.mjs"
+import { CN_word_model } from "./word.mjs"
+
+const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
+const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
+const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
+const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
 
 export class CN_rey_data_model extends CN_base_data_model {
   constructor() {
@@ -7,95 +14,103 @@ export class CN_rey_data_model extends CN_base_data_model {
 }
 
 export class CN_rey_data_test extends CN_base_data_test {
+  #base_language_id;
+  #language_form_input;
+  #intrusion_list = [];
+
+  #word_list = {
+    drum: { value: null, variants: [], alt_name: "tambour" },
+    curtain: { value: null, variants: [], alt_name: "rideau" },
+    bell: { value: null, variants: [], alt_name: "cloche" },
+    coffee: { value: null, variants: [], alt_name: "café" },
+    school: { value: null, variants: [], alt_name: "école" },
+    parent: { value: null, variants: [], alt_name: "parent" },
+    moon: { value: null, variants: [], alt_name: "lune" },
+    garden: { value: null, variants: [], alt_name: "jardin" },
+    hat: { value: null, variants: [], alt_name: "chapeau" },
+    farmer: { value: null, variants: [], alt_name: "fermier" },
+    nose: { value: null, variants: [], alt_name: "nez" },
+    turkey: { value: null, variants: [], alt_name: "dinde" },
+    colour: { value: null, variants: [], alt_name: "couleur" },
+    house: { value: null, variants: [], alt_name: "maison" },
+    river: { value: null, variants: [], alt_name: "rivière" },
+  };
+
   constructor(parent_el, model) {
     super(parent_el, model);
+
+    this.#language_form_input = new CN_input_enum(null, {
+      id: "language_id",
+      required: true,
+      class: "col-sm-9",
+      enum: {
+        path: "language",
+        modifier: {
+          where: { column: "active", operator: "=", value: true },
+          order: "language.name",
+        },
+      },
+      on_change: async (form_input, valie) => {
+        await CN_api.patch(this.get_api_path(), { language_id: form_input.get_value() });
+        this.update_element();
+      },
+    });
+  }
+
+  /**
+   * ADD DOCS
+   */
+  get_api_path() {
+    return `rey_data/test_entry_id=${this.get_model().get_parent_model().get_identifier()}`;
+  }
+
+  /**
+   * ADD DOCS
+   */
+  async set_word_value(word_name, value) {
+    const data = {};
+
+    if (CN_common.is_integer(value)) {
+      data[word_name] = null;
+      data[`${word_name}_rey_data_variant_id`] = value;
+    } else {
+      data[word_name] = value ? 1 : 0;
+      data[`${word_name}_rey_data_variant_id`] = null;
+    }
+
+    await CN_api.patch(this.get_api_path(), data);
   }
 
   /**
    * Extends parent method
    */
-  update_element() {
-    super.update_element();
-  }
-}
-
-/*
-// stuff we'll need to load from the rey_data record
-language_id
-language_code: language.code
-drum: "Drum;Tambour" drum_rey_data_variant_id
-curtain: "Curtain;Rideau" curtain_rey_data_variant_id
-bell: "Bell;Cloche" bell_rey_data_variant_id
-coffee: "Coffee;Café" coffee_rey_data_variant_id
-school: "School:École" school_rey_data_variant_id
-parent: "Parent;Parent" parent_rey_data_variant_id
-moon: "Moon;Lune" moon_rey_data_variant_id
-garden: "Garden;Jardin" garden_rey_data_variant_id
-hat: "Hat;Chapeau" hat_rey_data_variant_id
-farmer: "Farmer;Fermier" farmer_rey_data_variant_id
-nose: "Nose;Nez" nose_rey_data_variant_id
-turkey: "Turkey;Dinde" turkey_rey_data_variant_id
-colour: "Colour;Couleur" colour_rey_data_variant_id
-house: "House;Maison" house_rey_data_variant_id
-river: "River;Rivière" river_rey_data_variant_id
-
-export class CN_rey_data_test extends CN_action_base_test {
-  #language_list = [];
-  #word_list = [];
-  #intrusion_list = [];
-
-  constructor(parent_el, model) {
-    super(parent_el, model);
-  }
-
-  /**
-   * Extends parent method
-   *
   async on_load() {
     await super.on_load();
 
-    // get the current test_entry_id and language
-    const test_entry_id = this.get_property_value("test_entry_id");
-    const lang = this.get_property_value("language_code");
-
-    // build the word list based on all boolean properties
-    this.#word_list = this.get_all_properties().reduce((list, p) => {
-      if ("boolean" == p.type) {
-        // in the model we've set the title to both english and french words (separated by a ;)
-        const [en, fr] = p.title.split(";");
-        list.push({ name: p.name, label: "en" == lang ? en : fr, variants: [] });
-      }
-      return list;
-    }, []);
-
     // get additional data required for this data type
-    const [language_response, variant_response, intrusion_response] = await Promise.all([
-      CN_api.get(`test_entry/${test_entry_id}/language`, {
-        select: { column: "code" },
-        modifier: { order: "code" },
-      }),
+    const [record_response, language_response, variant_response, intrusion_response] = await Promise.all([
+      // record
+      CN_api.get(this.get_api_path()),
 
+      // language
+      CN_api.get("language/code=en"), // English is always the base language
+
+      // variant
       CN_api.get("rey_data_variant", {
         // get the id, word and variant word
         select: {
           column: [
             "id",
+            "language_id",
             "word",
             { table: "variant_language", column: "code" },
             { table: "variant", column: "word", alias: "variant" },
           ]
         },
-        // only get the language we need
-        modifier: {
-          where: {
-            column: "language.code",
-            operator: "=",
-            value: lang,
-          }
-        },
       }),
 
-      CN_api.get(`rey_data/${this.get_model().get_identifier()}/word`, {
+      // intrusion
+      CN_api.get(`${this.get_api_path()}/word`, {
         select: {
           column: [
             { table: "word", column: "word" },
@@ -107,11 +122,20 @@ export class CN_rey_data_test extends CN_action_base_test {
       }),
     ]);
 
-    // track which languages the test-entry uses
-    this.#language_list = language_response.map(language => language.code);
+    this.#base_language_id = language_response.id;
 
-    // add all variants to the word list
-    variant_response.forEach(variant => this.#word_list.find(w => w.name == variant.word).variants.push(variant));
+    this.#language_form_input.set_value(record_response.language_id);
+
+    // add details from the record and variant responses to the word list
+    Object.keys(this.#word_list).forEach(word_name => {
+      const word = this.#word_list[word_name];
+      word.value = (
+        record_response[`${word_name}_rey_data_variant_id`] ?
+        record_response[`${word_name}_rey_data_variant_id`] :
+        record_response[word_name]
+      );
+      word.variants = variant_response.filter(v => word_name == v.word);
+    });
 
     // get a list of all intrusions
     this.#intrusion_list = intrusion_response;
@@ -119,61 +143,60 @@ export class CN_rey_data_test extends CN_action_base_test {
 
   /**
    * Extends parent method
-   *
+   */
   update_element() {
     super.update_element();
 
-    // clear out dynamic content
-    const words_el = this.get_body_element().querySelector("[name=words] tbody");
+    const words_el = this.get_body_element().querySelector("div[name=words]");
     const intrusion_el = this.get_body_element().querySelector("[name=intrusion-list]");
-    words_el.innerHTML = "";
-    intrusion_el.innerHTML = "";
+    const language_id = this.#language_form_input.get_value();
 
-    // build the word list
+    // update the word list
+    Object.keys(this.#word_list).forEach(word_name => {
+      const word = this.#word_list[word_name];
 
-    this.#word_list.forEach(word => {
-      const tr_el = document.createElement("tr");
+      word.element.querySelector("label").innerText = CN_common.uc_words(
+        this.#base_language_id == language_id ?
+        word_name :
+        word.alt_name
+      );
 
-      // add the word label
-      tr_el.innerHTML += `<td class="text-end">${word.label}</td>`;
-
-      // add the yes/no radio buttons
-      let yes_no_td = '<td class="text-center">';
-      yes_no_td += `
-        <input id="${word.name}_yes" type="radio"></input>
-        <label for="${word.name}_yes">Yes</label>
-      `;
-      yes_no_td += `
-        <input id="${word.name}_no" type="radio"></input>
-        <label for="${word.name}_no">No</label>
-      `;
-      yes_no_td += "</td>";
-      tr_el.innerHTML += yes_no_td;
-
-      // add the variants
-      let variants_td = "<td>";
-      word.variants.forEach(variant => {
-        variants_td += `
-          <span class="pe-2">
+      // add the variants (of the currently selected language)
+      const variants_el = word.element.querySelector("div[name=variants]");
+      variants_el.innerHTML = "";
+      word.variants.filter(variant => variant.language_id == language_id).forEach(variant => {
+        const allowed = this.get_language_list().includes(variant.code);
+        variants_el.append(this.constructor.html(`
+          <span class="mx-2">
             <input
               type="radio"
               id="variant_${variant.id}"
-              ${this.#language_list.includes(variant.code) ? "" : "disabled=true"}
+              name="${word_name}"
+              ${allowed ? "" : 'style="cursor: not-allowed" disabled="true"'}
+              ${word.value == variant.id ? "checked" : ""}
             ></input>
             <label
               for="variant_${variant.id}"
-              ${this.#language_list.includes(variant.code) ? "" : 'class="text-muted"'}
+              ${allowed ? "" : 'style="cursor: not-allowed" class="text-black text-opacity-50"'}
             >${variant.variant}</label>
           </span>
-        `;
+        `));
+        variants_el.querySelector(`#variant_${variant.id}`).addEventListener("click", async () => {
+          await this.set_word_value(word_name, variant.id);
+        });
       });
-      variants_td += "</td>";
-      tr_el.innerHTML += variants_td;
 
-      words_el.append(tr_el);
+      // fill in the yes/no buttons
+      if (true === word.value) {
+        word.element.querySelector(`#${word_name}_yes`).checked = true;
+      } else if (false === word.value) {
+        word.element.querySelector(`#${word_name}_no`).checked = true;
+      }
     });
 
     // build the intrusion list
+    intrusion_el.innerHTML = "";
+
     if (0 == this.#intrusion_list.length) {
       if (!this.get_model().allow_edit()) {
         intrusion_el.innerHTML = this.constructor.html(
@@ -207,37 +230,81 @@ export class CN_rey_data_test extends CN_action_base_test {
   }
 
   /**
-   * Replace parent method
-   *
+   * Extend parent method
+   */
   create_body_element() {
-    const body_el = this.constructor.html(`
-      <div class="conatiner-fluid">
-        <div name="record"></div>
-        <div name="words">
-          <table class="table table-striped"><tbody></tbody></table>
-        </div>
-        <div name="intrusions">
-          <div name="intrusion-list" class="container-fluid"></div>
-          <div name="intrusion-add" class="container-fluid"></div>
-        </div>
-        <div name="status"></div>
-        <div name="audio"></div>
-      </div>
-    `);
+    const body_el = super.create_body_element();
+    const test_entry_el = body_el.querySelector("div[name=test-entry]");
 
-    // add the record details
-    body_el.querySelector("[name=record]").append(super.create_body_element());
+    const language_el = this.constructor.html('<div name="words" class="row mb-3"></div>');
+    test_entry_el.append(language_el);
+    CN_element_label.create_element(language_el, {
+      for: "language_id",
+      value: "Langauge",
+      class: "col-sm-3",
+    });
+    this.#language_form_input.set_parent_element(language_el);
+    language_el.append(this.#language_form_input.get_element());
+
+    const words_el = this.constructor.html('<div name="words" class="container-fluid"></div>');
+    test_entry_el.append(words_el);
+    test_entry_el.append(this.constructor.html(`
+      <div name="intrusions">
+        <div name="intrusion-list" class="container-fluid"></div>
+        <div name="intrusion-add" class="container-fluid">
+          <div class="row mb-3"></div>
+        </div>
+      </div>
+    `));
+
+    // add the word list
+    Object.keys(this.#word_list).forEach(word_name => {
+      const word = this.#word_list[word_name];
+      word.element = this.constructor.html('<div class="row"></div>');
+      words_el.append(word.element);
+
+      CN_element_label.create_element(word.element, {
+        value: "Loading...",
+        class: "col-sm-3",
+      });
+
+      // add the yes/no radio buttons
+      word.element.append(this.constructor.html(`
+        <div name="yes-no" class="col-sm-4 text-center">
+          <span class="mx-2">
+            <input id="${word_name}_yes" name="${word_name}" type="radio"></input>
+            <label for="${word_name}_yes" class="col-form-label form-check-label">Yes</label>
+          </span>
+          <span class="mx-2">
+            <input id="${word_name}_no" name="${word_name}" type="radio"></input>
+            <label for="${word_name}_no" class="col-form-label form-check-label">No</label>
+          </span>
+        </div>
+      `));
+
+      word.element.querySelector(`#${word_name}_yes`).addEventListener("click", async () => {
+        await this.set_word_value(word_name, true);
+      });
+      word.element.querySelector(`#${word_name}_no`).addEventListener("click", async () => {
+        await this.set_word_value(word_name, false);
+      });
+
+      // add the variants div
+      word.element.append(this.constructor.html(
+        '<div name="variants" class="col-sm-5 col-form-label">Loading...</div>'
+      ));
+    });
 
     // add the intrusion word entry
-    const word_row_el = this.constructor.html('<div class="row mb-3"></div>');
+    const word_row_el = body_el.querySelector("div[name=intrusion-add] div.row");
     CN_element_label.create_element(word_row_el, {
       for: "new_word_id",
       value: "Enter Word",
       class: "col-sm-3",
     });
-    const word_form_input = new CN_input_typeahead({
+    CN_input_typeahead.create_element(word_row_el, {
       id: "new_word_id",
-      class: "d-flex align-items-center col-sm-9",
+      class: "col-sm-9",
       typeahead: CN_word_model.get_typeahead(),
       postfix: (el) => {
         const btn_el = this.constructor.html(
@@ -250,11 +317,8 @@ export class CN_rey_data_test extends CN_action_base_test {
       },
       required: true,
     });
-    word_form_input.set_parent_element(word_row_el);
-    word_row_el.append(word_form_input.get_element());
     body_el.querySelector("[name=intrusion-add]").append(word_row_el);
 
     return body_el;
   }
 }
-*/

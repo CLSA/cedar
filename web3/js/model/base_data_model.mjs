@@ -83,6 +83,8 @@ export class CN_base_data_test extends CN_base_action {
     };
   }
 
+  // getters
+  get_language_list() { return this.#language_list; }
 
   /**
    * Extends parent method
@@ -308,16 +310,12 @@ export class CN_base_data_test extends CN_base_action {
   create_body_element() {
     const body_el = this.constructor.html(`
       <div class="conatiner-fluid">
-        <div name="record"></div>
-        <div name="test_entry"></div>
+        <div name="test-entry" class="container-fluid"></div>
         <div name="status" class="d-flex mx-1"></div>
         <hr />
         <div name="audio" class="mb-2"></div>
       </div>
     `);
-
-    // add the record details
-    body_el.querySelector("[name=record]").append(super.create_body_element());
 
     return body_el;
   }

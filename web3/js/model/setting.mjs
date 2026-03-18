@@ -1,4 +1,3 @@
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const classes = await import(`${CENOZO_URL}/js/model/setting.mjs`);
 
 export class CN_setting_model extends classes.CN_setting_model {
