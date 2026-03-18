@@ -674,7 +674,7 @@ cenozoApp.defineModule({
               object.languageModel.listModel.afterList(function () {
                 if (!object.languageModel.listModel.chooseMode) {
                   object.languageIdList =
-                    object.languageModel.listModel.cache.reduce(
+                    object.languageModel.listModel.records.reduce(
                       (list, language) => {
                         list.push(language.id);
                         return list;

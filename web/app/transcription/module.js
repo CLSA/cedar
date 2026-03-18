@@ -627,8 +627,7 @@ cenozoApp.defineModule({
                 return (
                   this.$$getAddEnabled() &&
                   "transcription" == this.getSubjectFromState() &&
-                  CnSession.setting.maxWorkingTranscriptions >
-                    this.listModel.cache.length
+                  CnSession.setting.maxWorkingTranscriptions > this.listModel.records.length
                 );
               } else {
                 return (
