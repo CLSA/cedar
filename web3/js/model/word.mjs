@@ -1,6 +1,7 @@
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
@@ -108,8 +109,39 @@ export class CN_word_model extends CN_base_model {
   }
 
   /**
+   * Returns the HTML friendly name for a word
+   * @return string
+   */
+  static get_word_html(word) {
+    return `<span class="text-bg-info rounded-1 p-1">${word.code}</span> ${word.word}`;
+  }
+
+  /**
+   * Determines whether a word is valid
+   * Valid words start with a letter, may have [-' ] in the middle and ends with a letter,
+   * must be 2+ characters long and may be enclosed by double-quotes (")
+   * @param integer|[] language_id: Restricts words to the provided language id or array of language ids
+   * @param string word
+   * @return boolean
+   */
+  static is_valid(word, language_id = null) {
+    word = word.replace(/^"([^"]+)"$/, "$1"); // remove double quotes at front/end
+    let letters = ""; 
+    if (language_id) {
+      const list = CN_common.is_array(language_id) ? language_id : [language_id];
+      letters = language_id.reduce((str, id) => {
+        str += CN_session.data.setting.special_letter[id];
+        return str;
+      }, "");
+    }
+
+    var re = new RegExp(`^[a-z${letters}]([-' a-z${letters}]*[a-z${letters}])?$`);
+    return null != word.match(re);
+  }
+
+  /**
    * Returns a typeahead object for models that have a typeahead property referencing this model
-   * @param string language_id: Restricts words to the provided language id or leave empty for any
+   * @param integer|[] language_id: Restricts words to the provided language id or array of language ids
    * @return object
    * @static
    */
@@ -117,22 +149,29 @@ export class CN_word_model extends CN_base_model {
     return {
       get_list: async (value) => {
         // build the where statement
-        const where = [
-          { column: 'word.word', operator: "LIKE", value: `%${value}%` },
-          { column: "word.fas", operator: "!=", value: "invalid" },
-          { column: "word.sister_word_id", operator: "=", value: null },
-        ];
-        if (language_id) where.push({ column: "word.language_id", operator: "=", value: language_id });
+        const where = [{ column: 'word.word', operator: "LIKE", value: `${value}%` }];
+        if (language_id) {
+          if (CN_common.is_array(language_id)) {
+            where.push({ column: "word.language_id", operator: "IN", value: language_id });
+          } else {
+            where.push({ column: "word.language_id", operator: "=", value: language_id });
+          }
+        }
 
         // put the exact match at the top of the returned list
         const special_order = {};
         special_order[`word="${value}"`] = true;
 
-        return await CN_api.get("word", {
+        return (await CN_api.get("word", {
           select: {
             column: [
               { column: "id", alias: "key" },
-              { column: 'CONCAT( word.word, " [", language.code, "]" )', alias: "value", table_prefix: false },
+              "word",
+              "misspelled",
+              "aft",
+              "fas",
+              "language_id",
+              { table: "language", column: "code" },
             ],
           },
           modifier: {
@@ -140,6 +179,9 @@ export class CN_word_model extends CN_base_model {
             order: [special_order, "word"],
             limit: 20,
           },
+        })).map(item => {
+          item.value = this.get_word_html(item);
+          return item;
         });
       },
     };

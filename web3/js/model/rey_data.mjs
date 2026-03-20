@@ -6,6 +6,7 @@ const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
 const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 
 export class CN_rey_data_model extends CN_base_data_model {
   constructor() {
@@ -70,6 +71,7 @@ export class CN_rey_data_test extends CN_base_data_test {
   async set_word_value(word_name, value) {
     const data = {};
 
+    this.#word_list[word_name].value = value;
     if (CN_common.is_integer(value)) {
       data[word_name] = null;
       data[`${word_name}_rey_data_variant_id`] = value;
@@ -103,7 +105,6 @@ export class CN_rey_data_test extends CN_base_data_test {
             "id",
             "language_id",
             "word",
-            { table: "variant_language", column: "code" },
             { table: "variant", column: "word", alias: "variant" },
           ]
         },
@@ -134,7 +135,7 @@ export class CN_rey_data_test extends CN_base_data_test {
         record_response[`${word_name}_rey_data_variant_id`] :
         record_response[word_name]
       );
-      word.variants = variant_response.filter(v => word_name == v.word);
+      word.variants = variant_response.filter(variant => word_name == variant.word);
     });
 
     // get a list of all intrusions
@@ -165,7 +166,7 @@ export class CN_rey_data_test extends CN_base_data_test {
       const variants_el = word.element.querySelector("div[name=variants]");
       variants_el.innerHTML = "";
       word.variants.filter(variant => variant.language_id == language_id).forEach(variant => {
-        const allowed = this.get_language_list().includes(variant.code);
+        const allowed = this.get_language_list().find(language => language.id == variant.language_id);
         variants_el.append(this.constructor.html(`
           <span class="mx-2">
             <input
@@ -199,9 +200,7 @@ export class CN_rey_data_test extends CN_base_data_test {
 
     if (0 == this.#intrusion_list.length) {
       if (!this.get_model().allow_edit()) {
-        intrusion_el.innerHTML = this.constructor.html(
-          '<div class="text-info">No intrusions have been entered.</div>'
-        );
+        intrusion_el.innerHTML = '<div class="text-info">No intrusions have been entered.</div>';
       }
     } else {
       let buttons_el = null;
@@ -219,7 +218,7 @@ export class CN_rey_data_test extends CN_base_data_test {
         buttons_el.append(this.constructor.html(`
           <div class="pb-1 px-2 w-25">
             <button type="button" class="btn btn-${btn_class} w-100">
-              [${intrusion.code}] ${intrusion.word}
+              ${CN_word_model.get_word_html(intrusion)}
             </button>
           </span>
         `));
@@ -240,7 +239,7 @@ export class CN_rey_data_test extends CN_base_data_test {
     test_entry_el.append(language_el);
     CN_element_label.create_element(language_el, {
       for: "language_id",
-      value: "Langauge",
+      value: "Language",
       class: "col-sm-3",
     });
     this.#language_form_input.set_parent_element(language_el);
@@ -250,10 +249,12 @@ export class CN_rey_data_test extends CN_base_data_test {
     test_entry_el.append(words_el);
     test_entry_el.append(this.constructor.html(`
       <div name="intrusions">
-        <div name="intrusion-list" class="container-fluid"></div>
+        <hr />
+        <div name="intrusion-list" class="container-fluid mb-2"></div>
         <div name="intrusion-add" class="container-fluid">
           <div class="row mb-3"></div>
         </div>
+        <hr />
       </div>
     `));
 
@@ -302,20 +303,54 @@ export class CN_rey_data_test extends CN_base_data_test {
       value: "Enter Word",
       class: "col-sm-3",
     });
+    const typeahead = CN_word_model.get_typeahead(this.get_language_list().map(language => language.id));
+    typeahead.allow_new = true;
+    typeahead.on_select = async (form_input, item) => {
+      // process the selected item
+      if (item.key) {
+      } else {
+        // remove en-/em-dashes
+        const new_word = item.value.toLowerCase().replace(/[—–]/g, "-");
+        if (new_word.match(/^-+$/)) {
+          await (new CN_modal_message({
+            title: "Placeholders Not Allowed",
+            message: "You cannot use placeholders for the REY test.",
+            header_class: "text-bg-danger",
+          }).show());
+        } else if (!CN_word_model.is_valid(new_word, this.get_language_list())) {
+          await (new CN_modal_message({
+            title: `
+              The word you have provided is invalid.\n\n
+              Please enter a word at least two characters long using only letters, single-quotes ('),
+              dashes (-) and spaces, and which starts with at least one alphabetic letter.
+            `,
+            header_class: "text-bg-danger",
+          }).show());
+        }
+      }
+      
+      // remove the value from the input
+      form_input.undo_value(true);
+    };
     CN_input_typeahead.create_element(word_row_el, {
       id: "new_word_id",
       class: "col-sm-9",
-      typeahead: CN_word_model.get_typeahead(),
+      typeahead: typeahead,
       postfix: (el) => {
         const btn_el = this.constructor.html(
           '<button type="button" class="btn btn-outline-primary ms-2">Mark Remaining As No</button>'
         );
         btn_el.addEventListener("click", async () => {
-          // TODO: implement
+          await Promise.all(
+            Object.keys(this.#word_list).map(word_name => {
+              const word = this.#word_list[word_name];
+              if (null == word.value) return this.set_word_value(word_name, false);
+            })
+          );
+          this.update_element();
         });
         el.append(btn_el);
       },
-      required: true,
     });
     body_el.querySelector("[name=intrusion-add]").append(word_row_el);
 

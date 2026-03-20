@@ -121,10 +121,7 @@ export class CN_base_data_test extends CN_base_action {
       status_type_response,
       sound_file_response
     ] = await Promise.all([
-      CN_api.get(`test_entry/${test_entry_id}/language`, {
-        select: { column: "code" },
-        modifier: { order: "code" },
-      }),
+      CN_api.get(`test_entry/${test_entry_id}/language`),
 
       CN_api.get("status_type", {
         select: { column: ["category", "name"] },
@@ -138,7 +135,7 @@ export class CN_base_data_test extends CN_base_action {
     ]);
 
     // track which languages the test-entry uses
-    this.#language_list = language_response.map(language => language.code);
+    this.#language_list = language_response;
 
     // get a list of all status types
     this.#status_type_list = status_type_response;

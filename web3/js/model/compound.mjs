@@ -18,6 +18,7 @@ export class CN_compound_model extends CN_base_model {
         sub_word_id: { type: "hidden" },
       },
       properties: {
+        // TODO: this property isn't showing when trying to add a new subword
         sub_word_id: {
           title: "Subword",
           type: "typeahead",

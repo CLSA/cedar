@@ -61,9 +61,27 @@ export class CN_test_entry_model extends CN_base_model {
 }
 
 export class CN_test_entry_view extends CN_action_view {
-  #data_model = null;
+  #data_type;
+  #data_model;
 
   // TODO: update the data_model's action after the test-entry's language list changes
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    if (this.#data_model) {
+      if ("crumb" == type) {
+        return this.#data_type.name;
+      }
+
+      if ("header" == type) {
+        return this.#data_type.name;
+      }
+    }
+
+    return await super.get_text(type);
+  }
 
   /**
    * Extend parent method
@@ -266,15 +284,22 @@ export class CN_test_entry_view extends CN_action_view {
       const model = this.get_model();
 
       // get the data type
-      const response = await CN_api.get(model.get_view_url(null, "api"), {
-        select: { column: { table: "test_type", column: "data_type" } }
+      this.#data_type = await CN_api.get(model.get_view_url(null, "api"), {
+        select: {
+          column: [
+            { table: "test_type", column: "data_type" },
+            { table: "test_type", column: "name" },
+          ],
+        },
       });
 
-      const data_module = CN_session.get_module(`${response.data_type}_data`);
+      const data_module = CN_session.get_module(`${this.#data_type.data_type}_data`);
       await data_module.load_classes();
       this.#data_model = data_module.create_model();
       // note that we set the identifier to an empty string because data models are customized to not use them
       this.#data_model.configure(this.get_body_element(), "test", null, model);
+
+      // get the 
     }
 
     const data_action = this.#data_model.get_action();
