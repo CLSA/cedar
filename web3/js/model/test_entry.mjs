@@ -64,8 +64,6 @@ export class CN_test_entry_view extends CN_action_view {
   #data_type;
   #data_model;
 
-  // TODO: update the data_model's action after the test-entry's language list changes
-
   /**
    * Extend parent method
    */
@@ -110,10 +108,12 @@ export class CN_test_entry_view extends CN_action_view {
       // don't proceed until the last note left was left by the current user
       if (0 == response.length || CN_session.data.user.id != response[0].user_id) {
         const note = await (new CN_modal_input({
-          input: "text",
-          min_length: 10,
           title: "Test Entry Note",
           message: "Please provide the reason you are changing the test entry's state.",
+          input: {
+            type:"text",
+            min_length: 10,
+          },
         })).open();
 
         if (undefined === note) return;
@@ -298,8 +298,6 @@ export class CN_test_entry_view extends CN_action_view {
       this.#data_model = data_module.create_model();
       // note that we set the identifier to an empty string because data models are customized to not use them
       this.#data_model.configure(this.get_body_element(), "test", null, model);
-
-      // get the 
     }
 
     const data_action = this.#data_model.get_action();

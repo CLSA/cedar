@@ -218,15 +218,16 @@ export class CN_word_view extends CN_action_view {
     if ("misspelled" == prop_name) {
       const typeahead = CN_word_model.get_typeahead(language_id);
       data.correct_word = await (new CN_modal_input({
-        input: "typeahead",
-        typeahead: typeahead,
         title: "Select Correct Word",
         message: `
           Please select the correct spelling for this word.<br/><br/>
           If you provide a word then all test-entries using the misspelled word will be changed to the
           selected word. You may leave the replacement word blank if you do want test-entries to be affected.
         `,
-        language_id: language_id
+        input: {
+          type: "typeahead",
+          typeahead: typeahead,
+        },
       })).open();
 
       if (undefined === data.correct_word) {
@@ -249,15 +250,18 @@ export class CN_word_view extends CN_action_view {
 
     // get the message for updated test entries
     data.note = await (new CN_modal_input({
-      input: "text",
       title: "Test Entry Note",
       message: `
         ${which} test entries using this word will be re-assigned to the last user that it was assigned to.
         Please provide a note that will be added to these test-entries:
       `,
-      value:
-        `The ${language} word "${word}" which is used by this test-entry has been marked as invalid.  ` +
-        "Please replace this word with another valid word and re-submit.",
+      input: {
+        type: "text",
+        value: `
+          The ${language} word "${word}" which is used by this test-entry has been marked as invalid.
+          Please replace this word with another valid word and re-submit.
+        `,
+      },
     })).open();
 
     if (undefined === data.note) {

@@ -6,6 +6,7 @@ const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
 const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/element/input/typeahead.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 
 export class CN_rey_data_model extends CN_base_data_model {
@@ -18,6 +19,7 @@ export class CN_rey_data_test extends CN_base_data_test {
   #base_language_id;
   #language_form_input;
   #intrusion_list = [];
+  #sister_list = {};
 
   #word_list = {
     drum: { value: null, variants: [], alt_name: "tambour" },
@@ -44,6 +46,7 @@ export class CN_rey_data_test extends CN_base_data_test {
       id: "language_id",
       required: true,
       class: "col-sm-9",
+      get_default: () => this.#base_language_id,
       enum: {
         path: "language",
         modifier: {
@@ -53,6 +56,7 @@ export class CN_rey_data_test extends CN_base_data_test {
       },
       on_change: async (form_input, valie) => {
         await CN_api.patch(this.get_api_path(), { language_id: form_input.get_value() });
+        await this.get_model().get_parent_model().get_action().run(true);
         this.update_element();
       },
     });
@@ -63,6 +67,16 @@ export class CN_rey_data_test extends CN_base_data_test {
    */
   get_api_path() {
     return `rey_data/test_entry_id=${this.get_model().get_parent_model().get_identifier()}`;
+  }
+
+  /**
+   * Converts a word to it's parent sister word (if one exists)
+   * @param string word
+   * @return string
+   */
+  convert_sister_word(word) {
+    const matching_sister = this.#sister_list.find(sister => sister.word_list.includes(word));
+    return matching_sister ? matching_sister.word : word;
   }
 
   /**
@@ -90,12 +104,24 @@ export class CN_rey_data_test extends CN_base_data_test {
     await super.on_load();
 
     // get additional data required for this data type
-    const [record_response, language_response, variant_response, intrusion_response] = await Promise.all([
+    const [
+      record_response,
+      language_response,
+      sister_response,
+      variant_response,
+      intrusion_response
+    ] = await Promise.all([
       // record
       CN_api.get(this.get_api_path()),
 
       // language
       CN_api.get("language/code=en"), // English is always the base language
+
+      // rey word sister words
+      CN_api.get("word", {
+        rey_words: 1,
+        select: { column: ["id", "word", "sister_list"]},
+      }),
 
       // variant
       CN_api.get("rey_data_variant", {
@@ -106,6 +132,7 @@ export class CN_rey_data_test extends CN_base_data_test {
             "language_id",
             "word",
             { table: "variant", column: "word", alias: "variant" },
+            { table: "variant", column: "language_id", alias: "variant_language_id" },
           ]
         },
       }),
@@ -126,6 +153,11 @@ export class CN_rey_data_test extends CN_base_data_test {
     this.#base_language_id = language_response.id;
 
     this.#language_form_input.set_value(record_response.language_id);
+
+    this.#sister_list = sister_response.map(sister => {
+      sister.word_list = sister.sister_list ? sister.sister_list.split(",") : [];
+      return sister;
+    });
 
     // add details from the record and variant responses to the word list
     Object.keys(this.#word_list).forEach(word_name => {
@@ -150,23 +182,23 @@ export class CN_rey_data_test extends CN_base_data_test {
 
     const words_el = this.get_body_element().querySelector("div[name=words]");
     const intrusion_el = this.get_body_element().querySelector("[name=intrusion-list]");
-    const language_id = this.#language_form_input.get_value();
+    const rey_language_id = Number(this.#language_form_input.get_value());
 
     // update the word list
     Object.keys(this.#word_list).forEach(word_name => {
       const word = this.#word_list[word_name];
-
       word.element.querySelector("label").innerText = CN_common.uc_words(
-        this.#base_language_id == language_id ?
+        this.#base_language_id == rey_language_id ?
         word_name :
-        word.alt_name
+        this.#word_list[word_name].alt_name
       );
 
       // add the variants (of the currently selected language)
       const variants_el = word.element.querySelector("div[name=variants]");
       variants_el.innerHTML = "";
-      word.variants.filter(variant => variant.language_id == language_id).forEach(variant => {
-        const allowed = this.get_language_list().find(language => language.id == variant.language_id);
+      word.variants.filter(variant => variant.language_id == rey_language_id).forEach(variant => {
+        // check that the variant is allowed (language is in the test-entry's language list)
+        const allowed = this.get_language_list().some(l => l.id == variant.variant_language_id);
         variants_el.append(this.constructor.html(`
           <span class="mx-2">
             <input
@@ -215,13 +247,20 @@ export class CN_rey_data_test extends CN_base_data_test {
           "intrusion" == intrusion.word_type ? "success" :
           "danger" // "invalid" == intrusion.word_type
         );
-        buttons_el.append(this.constructor.html(`
+        const button_div_el = this.constructor.html(`
           <div class="pb-1 px-2 w-25">
             <button type="button" class="btn btn-${btn_class} w-100">
               ${CN_word_model.get_word_html(intrusion)}
             </button>
           </span>
-        `));
+        `);
+        button_div_el.querySelector("button").addEventListener("click", async () => {
+          await CN_api.delete(`${this.get_api_path()}/word/${intrusion.id}`);
+          this.#intrusion_list.splice(index, 1);
+          this.update_element();
+        });
+
+        buttons_el.append(button_div_el);
       });
 
       intrusion_el.append(buttons_el);
@@ -303,11 +342,18 @@ export class CN_rey_data_test extends CN_base_data_test {
       value: "Enter Word",
       class: "col-sm-3",
     });
-    const typeahead = CN_word_model.get_typeahead(this.get_language_list().map(language => language.id));
+    const typeahead = CN_word_model.get_typeahead(this.get_language_list().map(l => l.id));
     typeahead.allow_new = true;
     typeahead.on_select = async (form_input, item) => {
+      // ignore empty values
+      if (!item.value) return;
+
+      const rey_language_id = Number(this.#language_form_input.get_value());
+
       // process the selected item
+      let input = null;
       if (item.key) {
+        input = item;
       } else {
         // remove en-/em-dashes
         const new_word = item.value.toLowerCase().replace(/[—–]/g, "-");
@@ -317,6 +363,7 @@ export class CN_rey_data_test extends CN_base_data_test {
             message: "You cannot use placeholders for the REY test.",
             header_class: "text-bg-danger",
           }).show());
+          return;
         } else if (!CN_word_model.is_valid(new_word, this.get_language_list())) {
           await (new CN_modal_message({
             title: `
@@ -326,11 +373,142 @@ export class CN_rey_data_test extends CN_base_data_test {
             `,
             header_class: "text-bg-danger",
           }).show());
+          return;
+        }
+
+        input = new_word;
+      }
+
+      // determine if the input is wrapped in quotes
+      let quoted = false;
+      if (CN_common.is_string(input)) {
+        // words enclosed in double-quotes are never modified
+        const matches = input.toLowerCase().match(/^"(.*)"$/);
+        if (null != matches) {
+          input = matches[1];
+          quoted = true;
         }
       }
-      
+
+      let new_input_list = [input];
+
+      // if the word isn't quoted then split it up by spaces and convert sister words
+      if (!quoted) {
+        new_input_list = (CN_common.is_string(input) ? input : input.word)
+          .split(/ +/)
+          // make the list unqiue
+          .filter((word_part, index, array) => array.indexOf(word_part) === index)
+          // check if the word is a sister word and convert to the parent if so
+          .map(word_part => this.convert_sister_word(word_part));
+
+        // If the input was an object, there is only one word in the new list and it matches that object
+        // then replace the list with the input word object
+        if (CN_common.is_object(input) && 1 == new_input_list.length && input.word == new_input_list[0]) {
+          new_input_list = [input];
+        }
+      }
+
+      for (const new_input of new_input_list) {
+        // convert sister words
+        const word_str = this.convert_sister_word(CN_common.is_string(new_input) ? new_input : new_input.word);
+
+        // 1) Check if the word is one of the REY words
+        if (this.#word_list[word_str]) {
+          await this.set_word_value(word_str, true);
+          continue;
+        }
+
+        // 2) Check if the word is one of the REY variants
+        let found = false;
+        for (const word_name in this.#word_list) {
+          const variant = this.#word_list[word_name].variants
+            .filter(v => v.language_id == rey_language_id)
+            .find(v => v.variant == word_str);
+          if (variant) {
+            // check that the variant is allowed (language is in the test-entry's language list)
+            await (this.get_language_list().find(l => l.id == variant.variant_language_id) ?
+              this.set_word_value(variant.word, variant.id) :
+              (new CN_modal_message({
+                title: "Variant Not Allowed",
+                header_class: "text-bg-danger",
+                message: `
+                  You have selected the variant word "${word_str}" which is currently disabled
+                  because the test-entry has not been identified as using the variant's language.\n\n
+                  If you wish to select this variant you must enable the relevant language first.
+                `,
+              })).open()
+            );
+
+            found = true;
+            break;
+          }
+        }
+        if (found) continue;
+
+        // 3) Add the word as an intrusion
+
+        // convert string inputs to a word with a language
+        let new_intrusion = null;
+        if (CN_common.is_string(new_input)) {
+          const language_id = await (new CN_modal_input({
+            title: "Confirm Word",
+            message: `
+              Please confirm that you wish to submit the word, "${new_intrusion}",
+              and that it is correctly spelled.
+            `,
+            input: {
+              type: "enum",
+              required: true,
+              get_default: () => rey_language_id,
+              enum: { values: this.get_language_list().map(l => ({ key: l.id, value: l.name })) },
+            },
+          })).open();
+
+          if (!language_id) continue; // if the user hits cancel the ignore the word
+          new_intrusion = { language_id: language_id, word: new_input };
+        } else {
+          new_intrusion = new_input;
+        }
+
+        if (this.#intrusion_list.some(
+          i => i.language_id == new_intrusion.language_id &&
+          i.word == new_intrusion.word
+        )) {
+          await (new CN_modal_message({
+            title: "Intrusion Already Exists",
+            header_class: "text-bg-danger",
+            message: `
+              The intrusion you have submitted has already been added to this REY test and does
+              need to be added multiple times.
+            `,
+          })).open();
+          continue;
+        }
+
+        try {
+          this.#intrusion_list.push(
+            await CN_api.post(`${this.get_api_path()}/word`, {
+              add: undefined == new_intrusion.id ? new_intrusion : new_intrusion.id,
+            })
+          );
+        } catch (error) {
+          if (406 == error.response.status) {
+            // the word is misspelled
+            return (new CN_modal_message({
+              title: "Misspelled Word",
+              header_class: "text-bg-danger",
+              message: "You have selected a misspelled word. This word cannot be used.",
+            })).open();
+          } else {
+            throw error;
+          }
+        }
+      }
+
       // remove the value from the input
       form_input.undo_value(true);
+
+      this.update_element();
     };
     CN_input_typeahead.create_element(word_row_el, {
       id: "new_word_id",

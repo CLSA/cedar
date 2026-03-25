@@ -24,6 +24,7 @@ export class CN_base_data_test extends CN_base_action {
   #language_list = [];
   #status_type_list = [];
   #sound_file_list = [];
+  #status_categories = {};
   #on_keydown;
 
   /**
@@ -149,85 +150,88 @@ export class CN_base_data_test extends CN_base_action {
    * Extends parent method
    */
   update_element() {
-    // clear out dynamic content
-    const status_el = this.get_body_element().querySelector("[name=status]");
-    const audio_el = this.get_body_element().querySelector("[name=audio]");
-    status_el.innerHTML = "";
-    audio_el.innerHTML = "";
-
-    // add the status_type dropdowns
-    if (0 < this.#status_type_list.length) {
+    // only define the status categories once
+    if (0 < this.#status_type_list.length && 0 == Object.keys(this.#status_categories)) {
       const parent_action = this.get_model().get_parent_model().get_action();
 
       // create an enum for all status types
-      const categories = {};
       this.#status_type_list.forEach(status_type => {
-        if (!categories[status_type.category]) {
-          categories[status_type.category] = {
+        if (!this.#status_categories[status_type.category]) {
+          this.#status_categories[status_type.category] = {
             enum_list: [],
-            enum_form_input: null,
-            string_form_input: null,
+            status_form_input: null,
+            other_form_input: null,
             is_other_selected: function() {
-              const status = this.enum_list.find(obj => obj.key == this.enum_form_input.get_value());
-              return status && status.value.match(/Other/);
+              const status = this.enum_list.find(obj => obj.key == this.status_form_input.get_value());
+              return status && status.value.match(/\bother\b/i);
             },
           };
         }
-        categories[status_type.category].enum_list.push({ key: status_type.id, value: status_type.name });
+        this.#status_categories[status_type.category].enum_list.push({
+          key: status_type.id,
+          value: status_type.name
+        });
       });
 
+      const status_el = this.get_body_element().querySelector("[name=status]");
       status_el.innerHTML = "";
-      for (const cat_name in categories) {
-        const category = categories[cat_name];
-        const id = `${cat_name}_status_type_id`;
+      for (const cat_name in this.#status_categories) {
+        const category = this.#status_categories[cat_name];
+        const status_id = `${cat_name}_status_type_id`;
         const other_id = `${cat_name}_status_type_other`;
         const other_value = parent_action.get_property_value(other_id);
 
-        const dropdown_el = this.constructor.html('<div class="w-100 m-2"></div>');
-        CN_element_label.create_element(dropdown_el, {
-          for: cat_name,
+        category.element = this.constructor.html('<div name="${cat_name}" class="w-100 m-2"></div>');
+        CN_element_label.create_element(category.element, {
+          for: status_id,
           value: `${CN_common.uc_words(cat_name)} Status`,
         });
 
-        category.enum_form_input = new CN_input_enum(dropdown_el, {
-          id: id,
-          get_default: () => parent_action.get_property_value(id),
+        category.status_form_input = new CN_input_enum(category.element, {
+          id: status_id,
+          get_default: () => parent_action.get_property_value(status_id),
           on_change: async (form_input, valid) => {
-            parent_action.set_property_value(id, form_input.get_value());
-            await parent_action.on_set_property(id);
-
-            // clear out the other value if we no longer need it
-            if (other_value && !category.is_other_selected()) {
-              category.string_form_input.set_value(null);
-              parent_action.set_property_value(other_id, null);
-              await parent_action.on_set_property(other_id);
+            if (valid) {
+              await this.#set_status(cat_name);
+            } else {
+              form_input.undo_value(true);
             }
-            this.update_element();
           },
           enum: { values: category.enum_list },
         });
-        dropdown_el.append(category.enum_form_input.get_element());
+        category.element.append(category.status_form_input.get_element());
 
-        category.string_form_input = new CN_input_string(dropdown_el, {
+        category.other_form_input = new CN_input_string(category.element, {
           id: other_id,
           get_default: () => other_value,
           on_change: async (form_input, valid) => {
-            parent_action.set_property_value(other_id, form_input.get_value());
-            await parent_action.on_set_property(other_id);
-            this.update_element();
+            if (valid) {
+              await this.#set_status(cat_name);
+            } else {
+              form_input.undo_value(true);
+            }
           },
         });
 
-        // only add the other string input when an "Other" status is selected
-        if (category.is_other_selected()) {
-          dropdown_el.append(category.string_form_input.get_element());
-        }
-
-        status_el.append(dropdown_el);
+        status_el.append(category.element);
       }
     }
 
-    // add the sound file list
+    // show the other string input when an "Other" status is selected
+    for (const cat_name in this.#status_categories) {
+      const category = this.#status_categories[cat_name];
+      const other_el = category.other_form_input.get_element();
+      if (category.is_other_selected()) {
+        category.element.append(other_el);
+      } else {
+        other_el.remove();
+      }
+    }
+
+    // rebuild the audio list
+    const audio_el = this.get_body_element().querySelector("[name=audio]");
+    audio_el.innerHTML = "";
+
     if (0 == this.#sound_file_list.length) {
       audio_el.innerHTML = "There are no sound files available for this test.";
     } else {
@@ -315,5 +319,29 @@ export class CN_base_data_test extends CN_base_action {
     `);
 
     return body_el;
+  }
+
+  /**
+   * ADD DOCS
+   */
+  async #set_status(cat_name) {
+    const test_entry_id = this.get_model().get_parent_model().get_identifier();
+    const category = this.#status_categories[cat_name];
+    const status_id = `${cat_name}_status_type_id`;
+    const other_id = `${cat_name}_status_type_other`;
+    const status_value = await category.status_form_input.get_value_for_record();
+    const other_value = (
+      category.is_other_selected() ?
+      await category.other_form_input.get_value_for_record() :
+      null
+    );
+
+    let data = {};
+    data[status_id] = status_value;
+    data[other_id] = other_value;
+    await CN_api.patch(`test_entry/${test_entry_id}`, data);
+    category.other_form_input.set_value(other_value);
+
+    this.update_element();
   }
 }
