@@ -197,26 +197,27 @@ export class CN_rey_data_test extends CN_base_data_test {
       const variants_el = word.element.querySelector("div[name=variants]");
       variants_el.innerHTML = "";
       word.variants.filter(variant => variant.language_id == rey_language_id).forEach(variant => {
-        // check that the variant is allowed (language is in the test-entry's language list)
-        const allowed = this.get_language_list().some(l => l.id == variant.variant_language_id);
-        variants_el.append(this.constructor.html(`
+        const variant_el = this.constructor.html(`
           <span class="mx-2">
             <input
               type="radio"
               id="variant_${variant.id}"
               name="${word_name}"
-              ${allowed ? "" : 'style="cursor: not-allowed" disabled="true"'}
               ${word.value == variant.id ? "checked" : ""}
             ></input>
-            <label
-              for="variant_${variant.id}"
-              ${allowed ? "" : 'style="cursor: not-allowed" class="text-black text-opacity-50"'}
-            >${variant.variant}</label>
+            <label for="variant_${variant.id}">${variant.variant}</label>
           </span>
-        `));
-        variants_el.querySelector(`#variant_${variant.id}`).addEventListener("click", async () => {
+        `);
+
+        // check that the variant is allowed (language is in the test-entry's language list)
+        if (!this.get_language_list().some(l => l.id == variant.variant_language_id)) {
+          variant_el.querySelector("label").classList.add("text-black", "text-opacity-50");
+          this.constructor.set_disabled(variant_el.querySelector("input"), true);
+        }
+        variant_el.querySelector("input").addEventListener("click", async () => {
           await this.set_word_value(word_name, variant.id);
         });
+        variants_el.append(variant_el);
       });
 
       // fill in the yes/no buttons

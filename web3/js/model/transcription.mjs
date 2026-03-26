@@ -221,11 +221,10 @@ export class CN_transcription_multiedit extends CN_base_action {
       const proceed_btn_el = body_el.querySelector("button[name=proceed]");
 
       // disable the proceed button if the restriction is "no-import" and there is no user selected
-      if ("no-import" == restrict_el.value && "null" == user_el.value) {
-        proceed_btn_el.setAttribute("disabled", true);
-      } else {
-        proceed_btn_el.removeAttribute("disabled");
-      }
+      this.constructor.set_disabled(
+        proceed_btn_el,
+        "no-import" == restrict_el.value && "null" == user_el.value
+      );
     }
 
     this.#participant_selection.add_event_listener("selectionchanged", () => {
