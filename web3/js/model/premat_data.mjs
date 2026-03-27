@@ -1,4 +1,4 @@
-import { CN_base_data_model, CN_base_data_test } from "./base_data_model.mjs"
+import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
 
 export class CN_premat_data_model extends CN_base_data_model {
   constructor() {

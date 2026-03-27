@@ -9,6 +9,8 @@ const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`
 const { CN_input_string } = await import(`${CENOZO_URL}/js/element/input/string.mjs`);
 
 export class CN_base_data_model extends CN_base_model {
+  #data_name;
+
   constructor(data_name) {
     super({
       wording: {
@@ -17,7 +19,15 @@ export class CN_base_data_model extends CN_base_model {
         posessive: `${data_name} data's`,
       },
     });
+
+    if ("CN_base_data_model" == this.constructor) {
+      throw new Error("Abstract class CN_base_data_model can't be instantiated.");
+    }   
+
+    this.#data_name = data_name.toLowerCase().replace(/[^a-z]g/, "");
   }
+
+  get_data_name() { return this.#data_name; }
 }
 
 export class CN_base_data_test extends CN_base_action {
@@ -32,6 +42,11 @@ export class CN_base_data_test extends CN_base_action {
    */
   constructor(parent_el, model) {
     super("test", parent_el, model);
+
+    if ("CN_base_data_test" == this.constructor) {
+      throw new Error("Abstract class CN_base_data_test can't be instantiated.");
+    }   
+
     this.set_simple_mode(true);
 
     this.#on_keydown = (event) => {
@@ -86,6 +101,20 @@ export class CN_base_data_test extends CN_base_action {
 
   // getters
   get_language_list() { return this.#language_list; }
+
+  /**
+   * ADD DOCS
+   */
+  get_api_path() {
+    const model = this.get_model();
+    const test_entry_id = model.get_parent_model().get_identifier();
+    const data_name = model.get_data_name();
+    return (
+      'rey' == data_name ?
+      `${data_name}_data/test_entry_id=${test_entry_id}` :
+      `test_entry/${test_entry_id}/${data_name}_data`
+    );
+  }
 
   /**
    * Extends parent method
@@ -306,17 +335,27 @@ export class CN_base_data_test extends CN_base_action {
   }
 
   /**
+   * Must be implemented by all child classes
+   */
+  create_test_entry_element() {
+    return null;
+  }
+
+  /**
    * Replace parent method
    */
   create_body_element() {
     const body_el = this.constructor.html(`
       <div class="conatiner-fluid">
         <div name="test-entry" class="container-fluid"></div>
+        <hr />
         <div name="status" class="d-flex mx-1"></div>
         <hr />
         <div name="audio" class="mb-2"></div>
       </div>
     `);
+
+    body_el.querySelector("div[name=test-entry]").append(this.create_test_entry_element());
 
     return body_el;
   }

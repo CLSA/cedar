@@ -124,7 +124,7 @@ export class CN_word_model extends CN_base_model {
    * @param string word
    * @return boolean
    */
-  static is_valid(word, language_id = null) {
+  static is_word_valid(word, language_id = null) {
     word = word.replace(/^"([^"]+)"$/, "$1"); // remove double quotes at front/end
     let letters = ""; 
     if (language_id) {

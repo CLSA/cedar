@@ -1,4 +1,4 @@
-import { CN_base_data_model, CN_base_data_test } from "./base_data_model.mjs"
+import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
 import { CN_word_model } from "./word.mjs"
 
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
@@ -60,13 +60,6 @@ export class CN_rey_data_test extends CN_base_data_test {
         this.update_element();
       },
     });
-  }
-
-  /**
-   * ADD DOCS
-   */
-  get_api_path() {
-    return `rey_data/test_entry_id=${this.get_model().get_parent_model().get_identifier()}`;
   }
 
   /**
@@ -181,7 +174,7 @@ export class CN_rey_data_test extends CN_base_data_test {
     super.update_element();
 
     const words_el = this.get_body_element().querySelector("div[name=words]");
-    const intrusion_el = this.get_body_element().querySelector("[name=intrusion-list]");
+    const intrusions_el = this.get_body_element().querySelector("[name=intrusion-list]");
     const rey_language_id = Number(this.#language_form_input.get_value());
 
     // update the word list
@@ -229,17 +222,19 @@ export class CN_rey_data_test extends CN_base_data_test {
     });
 
     // build the intrusion list
-    intrusion_el.innerHTML = "";
+    intrusions_el.innerHTML = "";
 
     if (0 == this.#intrusion_list.length) {
       if (!this.get_model().allow_edit()) {
-        intrusion_el.innerHTML = '<div class="text-info">No intrusions have been entered.</div>';
+        intrusions_el.append(this.constructor.html(
+          '<div class="text-info">No intrusions have been entered.</div>'
+        ));
       }
     } else {
       let buttons_el = null;
       this.#intrusion_list.forEach((intrusion, index) => {
         if (0 == index%4) {
-          if (buttons_el) intrusion_el.append(buttons_el);
+          if (buttons_el) intrusions_el.append(buttons_el);
           buttons_el = this.constructor.html('<div class="row"></div>');
         }
 
@@ -253,27 +248,26 @@ export class CN_rey_data_test extends CN_base_data_test {
             <button type="button" class="btn btn-${btn_class} w-100">
               ${CN_word_model.get_word_html(intrusion)}
             </button>
-          </span>
+          </div>
         `);
         button_div_el.querySelector("button").addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/word/${intrusion.id}`);
-          this.#intrusion_list.splice(index, 1);
+          await this.on_load();
           this.update_element();
         });
 
         buttons_el.append(button_div_el);
       });
 
-      intrusion_el.append(buttons_el);
+      intrusions_el.append(buttons_el);
     }
   }
 
   /**
    * Extend parent method
    */
-  create_body_element() {
-    const body_el = super.create_body_element();
-    const test_entry_el = body_el.querySelector("div[name=test-entry]");
+  create_test_entry_element() {
+    const test_entry_el = this.constructor.html('<div></div>');
 
     const language_el = this.constructor.html('<div name="words" class="row mb-3"></div>');
     test_entry_el.append(language_el);
@@ -291,10 +285,9 @@ export class CN_rey_data_test extends CN_base_data_test {
       <div name="intrusions">
         <hr />
         <div name="intrusion-list" class="container-fluid mb-2"></div>
-        <div name="intrusion-add" class="container-fluid">
+        <div name="word-add" class="container-fluid">
           <div class="row mb-3"></div>
         </div>
-        <hr />
       </div>
     `));
 
@@ -336,8 +329,8 @@ export class CN_rey_data_test extends CN_base_data_test {
       ));
     });
 
-    // add the intrusion word entry
-    const word_row_el = body_el.querySelector("div[name=intrusion-add] div.row");
+    // add word entry
+    const word_row_el = test_entry_el.querySelector("div[name=word-add] div.row");
     CN_element_label.create_element(word_row_el, {
       for: "new_word_id",
       value: "Enter Word",
@@ -363,9 +356,9 @@ export class CN_rey_data_test extends CN_base_data_test {
             title: "Placeholders Not Allowed",
             message: "You cannot use placeholders for the REY test.",
             header_class: "text-bg-danger",
-          }).show());
+          }).open());
           return;
-        } else if (!CN_word_model.is_valid(new_word, this.get_language_list())) {
+        } else if (!CN_word_model.is_word_valid(new_word, this.get_language_list())) {
           await (new CN_modal_message({
             title: `
               The word you have provided is invalid.\n\n
@@ -373,7 +366,7 @@ export class CN_rey_data_test extends CN_base_data_test {
               dashes (-) and spaces, and which starts with at least one alphabetic letter.
             `,
             header_class: "text-bg-danger",
-          }).show());
+          }).open());
           return;
         }
 
@@ -454,7 +447,7 @@ export class CN_rey_data_test extends CN_base_data_test {
           const language_id = await (new CN_modal_input({
             title: "Confirm Word",
             message: `
-              Please confirm that you wish to submit the word, "${new_intrusion}",
+              Please confirm that you wish to submit the word, "${new_input}",
               and that it is correctly spelled.
             `,
             input: {
@@ -516,8 +509,9 @@ export class CN_rey_data_test extends CN_base_data_test {
       class: "col-sm-9",
       typeahead: typeahead,
       postfix: (el) => {
+        el.classList.add("flex-fill");
         const btn_el = this.constructor.html(
-          '<button type="button" class="btn btn-outline-primary ms-2">Mark Remaining As No</button>'
+          '<button type="button" class="btn btn-outline-primary w-100 ms-2">Mark Remaining As No</button>'
         );
         btn_el.addEventListener("click", async () => {
           await Promise.all(
@@ -531,8 +525,8 @@ export class CN_rey_data_test extends CN_base_data_test {
         el.append(btn_el);
       },
     });
-    body_el.querySelector("[name=intrusion-add]").append(word_row_el);
+    test_entry_el.querySelector("[name=word-add]").append(word_row_el);
 
-    return body_el;
+    return test_entry_el;
   }
 }

@@ -38,6 +38,7 @@ export class CN_test_entry_model extends CN_base_model {
       properties: {
         data_type: { meta: { table: "test_type", column: "data_type" } },
         state: { type: "enum" },
+        participant_language_id: { meta: { table: "participant", column: "language_id" } },
         prev_test_entry_id: { meta: {} },
         next_test_entry_id: { meta: {} },
 
