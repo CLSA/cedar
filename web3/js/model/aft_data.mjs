@@ -6,4 +6,8 @@ export class CN_aft_data_model extends CN_base_rank_data_model {
   }
 }
 
-export class CN_aft_data_test extends CN_base_rank_data_test {}
+export class CN_aft_data_test extends CN_base_rank_data_test {
+  constructor(parent_el, model) {
+    super(parent_el, model, "word");
+  }
+}

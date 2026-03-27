@@ -55,7 +55,7 @@ export class CN_rey_data_test extends CN_base_data_test {
         },
       },
       on_change: async (form_input, valie) => {
-        await CN_api.patch(this.get_api_path(), { language_id: form_input.get_value() });
+        await CN_api.patch(this.get_api_path(), { language_id: await form_input.get_value_for_record() });
         await this.get_model().get_parent_model().get_action().run(true);
         this.update_element();
       },
@@ -342,7 +342,7 @@ export class CN_rey_data_test extends CN_base_data_test {
       // ignore empty values
       if (!item.value) return;
 
-      const rey_language_id = Number(this.#language_form_input.get_value());
+      const rey_language_id = await this.#language_form_input.get_value_for_record();
 
       // process the selected item
       let input = null;

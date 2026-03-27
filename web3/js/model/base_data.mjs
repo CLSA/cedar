@@ -24,7 +24,7 @@ export class CN_base_data_model extends CN_base_model {
       throw new Error("Abstract class CN_base_data_model can't be instantiated.");
     }   
 
-    this.#data_name = data_name.toLowerCase().replace(/[^a-z]g/, "");
+    this.#data_name = data_name.toLowerCase().replace(/[^a-z]/g, "");
   }
 
   get_data_name() { return this.#data_name; }
@@ -110,7 +110,7 @@ export class CN_base_data_test extends CN_base_action {
     const test_entry_id = model.get_parent_model().get_identifier();
     const data_name = model.get_data_name();
     return (
-      'rey' == data_name ?
+      ["rey", "premat"].includes(data_name) ?
       `${data_name}_data/test_entry_id=${test_entry_id}` :
       `test_entry/${test_entry_id}/${data_name}_data`
     );
