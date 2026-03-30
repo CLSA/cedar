@@ -121,6 +121,12 @@ export class CN_transcription_model extends CN_base_model {
 }
 
 export class CN_transcription_multiedit extends CN_base_action {
+  #restriction_form_input;
+  #site_form_input;
+  #user_form_input;
+  #user_warning_el;
+  #proceed_btn_el;
+
   #import_restrictions = [{
     key: "no-import",
     value: "NO-IMPORT: Participants already available to the application",
@@ -131,7 +137,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     key: "any",
     value: "ANY: Do not restrict participants (unavailable participants will be imported)",
   }];
-  #participant_selection = new CN_participant_selection({
+  #participant_selection = new CN_participant_selection(null, {
     path: "transcription",
     data: { import_restriction: this.#import_restrictions[0].key },
   });
@@ -141,7 +147,7 @@ export class CN_transcription_multiedit extends CN_base_action {
    * @param base_model model: The model that the action belongs to
    */
   constructor(parent_el, model) {
-    super("multiedit", model);
+    super("multiedit", parent_el, model);
   }
 
   /**
@@ -173,21 +179,31 @@ export class CN_transcription_multiedit extends CN_base_action {
     const model = this.get_model();
 
     // reset the list and transcription components
-    this.#participant_selection.set_data({ import_restriction: this.#import_restrictions[0].key });
     this.#participant_selection.reset();
+  }
 
-    // populate the site and user selection list
-    const site_el = this.get_body_element().querySelector("#site_id");
-    site_el.innerHTML = "";
-    site_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
-    const site_list = await CN_api.get( "site", { select: { column: ["id", "name"] } });
-    site_list.forEach(site => {
-      site_el.append(this.constructor.html(`<option value="${site.id}">${site.name}</option>`));
-    });
+  /**
+   * Extend parent method
+   */
+  update_element() {
+    if (this.#restriction_form_input) {
+      const restriction_type = this.#restriction_form_input.get_value();
+      if (this.#user_form_input) {
+        this.constructor.set_disabled(
+          this.#proceed_btn_el,
+          "no-import" == restriction_type && !this.#user_form_input.get_value()
+        );
+      }
 
-    const user_el = this.get_body_element().querySelector("#user_id");
-    user_el.innerHTML = "";
-    user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
+      if (this.#user_warning_el) {
+        // show or hide the user warning based on the selected restriction type
+        if ("no-import" == restriction_type) {
+          this.#user_warning_el.classList.add("d-none");
+        } else {
+          this.#user_warning_el.classList.remove("d-none");
+        }
+      }
+    }
   }
 
   /**
@@ -215,21 +231,8 @@ export class CN_transcription_multiedit extends CN_base_action {
       </div>
     `);
 
-    function update_proceed_button() {
-      // update proceed button enabled state based on new site selection
-      const restrict_el = body_el.querySelector("#import_restriction");
-      const user_el = body_el.querySelector("#user_id");
-      const proceed_btn_el = body_el.querySelector("button[name=proceed]");
-
-      // disable the proceed button if the restriction is "no-import" and there is no user selected
-      this.constructor.set_disabled(
-        proceed_btn_el,
-        "no-import" == restrict_el.value && "null" == user_el.value
-      );
-    }
-
     this.#participant_selection.add_event_listener("selectionchanged", () => {
-      update_proceed_button();
+      this.update_element();
       const assignment_el = body_el.querySelector("[name=transcription-assignment]");
       if (this.#participant_selection.get_identifier_list().length) {
         assignment_el.classList.remove("d-none");
@@ -238,7 +241,6 @@ export class CN_transcription_multiedit extends CN_base_action {
       }
     });
 
-    const participant_selection_el = this.#participant_selection.get_element();
     const restrict_row_el = this.constructor.html('<div class="row"></div>');
 
     CN_element_label.create_element(restrict_row_el, {
@@ -246,23 +248,24 @@ export class CN_transcription_multiedit extends CN_base_action {
       value: "Restrict to",
       class: "col-sm-3",
     });
-    const restrict_form_input = new CN_input_enum({
+    this.#restriction_form_input = new CN_input_enum(restrict_row_el, {
       id: "import_restriction",
-      class: "d-flex align-items-center col-sm-9",
+      class: "col-sm-9",
       required: true,
-      enum: { values: this.#import_restrictions, },
+      get_default: () => "no-import",
+      enum: { values: this.#import_restrictions },
       on_change: (form_input) => {
         // set the import_restriction data when the dropdown changes
         this.#participant_selection.reset_confirmation();
-        this.#participant_selection.set_data({ import_restriction: form_input.get_value() } );
+        this.#participant_selection.set_config("data", { import_restriction: form_input.get_value() });
       },
     });
-    restrict_form_input.set_parent_element(restrict_row_el);
-    restrict_row_el.append(restrict_form_input.get_element());
-    restrict_form_input.set_value("no-import");
-    participant_selection_el.querySelector(".card-footer").prepend(restrict_row_el);
+    restrict_row_el.append(this.#restriction_form_input.get_element());
 
-    body_el.querySelector("[name=participant-list]").append(participant_selection_el);
+    const participant_list_el = body_el.querySelector("[name=participant-list]");
+    this.#participant_selection.set_parent_element(participant_list_el);
+    participant_list_el.append(this.#participant_selection.get_element());
+    this.#participant_selection.get_element().querySelector(".card-footer").prepend(restrict_row_el);
 
     const assignment_body_el = this.constructor.html('<div class="row"></div>');
     CN_element_label.create_element(assignment_body_el, {
@@ -270,17 +273,37 @@ export class CN_transcription_multiedit extends CN_base_action {
       value: "Assign to Site",
       class: "col-sm-3",
     });
-    const site_form_input = new CN_input_enum({
+    this.#site_form_input = new CN_input_enum(assignment_body_el, {
       id: "site_id",
-      class: "d-flex align-items-center col-sm-9",
+      class: "col-sm-9",
+      get_default: () => null,
+      enum: {
+        get_enums: async (form_input) => (
+          await CN_api.get("site", { select: { column: ["id", "name"] } })
+        ).map(site => ({ key: site.id, value: site.name })),
+      },
       on_change: async (form_input) => {
-        // update user list based on new site selection
-        const user_el = this.get_body_element().querySelector("#user_id");
+        // update the user dropdown to update its enum list
+        this.#user_form_input.set_value(null);
+        await this.#user_form_input.update();
+        this.update_element();
+      },
+    });
+    assignment_body_el.append(this.#site_form_input.get_element());
 
-        user_el.innerHTML = "";
-        user_el.append(this.constructor.html('<option value="null" selected>(empty)</option>'));
-        if ("null" != form_input.get_value()) {
-          const user_list = await CN_api.get( "user", {
+    CN_element_label.create_element(assignment_body_el, {
+      for: "user_id",
+      value: "Assign to User",
+      class: "col-sm-3",
+    });
+    const user_el = this.constructor.html('<div class="col-sm-9"></div>');
+    assignment_body_el.append(user_el);
+    this.#user_form_input = new CN_input_enum(user_el, {
+      id: "user_id",
+      get_default: () => null,
+      enum: {
+        get_enums: async (form_input) => (
+          await CN_api.get("user", {
             select: { column: ["id", "name", "first_name", "last_name"] },
             modifier: {
               join: [
@@ -288,46 +311,38 @@ export class CN_transcription_multiedit extends CN_base_action {
                 { table: "role", onleft: "access.role_id", onright: "role.id" },
               ],
               where: [
-                { column: "access.site_id", operator: "=", value: form_input.get_value() },
+                { column: "access.site_id", operator: "=", value: this.#site_form_input.get_value() },
                 { column: "role.name", operator: "=", value: "typist" },
                 { column: "user.active", operator: "=", value: true },
               ],
               order: "user.name",
             },
-          });
-          user_list.forEach(user => {
-            user_el.append(this.constructor.html(
-              `<option value="${user.id}">${user.first_name} ${user.last_name} (${user.name})</option>`
-            ));
-          });
-        }
-        update_proceed_button();
+          })
+        ).map(user => ({
+          key: user.id,
+          value: `${user.first_name} ${user.last_name} (${user.name})`,
+        })),
+      },
+      on_change: () => {
+        this.update_element();
       },
     });
-    site_form_input.set_parent_element(assignment_body_el);
-    assignment_body_el.append(site_form_input.get_element());
-    CN_element_label.create_element(assignment_body_el, {
-      for: "user_id",
-      value: "Assign to User",
-      class: "col-sm-3",
-    });
-    const user_form_input = new CN_input_enum({
-      id: "user_id",
-      class: "d-flex align-items-center col-sm-9",
-      on_change: update_proceed_button,
-    });
-    user_form_input.set_parent_element(assignment_body_el);
-    assignment_body_el.append(user_form_input.get_element());
+    user_el.append(this.#user_form_input.get_element());
+
+    this.#user_warning_el = this.constructor.html(`
+      <div name="user-warning" class="text-info d-none">
+        Please note that if you leave this empty then imported participants will become available in the
+        application's participant list without being assigned a transcription (they will be available for
+        new transcription requests).
+      </div>
+    `);
+    user_el.append(this.#user_warning_el);
 
     const assignment_footer_el = this.constructor.html('<div class="row"></div>');
-    const proceed_btn_el = this.constructor.html(
+    this.#proceed_btn_el = this.constructor.html(
       '<button name="proceed" type="button" class="btn btn-primary">Proceed</button>'
     );
-    proceed_btn_el.addEventListener("click", async () => {
-      const site_el = this.get_body_element().querySelector("#site_id");
-      const site_id = "null" == site_el.value ? null : site_el.value;
-      const user_el = this.get_body_element().querySelector("#user_id");
-      const user_id = "null" == user_el.value ? null : user_el.value;
+    this.#proceed_btn_el.addEventListener("click", async () => {
       const identifier_list = this.#participant_selection.get_identifier_list();
 
       let response = null;
@@ -335,25 +350,22 @@ export class CN_transcription_multiedit extends CN_base_action {
         response = await CN_api.post("transcription", {
           identifier_id: this.#participant_selection.get_idtype(),
           identifier_list: identifier_list,
-          site_id: site_id,
-          user_id: user_id,
+          site_id: await this.#site_form_input.get_value_for_record(),
+          user_id: await this.#user_form_input.get_value_for_record(),
           process: true,
         });
       });
 
-      await (new CN_modal_message({
-        title: "Transcription(s) Processed",
-        message: (
-          `A total of ${identifier_list.length} transcription(s) have been processed` +
-          (user_id ? ` and assigned to user "${user_el.options[user_el.selectedIndex].text}"` : "") +
-          (site_id ? ` at site "${site_el.options[site_el.selectedIndex].text}"` : "" ) +
-          "."
-        ),
-      })).open();
+      let message = `A total of ${identifier_list.length} transcription(s) have been processed`;
+      const user_name = this.#user_form_input.get_value_label();
+      if (user_name) message += ` and assigned to user "${user_name}"`;
+      const site_name = this.#site_form_input.get_value_label();
+      if (site_name) message += ` at site "${site_name}"`;
 
+      await (new CN_modal_message({ title: "Transcription(s) Processed", message: message })).open();
       await this.#participant_selection.reset();
     });
-    assignment_footer_el.append(proceed_btn_el);
+    assignment_footer_el.append(this.#proceed_btn_el);
 
     const assignment_el = CN_element_card.create_element(
       body_el.querySelector("[name=transcription-assignment]"),
