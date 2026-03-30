@@ -29,6 +29,16 @@ export class CN_premat_data_test extends CN_base_data_test {
   /**
    * Extends parent method
    */
+  set_disabled(disabled) {
+    super.set_disabled(disabled);
+
+    if (this.#counting_form_input) this.#counting_form_input.set_disabled(disabled);
+    if (this.#alphabet_form_input) this.#alphabet_form_input.set_disabled(disabled);
+  }
+
+  /**
+   * Extends parent method
+   */
   update_element() {
     super.update_element();
 

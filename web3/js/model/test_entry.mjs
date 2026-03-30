@@ -4,6 +4,7 @@ const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
@@ -86,8 +87,10 @@ export class CN_test_entry_notes extends CN_action_notes {
 }
 
 export class CN_test_entry_view extends CN_action_view {
-  #data_type;
+  #test_type;
   #data_model;
+  #state_btn_el;
+  #reset_btn_el;
 
   /**
    * Extend parent method
@@ -96,12 +99,31 @@ export class CN_test_entry_view extends CN_action_view {
     const model = this.get_model();
 
     if (["crumb", "header"].includes(type)) {
-      return (await CN_api.get(model.get_view_url(null, "api"), {
-        select: { column: { table: "test_type", column: "name" } },
-      })).name;
+      return this.#test_type.name;
     }
 
     return await super.get_text(type);
+  }
+
+  /**
+   * Extend parent method
+   */
+  set_disabled(disabled) {
+    this.#data_model.get_action().set_disabled(disabled);
+
+    const state = this.get_property_value("state");
+    if (this.#state_btn_el) {
+      this.constructor.set_disabled(
+        this.#state_btn_el, disabled ||
+        ("assigned" != state && "typist" == CN_session.data.role.name)
+      );
+    }
+    if (this.#reset_btn_el) {
+      this.constructor.set_disabled(
+        this.#reset_btn_el, disabled ||
+        ("assigned" != state && "typist" == CN_session.data.role.name)
+      );
+    }
   }
 
   /**
@@ -148,8 +170,8 @@ export class CN_test_entry_view extends CN_action_view {
       }
     }
 
-    // TODO: disable the working elements
     try {
+      this.set_disabled(true);
       await CN_api.patch(test_entry_path, { state: state });
       if ("assigned" != state && "typist" == CN_session.data.role.name) {
         await this.transition("next");
@@ -161,10 +183,8 @@ export class CN_test_entry_view extends CN_action_view {
         await (new CN_modal_message({
           title: "Conflict",
           message: "The test-entry cannot be submitted if it " + (
-            "aft" == self.record.data_type || "fas" == self.record.data_type ?
-            "contains invalid words or placeholders." :
-            "rey" == self.record.data_type ?
-            "contains invalid words or there is missing data." :
+            "aft" == this.#test_type.data_type || "fas" == this.#test_type.data_type ? "contains invalid words or placeholders." :
+            "rey" == this.#test_type.data_type ? "contains invalid words or there is missing data." :
             "is missing data."
           ),
           type: "danger",
@@ -173,7 +193,7 @@ export class CN_test_entry_view extends CN_action_view {
         throw error;
       }
     } finally {
-      // TODO: enable the working elements
+      this.set_disabled(false);
     }
   }
 
@@ -217,7 +237,10 @@ export class CN_test_entry_view extends CN_action_view {
     const options = [];
     if ("assigned" == state) {
       options.push({ name: "deferred", title: "Defer" });
-      options.push({ name: "submitted", title: "Force Submit" });
+      options.push({
+        name: "submitted",
+        title: "typist" == CN_session.data.role.name ? "Submit" : "Force Submit"
+      });
     } else if ("deferred" == state) {
       options.push({ name: "assigned", title: "Return to Typist" });
       options.push({ name: "submitted", title: "Force Submit" });
@@ -226,18 +249,28 @@ export class CN_test_entry_view extends CN_action_view {
       options.push({ name: "deferred", title: "Un-submit and Defer" });
     }
 
-    const state_btn_el = footer_el.querySelector("button[name=state]");
     const dropdown_el = footer_el.querySelector("ul.dropdown-menu");
-    if (state_btn_el) {
-      state_btn_el.innerHTML = `State: ${CN_common.uc_words(state)}`;
+    if (this.#state_btn_el) {
+      this.#state_btn_el.innerHTML = `State: ${CN_common.uc_words(state)}`;
       dropdown_el.innerHTML = "";
       options.forEach(option => {
         dropdown_el.append(this.constructor.html(
           `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
         ))
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
-        btn_el.addEventListener("click", this.set_state.bind(this, option.name, true));
+        btn_el.addEventListener("click", this.set_state.bind(this, option.name, "deferred" == option.name));
       });
+      this.constructor.set_disabled(
+        this.#state_btn_el, this.get_disabled() ||
+        ("assigned" != state && "typist" == CN_session.data.role.name)
+      );
+    }
+
+    if (this.#reset_btn_el) {
+      this.constructor.set_disabled(
+        this.#reset_btn_el, this.get_disabled() ||
+        ("assigned" != state && "typist" == CN_session.data.role.name)
+      );
     }
   }
 
@@ -288,13 +321,23 @@ export class CN_test_entry_view extends CN_action_view {
         <ul class="dropdown-menu"></ul>
       </div>
     `));
+    this.#state_btn_el = footer_el.querySelector("button[name=state]");
 
-    const reset_btn_el = this.constructor.html(
+    this.#reset_btn_el = this.constructor.html(
       '<button name="reset" type="button" class="btn btn-danger">Reset</button>'
     );
-    reset_btn_el.addEventListener("click", () => {
+    this.#reset_btn_el.addEventListener("click", async () => {
+      const response = await (new CN_modal_confirm({
+        title: "Reset Entry",
+        message: "Are you sure you wish to reset the entry?",
+      })).open();
+
+      if (response) {
+        await CN_api.patch(`test_entry/${this.get_model().get_identifier()}?reset=1`, {});
+        await this.run();
+      }
     });
-    left_btn_group_el.append(reset_btn_el);
+    left_btn_group_el.append(this.#reset_btn_el);
 
     const notes_btn_el = this.constructor.html(
       '<button name="notes" type="button" class="btn btn-light btn-outline-primary">Notes</button>'
@@ -322,7 +365,7 @@ export class CN_test_entry_view extends CN_action_view {
       const model = this.get_model();
 
       // get the data type
-      this.#data_type = await CN_api.get(model.get_view_url(null, "api"), {
+      this.#test_type = await CN_api.get(model.get_view_url(null, "api"), {
         select: {
           column: [
             { table: "test_type", column: "data_type" },
@@ -331,7 +374,7 @@ export class CN_test_entry_view extends CN_action_view {
         },
       });
 
-      const data_module = CN_session.get_module(`${this.#data_type.data_type}_data`);
+      const data_module = CN_session.get_module(`${this.#test_type.data_type}_data`);
       await data_module.load_classes();
       this.#data_model = data_module.create_model();
       // note that we set the identifier to an empty string because data models are customized to not use them

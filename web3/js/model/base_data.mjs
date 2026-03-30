@@ -139,6 +139,23 @@ export class CN_base_data_test extends CN_base_action {
   /**
    * Extends parent method
    */
+  set_disabled(disabled) {
+    super.set_disabled(disabled);
+
+    for (const cat_name in this.#status_categories) {
+      if (this.#status_categories[cat_name].status_form_input) {
+        this.#status_categories[cat_name].status_form_input.set_disabled(disabled);
+      }
+    }
+
+    this.#sound_file_list.forEach(sound_file => {
+      if (sound_file.form_input) sound_file.form_input.set_disabled(disabled);
+    });
+  }
+
+  /**
+   * Extends parent method
+   */
   async on_load() {
     await super.on_load();
 

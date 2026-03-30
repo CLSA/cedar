@@ -18,6 +18,7 @@ export class CN_rey_data_model extends CN_base_data_model {
 export class CN_rey_data_test extends CN_base_data_test {
   #base_language_id;
   #language_form_input;
+  #new_entry_form_input;
   #intrusion_list = [];
   #sister_list = {};
 
@@ -88,6 +89,16 @@ export class CN_rey_data_test extends CN_base_data_test {
     }
 
     await CN_api.patch(this.get_api_path(), data);
+  }
+
+  /**
+   * Extends parent method
+   */
+  set_disabled(disabled) {
+    super.set_disabled(disabled);
+
+    if (this.#language_form_input) this.#language_form_input.set_disabled(disabled);
+    if (this.#new_entry_form_input) this.#new_entry_form_input.set_disabled(disabled);
   }
 
   /**
@@ -332,7 +343,7 @@ export class CN_rey_data_test extends CN_base_data_test {
     // add word entry
     const word_row_el = test_entry_el.querySelector("div[name=word-add] div.row");
     CN_element_label.create_element(word_row_el, {
-      for: "new_word_id",
+      for: "new_entry",
       value: "Enter Word",
       class: "col-sm-3",
     });
@@ -350,15 +361,15 @@ export class CN_rey_data_test extends CN_base_data_test {
         input = item;
       } else {
         // remove en-/em-dashes
-        const new_word = item.value.toLowerCase().replace(/[—–]/g, "-");
-        if (new_word.match(/^-+$/)) {
+        const new_entry = item.value.toLowerCase().replace(/[—–]/g, "-");
+        if (new_entry.match(/^-+$/)) {
           await (new CN_modal_message({
             title: "Placeholders Not Allowed",
             message: "You cannot use placeholders for the REY test.",
             header_class: "text-bg-danger",
           }).open());
           return;
-        } else if (!CN_word_model.is_word_valid(new_word, this.get_language_list())) {
+        } else if (!CN_word_model.is_word_valid(new_entry, this.get_language_list())) {
           await (new CN_modal_message({
             title: `
               The word you have provided is invalid.\n\n
@@ -370,7 +381,7 @@ export class CN_rey_data_test extends CN_base_data_test {
           return;
         }
 
-        input = new_word;
+        input = new_entry;
       }
 
       // determine if the input is wrapped in quotes
@@ -504,8 +515,8 @@ export class CN_rey_data_test extends CN_base_data_test {
 
       this.update_element();
     };
-    CN_input_typeahead.create_element(word_row_el, {
-      id: "new_word_id",
+    this.#new_entry_form_input = new CN_input_typeahead(word_row_el, {
+      id: "new_entry",
       class: "col-sm-9",
       typeahead: typeahead,
       postfix: (el) => {
@@ -525,6 +536,8 @@ export class CN_rey_data_test extends CN_base_data_test {
         el.append(btn_el);
       },
     });
+
+    word_row_el.append(this.#new_entry_form_input.get_element());
     test_entry_el.querySelector("[name=word-add]").append(word_row_el);
 
     return test_entry_el;

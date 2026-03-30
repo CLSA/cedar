@@ -22,6 +22,7 @@ export class CN_base_rank_data_model extends CN_base_data_model {
 export class CN_base_rank_data_test extends CN_base_data_test {
   #entry_type;
   #entry_list;
+  #new_entry_form_input;
 
   constructor(parent_el, model, entry_type) {
     super(parent_el, model);
@@ -31,6 +32,21 @@ export class CN_base_rank_data_test extends CN_base_data_test {
     }
 
     this.#entry_type = entry_type;
+  }
+
+  /**
+   * Extends parent method
+   */
+  set_disabled(disabled) {
+    super.set_disabled(disabled);
+
+    if (this.#new_entry_form_input) this.#new_entry_form_input.set_disabled(disabled);
+    const new_entry_btn_el = this.#new_entry_form_input.get_element().querySelector("button");
+    if (new_entry_btn_el) this.constructor.set_disabled(new_entry_btn_el, disabled);
+    this.#entry_list.forEach(entry => {
+      if (entry.action_btn_el) this.constructor.set_disabled(entry.action_btn_el, disabled);
+      if (entry.entry_btn_el) this.constructor.set_disabled(entry.entry_btn_el, disabled);
+    });
   }
 
   /**
@@ -90,12 +106,13 @@ export class CN_base_rank_data_test extends CN_base_data_test {
           "replace" == entry.action ? "box-arrow-up-right" :
           "fullscreen" // no action
         );
-        const action_btn_el = this.constructor.html(`
+        entry.action_btn_el = this.constructor.html(`
           <button type="button" name="action" class="btn btn-outline-primary me-1">
             <i class="bi bi-${i_class}"></i>
           </button>
         `);
-        action_btn_el.addEventListener("click", async () => {
+        this.constructor.set_disabled(entry.action_btn_el, this.get_disabled());
+        entry.action_btn_el.addEventListener("click", async () => {
           // remove the action from all entries and advance this entry to the next action
           this.#entry_list.forEach(e => {
             if (e.id == entry.id) {
@@ -112,7 +129,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
           });
           this.update_element();
         });
-        button_div_el.append(action_btn_el);
+        button_div_el.append(entry.action_btn_el);
 
         const btn_class = (
           "character" == this.#entry_type ? "outline-primary" :
@@ -122,7 +139,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
           "invalid" == entry.word_type ? "danger" :
           "secondary" // "placeholder" == entry.word_type
         );
-        const entry_btn_el = this.constructor.html(`
+        entry.entry_btn_el = this.constructor.html(`
           <button type="button" name="entry" class="btn btn-${btn_class} w-100">
             ${
               "character" == this.#entry_type ?
@@ -133,12 +150,13 @@ export class CN_base_rank_data_test extends CN_base_data_test {
             }
           </button>
         `);
-        entry_btn_el.addEventListener("click", async () => {
+        this.constructor.set_disabled(entry.entry_btn_el, this.get_disabled());
+        entry.entry_btn_el.addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/${entry.id}`);
           await this.on_load();
           this.update_element();
         });
-        button_div_el.append(entry_btn_el);
+        button_div_el.append(entry.entry_btn_el);
       });
 
       entries_el.append(buttons_el);
@@ -168,7 +186,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
     });
 
     if ("character" == this.#entry_type) {
-      CN_input_string.create_element(entry_row_el, {
+      this.#new_entry_form_input = new CN_input_string(entry_row_el, {
         id: "new_entry",
         class: "col-sm-9",
         regex: "^[a-z0-9]$",
@@ -248,7 +266,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
         await this.#submit_entry(input);
         form_input.undo_value(true);
       };
-      CN_input_typeahead.create_element(entry_row_el, {
+      this.#new_entry_form_input = new CN_input_typeahead(entry_row_el, {
         id: "new_entry",
         class: "col-sm-9",
         typeahead: typeahead,
@@ -258,7 +276,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
             '<button type="button" class="btn btn-outline-primary w-100 ms-2">Add Placeholder</button>'
           );
           btn_el.addEventListener("click", async () => {
-            await CN_api.post(this.get_api_path(), { word_id: null });
+            await this.#submit_entry({ word_id: null });
             await this.on_load();
             this.update_element();
           });
@@ -267,6 +285,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
       });
     }
 
+    entry_row_el.append(this.#new_entry_form_input.get_element());
     test_entry_el.querySelector("[name=entry-add]").append(entry_row_el);
 
 

@@ -10,11 +10,4 @@ export class CN_mat_data_test extends CN_base_rank_data_test {
   constructor(parent_el, model) {
     super(parent_el, model, "character");
   }
-
-  /**
-   * Extends parent method
-   */
-  update_element() {
-    super.update_element();
-  }
 }
