@@ -1,4 +1,5 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
@@ -377,5 +378,17 @@ export class CN_transcription_multiedit extends CN_base_action {
     `);
     footer_el.querySelector("button[name=back]").addEventListener("click", this.on_navigate_to_parent.bind(this));
     return footer_el;
+  }
+}
+
+export class CN_transcription_view extends CN_action_view {
+  /**
+   * Extends the parent method
+   */
+  async get_text(type) {
+    if (["crumb", "name"].includes(type)) {
+      return this.get_property_value("uid");
+    }
+    return await super.get_text(type);
   }
 }

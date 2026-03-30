@@ -126,7 +126,7 @@ export class CN_word_model extends CN_base_model {
    */
   static is_word_valid(word, language_id = null) {
     word = word.replace(/^"([^"]+)"$/, "$1"); // remove double quotes at front/end
-    let letters = ""; 
+    let letters = "";
     if (language_id) {
       const list = CN_common.is_array(language_id) ? language_id : [language_id];
       letters = language_id.reduce((str, id) => {

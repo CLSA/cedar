@@ -1,3 +1,4 @@
+const { CN_action_notes } = await import(`${CENOZO_URL}/js/element/action/notes.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
@@ -61,6 +62,29 @@ export class CN_test_entry_model extends CN_base_model {
   }
 }
 
+export class CN_test_entry_notes extends CN_action_notes {
+  constructor(parent_el, model) {
+    super(parent_el, model);
+    this.set_footer_at_top(false);
+    this.set_note_module_name("test_entry_note");
+  }
+
+  /**
+   * Extend parent method
+   */
+  async get_text(type) {
+    const model = this.get_model();
+
+    if (["crumb", "header"].includes(type)) {
+      return (await CN_api.get(model.get_view_url(null, "api"), {
+        select: { column: { table: "test_type", column: "name" } },
+      })).name;
+    }
+
+    return await super.get_text(type);
+  }
+}
+
 export class CN_test_entry_view extends CN_action_view {
   #data_type;
   #data_model;
@@ -69,14 +93,12 @@ export class CN_test_entry_view extends CN_action_view {
    * Extend parent method
    */
   async get_text(type) {
-    if (this.#data_model) {
-      if ("crumb" == type) {
-        return this.#data_type.name;
-      }
+    const model = this.get_model();
 
-      if ("header" == type) {
-        return this.#data_type.name;
-      }
+    if (["crumb", "header"].includes(type)) {
+      return (await CN_api.get(model.get_view_url(null, "api"), {
+        select: { column: { table: "test_type", column: "name" } },
+      })).name;
     }
 
     return await super.get_text(type);
@@ -260,16 +282,31 @@ export class CN_test_entry_view extends CN_action_view {
 
     // add the state, reset and notes buttons
     left_btn_group_el.append(this.constructor.html(`
-      <div class="btn-group ms-3" role="group">
-        <div class="btn-group" role="group">
-          <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
-          </button>
-          <ul class="dropdown-menu"></ul>
-        </div>
-        <button name="reset" type="button" class="btn btn-danger">Reset</button>
-        <button name="notes" type="button" class="btn btn-light btn-outline-primary">Notes</button>
+      <div class="btn-group" role="group">
+        <button name="state" type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
+        </button>
+        <ul class="dropdown-menu"></ul>
       </div>
     `));
+
+    const reset_btn_el = this.constructor.html(
+      '<button name="reset" type="button" class="btn btn-danger">Reset</button>'
+    );
+    reset_btn_el.addEventListener("click", () => {
+    });
+    left_btn_group_el.append(reset_btn_el);
+
+    const notes_btn_el = this.constructor.html(
+      '<button name="notes" type="button" class="btn btn-light btn-outline-primary">Notes</button>'
+    );
+    notes_btn_el.addEventListener(
+      "click",
+      CN_session.navigate_to.bind(
+        CN_session,
+        this.get_model().get_view_url().replace(/test_entry\/view/, "test_entry/notes")
+      )
+    );
+    left_btn_group_el.append(notes_btn_el);
 
     return footer_el;
   }

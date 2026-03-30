@@ -22,7 +22,7 @@ export class CN_base_data_model extends CN_base_model {
 
     if ("CN_base_data_model" == this.constructor) {
       throw new Error("Abstract class CN_base_data_model can't be instantiated.");
-    }   
+    }
 
     this.#data_name = data_name.toLowerCase().replace(/[^a-z]/g, "");
   }
@@ -45,7 +45,7 @@ export class CN_base_data_test extends CN_base_action {
 
     if ("CN_base_data_test" == this.constructor) {
       throw new Error("Abstract class CN_base_data_test can't be instantiated.");
-    }   
+    }
 
     this.set_simple_mode(true);
 
@@ -316,7 +316,7 @@ export class CN_base_data_test extends CN_base_action {
                 form_input.set_disabled(true);
                 try {
                   // update the server
-                  let data = {}; 
+                  let data = {};
                   data.identifying = await form_input.get_value_for_record();
                   await CN_api.patch(`sound_file/${sound_file.id}`, data);
                   sound_file.identifying = form_input.get_value();

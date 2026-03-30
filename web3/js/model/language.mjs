@@ -8,7 +8,7 @@ export class CN_language_list extends base_list_class {
    */
   async on_choose() {
     await super.on_choose();
-    
+
     if (!this.is_choosing()) {
       // if the parent is a test entry then update it (so the data model's action is also updated)
       const parent_model = this.get_model().get_parent_model();

@@ -399,52 +399,6 @@ class test_type extends \cenozo\database\record
       $letter_sequence_mod->get_sql()
     ) );
 
-    /*
-    $base_sequence_sel = lib::create( 'database\select' );
-    $base_sequence_sel->from( 'test_entry' );
-    $base_sequence_sel->add_column(
-      '( @sequence_rank := IF( @test_entry_id = test_entry_id, @sequence_rank + 1, 1 ) )',
-      'srank',
-      false
-    );
-    $base_sequence_sel->add_column(
-      '( @test_entry_id := test_entry_id )',
-      'test_entry_id',
-      false
-    );
-    $base_sequence_sel->add_table_column( 'mat_data', 'rank' );
-    $base_sequence_sel->add_table_column( 'mat_data', 'value' );
-
-    $base_sequence_mod = clone $modifier;
-    $base_sequence_mod->join( 'mat_data', 'test_entry.id', 'mat_data.test_entry_id' );
-    $base_sequence_mod->order( 'test_entry_id' );
-    $base_sequence_mod->order( 'rank' );
-
-    $number_sequence_sel = clone $base_sequence_sel;
-    $number_sequence_mod = clone $base_sequence_mod;
-    $number_sequence_mod->where( 'value', 'RLIKE', '[0-9]' );
-    static::db()->execute( 'SET @sequence_rank := 0' );
-    static::db()->execute( 'SET @test_entry_id := 0' );
-    static::db()->execute( sprintf(
-      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank, value ) %s %s'."\n".
-      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
-      $number_sequence_sel->get_sql(),
-      $number_sequence_mod->get_sql()
-    ) );
-
-    $letter_sequence_sel = clone $base_sequence_sel;
-    $letter_sequence_mod = clone $base_sequence_mod;
-    $letter_sequence_mod->where( 'value', 'RLIKE', '[a-z]' );
-    static::db()->execute( 'SET @sequence_rank := 0' );
-    static::db()->execute( 'SET @test_entry_id := 0' );
-    static::db()->execute( sprintf(
-      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank, value ) %s %s'."\n".
-      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
-      $letter_sequence_sel->get_sql(),
-      $letter_sequence_mod->get_sql()
-    ) );
-    */
-
     // now score the test using the sequence ranks
     $mat_sel = clone $select;
     $mat_sel->add_column( 'COUNT(*)', 'score', false );
