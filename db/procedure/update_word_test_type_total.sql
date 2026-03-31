@@ -20,6 +20,6 @@ BEGIN
     FROM word
     LEFT JOIN rey_data_has_word ON word.id = rey_data_has_word.word_id
     WHERE word.id = proc_word_id
-    ON DUPLICATE KEY UPDATE rey_total = VALUES(rey_total); 
+    ON DUPLICATE KEY UPDATE rey_total = VALUES(rey_total);
   END IF;
 END$$

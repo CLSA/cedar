@@ -14,3 +14,6 @@ BEGIN
     AND aft IS NULL
     AND fas IS NULL;
   END IF;
+
+  CALL update_test_entry_has_word( OLD.test_entry_id );
+END$$

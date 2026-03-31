@@ -9,4 +9,5 @@ CREATE TABLE status_type (
   UNIQUE INDEX uq_category_rank (category ASC, rank ASC),
   UNIQUE INDEX uq_category_name (category ASC, name ASC))
 ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4;
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_general_ci;

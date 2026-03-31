@@ -14,3 +14,7 @@ BEGIN
     AND aft IS NULL
     AND fas IS NULL;
   END IF;
+
+  SET @test_entry_id = ( SELECT test_entry_id FROM rey_data WHERE id = OLD.rey_data_id );
+  CALL update_test_entry_has_word( @test_entry_id );
+END$$
