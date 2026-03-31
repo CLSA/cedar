@@ -1,0 +1,13 @@
+CREATE TABLE test_type (
+  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  rank INT(10) UNSIGNED NOT NULL,
+  name VARCHAR(45) NOT NULL,
+  data_type ENUM('aft', 'fas', 'mat', 'premat', 'rey') NOT NULL,
+  description TEXT NULL DEFAULT NULL,
+  PRIMARY KEY (id),
+  UNIQUE INDEX uq_name (name ASC),
+  UNIQUE INDEX uq_rank (rank ASC))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;
