@@ -54,11 +54,7 @@ export class CN_premat_data_test extends CN_base_data_test {
 
     const counting_row_el = this.constructor.html('<div class="row mb-3"></div>');
     test_entry_el.append(counting_row_el);
-    CN_element_label.create_element(counting_row_el, {
-      for: "counting",
-      value: "Counting",
-      class: "col-sm-3",
-    });
+    CN_element_label.append(counting_row_el, { for: "counting", value: "Counting", class: "col-sm-3" });
     this.#counting_form_input = new CN_input_boolean(counting_row_el, {
       id: "counting",
       class: "col-sm-9",
@@ -70,11 +66,7 @@ export class CN_premat_data_test extends CN_base_data_test {
 
     const alphabet_row_el = this.constructor.html('<div class="row mb-3"></div>');
     test_entry_el.append(alphabet_row_el);
-    CN_element_label.create_element(alphabet_row_el, {
-      for: "alphabet",
-      value: "Alphabet",
-      class: "col-sm-3",
-    });
+    CN_element_label.append(alphabet_row_el, { for: "alphabet", value: "Alphabet", class: "col-sm-3" });
     this.#alphabet_form_input = new CN_input_boolean(alphabet_row_el, {
       id: "alphabet",
       class: "col-sm-9",

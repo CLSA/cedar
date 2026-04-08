@@ -23,13 +23,13 @@ export class CN_transcription_model extends CN_base_model {
         user: {
           column: "user.name",
           title: "Assigned",
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which user the transcription is assigned to",
         },
         user_list: {
           title: "User List",
           table_prefix: false,
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which users have worked with at least one test-entry, ordered by first access date",
         },
         language_list: {
@@ -40,12 +40,12 @@ export class CN_transcription_model extends CN_base_model {
         site: {
           column: "site.name",
           title: "Credited Site",
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
         },
         state: {
           title: "State",
           table_prefix: false,
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: 'One of "assigned", "deferred" or "completed"',
         },
         start_datetime: { title: "Start", type: "datetimesecond" },
@@ -85,21 +85,21 @@ export class CN_transcription_model extends CN_base_model {
               return user_list.map(u => ({ key: u.id, value: `${u.first_name} ${u.last_name} (${u.name})` }));
             },
           },
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which user the transcription is assigned to",
         },
         site_id: {
           title: "Credited Site",
           type: "enum",
           enum: { path: "site" },
-          is_constant: () => 3 > CN_session.data.role.tier,
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_constant: () => 3 > CN_session.get("role", "tier"),
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
         },
         state: {
           meta: {},
           title: "State",
           is_constant: () => true,
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: 'One of "assigned", "deferred" or "completed"',
         },
         start_datetime: {
@@ -243,7 +243,7 @@ export class CN_transcription_multiedit extends CN_base_action {
 
     const restrict_row_el = this.constructor.html('<div class="row"></div>');
 
-    CN_element_label.create_element(restrict_row_el, {
+    CN_element_label.append(restrict_row_el, {
       for: "import_restriction",
       value: "Restrict to",
       class: "col-sm-3",
@@ -268,7 +268,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     this.#participant_selection.get_element().querySelector(".card-footer").prepend(restrict_row_el);
 
     const assignment_body_el = this.constructor.html('<div class="row"></div>');
-    CN_element_label.create_element(assignment_body_el, {
+    CN_element_label.append(assignment_body_el, {
       for: "site_id",
       value: "Assign to Site",
       class: "col-sm-3",
@@ -291,7 +291,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     });
     assignment_body_el.append(this.#site_form_input.get_element());
 
-    CN_element_label.create_element(assignment_body_el, {
+    CN_element_label.append(assignment_body_el, {
       for: "user_id",
       value: "Assign to User",
       class: "col-sm-3",
@@ -362,19 +362,16 @@ export class CN_transcription_multiedit extends CN_base_action {
       const site_name = this.#site_form_input.get_value_label();
       if (site_name) message += ` at site "${site_name}"`;
 
-      await (new CN_modal_message({ title: "Transcription(s) Processed", message: message })).open();
+      await CN_modal_message.create_and_open({ title: "Transcription(s) Processed", message: message });
       await this.#participant_selection.reset();
     });
     assignment_footer_el.append(this.#proceed_btn_el);
 
-    const assignment_el = CN_element_card.create_element(
-      body_el.querySelector("[name=transcription-assignment]"),
-      {
-        header: "Transcription Assignment",
-        body: assignment_body_el,
-        footer: assignment_footer_el,
-      }
-    );
+    CN_element_card.append(body_el.querySelector("[name=transcription-assignment]"), {
+      header: "Transcription Assignment",
+      body: assignment_body_el,
+      footer: assignment_footer_el,
+    });
 
     return body_el;
   }

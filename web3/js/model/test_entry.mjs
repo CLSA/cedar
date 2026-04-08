@@ -27,7 +27,7 @@ export class CN_test_entry_model extends CN_base_model {
         user_list: {
           title: "User List",
           table_prefix: false,
-          is_hidden: () => "typist" == CN_session.data.role.name,
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which users have worked with the test-entry, ordered by first access date",
         },
         language_list: {
@@ -115,13 +115,13 @@ export class CN_test_entry_view extends CN_action_view {
     if (this.#state_btn_el) {
       this.constructor.set_disabled(
         this.#state_btn_el, disabled ||
-        ("assigned" != state && "typist" == CN_session.data.role.name)
+        ("assigned" != state && "typist" == CN_session.get("role", "name"))
       );
     }
     if (this.#reset_btn_el) {
       this.constructor.set_disabled(
         this.#reset_btn_el, disabled ||
-        ("assigned" != state && "typist" == CN_session.data.role.name)
+        ("assigned" != state && "typist" == CN_session.get("role", "name"))
       );
     }
   }
@@ -151,20 +151,20 @@ export class CN_test_entry_view extends CN_action_view {
       });
 
       // don't proceed until the last note left was left by the current user
-      if (0 == response.length || CN_session.data.user.id != response[0].user_id) {
-        const note = await (new CN_modal_input({
+      if (0 == response.length || CN_session.get("user", "id") != response[0].user_id) {
+        const note = await CN_modal_input.create_and_open({
           title: "Test Entry Note",
           message: "Please provide the reason you are changing the test entry's state.",
           input: {
             type:"text",
             min_length: 10,
           },
-        })).open();
+        });
 
         if (undefined === note) return;
 
         await CN_api.post(`${test_entry_path}/test_entry_note`, {
-          user_id: CN_session.data.user.id,
+          user_id: CN_session.get("user", "id"),
           note: note,
         });
       }
@@ -173,14 +173,14 @@ export class CN_test_entry_view extends CN_action_view {
     try {
       this.set_disabled(true);
       await CN_api.patch(test_entry_path, { state: state });
-      if ("assigned" != state && "typist" == CN_session.data.role.name) {
+      if ("assigned" != state && "typist" == CN_session.get("role", "name")) {
         await this.transition("next");
       } else {
         await this.run();
       }
     } catch (error) {
       if (409 == error.response.status) {
-        await (new CN_modal_message({
+        await CN_modal_message.create_and_open({
           title: "Conflict",
           message: "The test-entry cannot be submitted if it " + (
             "aft" == this.#test_type.data_type || "fas" == this.#test_type.data_type ? "contains invalid words or placeholders." :
@@ -188,7 +188,7 @@ export class CN_test_entry_view extends CN_action_view {
             "is missing data."
           ),
           type: "danger",
-        })).open();
+        });
       } else {
         throw error;
       }
@@ -239,7 +239,7 @@ export class CN_test_entry_view extends CN_action_view {
       options.push({ name: "deferred", title: "Defer" });
       options.push({
         name: "submitted",
-        title: "typist" == CN_session.data.role.name ? "Submit" : "Force Submit"
+        title: "typist" == CN_session.get("role", "name") ? "Submit" : "Force Submit"
       });
     } else if ("deferred" == state) {
       options.push({ name: "assigned", title: "Return to Typist" });
@@ -262,14 +262,14 @@ export class CN_test_entry_view extends CN_action_view {
       });
       this.constructor.set_disabled(
         this.#state_btn_el, this.get_disabled() ||
-        ("assigned" != state && "typist" == CN_session.data.role.name)
+        ("assigned" != state && "typist" == CN_session.get("role", "name"))
       );
     }
 
     if (this.#reset_btn_el) {
       this.constructor.set_disabled(
         this.#reset_btn_el, this.get_disabled() ||
-        ("assigned" != state && "typist" == CN_session.data.role.name)
+        ("assigned" != state && "typist" == CN_session.get("role", "name"))
       );
     }
   }
@@ -278,7 +278,7 @@ export class CN_test_entry_view extends CN_action_view {
    * Replace parent method
    */
   create_placeholder_element() {
-    return CN_element_loading_box.create_element();
+    return CN_element_loading_box.create();
   }
 
   /**
@@ -327,10 +327,10 @@ export class CN_test_entry_view extends CN_action_view {
       '<button name="reset" type="button" class="btn btn-danger">Reset</button>'
     );
     this.#reset_btn_el.addEventListener("click", async () => {
-      const response = await (new CN_modal_confirm({
+      const response = await CN_modal_confirm.create_and_open({
         title: "Reset Entry",
         message: "Are you sure you wish to reset the entry?",
-      })).open();
+      });
 
       if (response) {
         await CN_api.patch(`test_entry/${this.get_model().get_identifier()}?reset=1`, {});

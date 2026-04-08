@@ -78,9 +78,9 @@ export class CN_base_data_test extends CN_base_action {
 
                 // update the audio elements based on which is active
                 if (sf.active) {
-                  sf.label_el.classList.add("text-bg-info");
+                  sf.label.get_element().classList.add("text-bg-info");
                 } else {
-                  sf.label_el.classList.remove("text-bg-info");
+                  sf.label.get_element().classList.remove("text-bg-info");
                   sf.form_input.get_control_element().pause();
                 }
               });
@@ -228,7 +228,7 @@ export class CN_base_data_test extends CN_base_action {
         const other_value = parent_action.get_property_value(other_id);
 
         category.element = this.constructor.html('<div name="${cat_name}" class="w-100 m-2"></div>');
-        CN_element_label.create_element(category.element, {
+        CN_element_label.append(category.element, {
           for: status_id,
           value: `${CN_common.uc_words(cat_name)} Status`,
         });
@@ -294,7 +294,7 @@ export class CN_base_data_test extends CN_base_action {
       this.#sound_file_list.forEach(sound_file => {
         const sound_file_id = `sound_file_${sound_file.id}`;
         const row_el = this.constructor.html('<div class="row ms-2 me-0 mb-3"></div>');
-        sound_file.label_el = CN_element_label.create_element(row_el, {
+        sound_file.label = CN_element_label.append(row_el, {
           for: `sound_file_${sound_file.id}`,
           value: CN_common.uc_words(sound_file.name),
           class: `col-sm-3 rounded ${sound_file.active ? "text-bg-info" : ""}`,
@@ -310,15 +310,15 @@ export class CN_base_data_test extends CN_base_action {
 
               // update the audio elements based on which is active
               if (sf.active) {
-                sf.label_el.classList.add("text-bg-info");
+                sf.label.get_element().classList.add("text-bg-info");
               } else {
-                sf.label_el.classList.remove("text-bg-info");
+                sf.label.get_element().classList.remove("text-bg-info");
                 sf.form_input.get_control_element().pause();
               }
             });
           },
           postfix: (el) => {
-            CN_input_boolean.create_element(el, {
+            CN_input_boolean.append(el, {
               id: `identifying_${sound_file.id}`,
               class: "ms-2",
               placeholder: "(select identifying)",

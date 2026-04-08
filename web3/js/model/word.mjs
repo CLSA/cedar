@@ -63,13 +63,13 @@ export class CN_word_model extends CN_base_model {
               // warn if the sister word is an intrusion
               const response = await CN_api.get(`word/${sister_word_id}`, { select: { column: "fas" } });
               if ("intrusion" == response.fas) {
-                proceed = await (new CN_modal_confirm({
+                proceed = await CN_modal_confirm.create_and_open({
                   title: "Parent Sister Word is Intrusion",
                   message: `
                     Warning: the parent sister word you have selected, "${form_input.get_value()}",
                     is an FAS intrusion.  Are you sure you have selected the correct word?
                   `,
-                })).open();
+                });
               }
             }
 
@@ -101,7 +101,7 @@ export class CN_word_model extends CN_base_model {
    */
   allow_edit() {
     return super.allow_edit() && !(
-      3 > CN_session.data.role.tier &&
+      3 > CN_session.get("role", "tier") &&
       null != this.get_action().get_property_value("misspelled") &&
       null != this.get_action().get_property_value("aft") &&
       null != this.get_action().get_property_value("fas")
@@ -130,7 +130,7 @@ export class CN_word_model extends CN_base_model {
     if (language_id) {
       const list = CN_common.is_array(language_id) ? language_id : [language_id];
       letters = language_id.reduce((str, id) => {
-        str += CN_session.data.setting.special_letter[id];
+        str += CN_session.get("setting", "special_letter")[id];
         return str;
       }, "");
     }
@@ -217,7 +217,7 @@ export class CN_word_view extends CN_action_view {
 
     if ("misspelled" == prop_name) {
       const typeahead = CN_word_model.get_typeahead(language_id);
-      data.correct_word = await (new CN_modal_input({
+      data.correct_word = await CN_modal_input.create_and_open({
         title: "Select Correct Word",
         message: `
           Please select the correct spelling for this word.<br/><br/>
@@ -228,7 +228,7 @@ export class CN_word_view extends CN_action_view {
           type: "typeahead",
           typeahead: typeahead,
         },
-      })).open();
+      });
 
       if (undefined === data.correct_word) {
         this.get_property(prop_name).form_input.undo_value();
@@ -249,7 +249,7 @@ export class CN_word_view extends CN_action_view {
     }
 
     // get the message for updated test entries
-    data.note = await (new CN_modal_input({
+    data.note = await CN_modal_input.create_and_open({
       title: "Test Entry Note",
       message: `
         ${which} test entries using this word will be re-assigned to the last user that it was assigned to.
@@ -262,7 +262,7 @@ export class CN_word_view extends CN_action_view {
           Please replace this word with another valid word and re-submit.
         `,
       },
-    })).open();
+    });
 
     if (undefined === data.note) {
       this.get_property(prop_name).form_input.undo_value();

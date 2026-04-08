@@ -179,7 +179,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
 
     // add word entry
     const entry_row_el = test_entry_el.querySelector("div[name=entry-add] div.row");
-    CN_element_label.create_element(entry_row_el, {
+    CN_element_label.append(entry_row_el, {
       for: "new_entry",
       value: `Enter ${CN_common.uc_words(this.#entry_type)}`,
       class: "col-sm-3",
@@ -227,7 +227,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
           // remove en-/em-dashes, and remove case and double quotes if they are found at the start/end
           const new_entry = item.value.toLowerCase().replace(/[—–]/g, "-").replace(/^"|"$/g, "").toLowerCase();
           if (!CN_word_model.is_word_valid(new_entry) && !new_entry.match(/^-+$/)) {
-            await (new CN_modal_message({
+            await CN_modal_message.create_and_open({
               title: "Invalid Word",
               message: `
                 The word you have provided is invalid.\n\n
@@ -235,12 +235,12 @@ export class CN_base_rank_data_test extends CN_base_data_test {
                 dashes (-) and spaces, and which starts with at least one alphabetic letter.
               `,
               header_class: "text-bg-danger",
-            }).open());
+            });
             return;
           } else {
             const participant_language_id =
               this.get_model().get_parent_model().get_action().get_property_value("participant_language_id");
-            const language_id = await (new CN_modal_input({
+            const language_id = await CN_modal_input.create_and_open({
               title: "Confirm Word",
               message: `
                 Please confirm that you wish to submit the word, "${new_entry}",
@@ -252,7 +252,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
                 get_default: () => participant_language_id,
                 enum: { values: this.get_language_list().map(l => ({ key: l.id, value: l.name })) },
               },
-            })).open();
+            });
 
             if (!language_id) {
               await this.on_load();
