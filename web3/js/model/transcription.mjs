@@ -1,10 +1,12 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
+const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
 const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
@@ -60,6 +62,7 @@ export class CN_transcription_model extends CN_base_model {
           meta: { table: "participant", column: "uid" },
           title: "Participant",
           is_constant: () => true,
+          is_hidden: model => "add" == model.get_action_name(),
         },
         user_id: {
           title: "User",
@@ -67,16 +70,14 @@ export class CN_transcription_model extends CN_base_model {
           enum: {
             path: "user",
             get_enums: async (model) => {
-              const site_id = model.get_action().get_property_value("site_id");
               const user_list = await CN_api.get( "user", {
-                select: { column: ["id", "name", "first_name", "last_name"] },
+                select: { distinct: true, column: ["id", "name", "first_name", "last_name"] },
                 modifier: {
                   join: [
                     { table: "access", onleft: "user.id", onright: "access.user_id" },
                     { table: "role", onleft: "access.role_id", onright: "role.id" },
                   ],
                   where: [
-                    { column: "access.site_id", operator: "=", value: site_id },
                     { column: "role.name", operator: "=", value: "typist" },
                   ],
                   order: "user.name",
@@ -93,13 +94,13 @@ export class CN_transcription_model extends CN_base_model {
           type: "enum",
           enum: { path: "site" },
           is_constant: () => 3 > CN_session.get("role", "tier"),
-          is_hidden: () => "typist" == CN_session.get("role", "name"),
+          is_hidden: model => "add" == model.get_action_name(),
         },
         state: {
           meta: {},
           title: "State",
           is_constant: () => true,
-          is_hidden: () => "typist" == CN_session.get("role", "name"),
+          is_hidden: model => "add" == model.get_action_name(),
           help: 'One of "assigned", "deferred" or "completed"',
         },
         start_datetime: {
@@ -107,16 +108,49 @@ export class CN_transcription_model extends CN_base_model {
           title: "Start Date & Time",
           type: "datetimesecond",
           is_constant: () => true,
+          is_hidden: model => "add" == model.get_action_name(),
         },
         end_datetime: {
           meta: {},
           title: "End Date & Time",
           type: "datetimesecond",
           is_constant: () => true,
+          is_hidden: model => "add" == model.get_action_name(),
           help: 'Only set when the state is "completed"',
         },
       },
     });
+  }
+
+  /**
+   * Extend parent method
+   */
+  allow_add() {
+    const records = (
+      "list" == this.get_action_name() ?
+      this.get_action().get_record_count() :
+      null
+    );
+    if ("typist" == CN_session.get("role", "name")) {
+      const leaf_model = CN_session.get_leaf_model();
+      return (
+        super.allow_add() &&
+        null != leaf_model &&
+        "transcription" == leaf_model.get_name() &&
+        "list" == leaf_model.get_action_name() &&
+        null != records &&
+        CN_session.get("setting", "max_working_transcriptions") > records
+      );
+    } else {
+      const parent_model = this.get_parent_model();
+      return super.allow_add() && (
+        null != parent_model &&
+        ("participant" == parent_model.get_name() && 0 == records) ||
+        ("add" == this.get_action_name())
+      );
+    }
+
+    return false;
   }
 }
 
@@ -390,6 +424,57 @@ export class CN_transcription_multiedit extends CN_base_action {
   }
 }
 
+export class CN_transcription_list extends CN_action_list {
+  /**
+   * Extends the parent method
+   */
+  create_footer_element() {
+    const footer_el = super.create_footer_element();
+    const btn_group_el = footer_el.querySelector("div.btn-group");
+
+    if (this.get_model().get_module().action_allowed("multiedit")) {
+      const multiedit_btn_el = this.constructor.html(
+        '<button name="multiedit" type="button" class="btn btn-light btn-outline-primary">Multiedit</button>'
+      );
+      multiedit_btn_el.addEventListener("click", () => {
+        CN_session.navigate_to("transcription/multiedit");
+      });
+      btn_group_el.append(multiedit_btn_el);
+    }
+
+    if (2 < CN_session.get("role", "tier")) {
+      const rescore_btn_el = this.constructor.html(
+        '<button name="rescore" type="button" class="btn btn-light btn-outline-primary">Rescore All</button>'
+      );
+      rescore_btn_el.addEventListener("click", async () => {
+        const response = await CN_modal_confirm.create_and_open({
+          title: "Rescore All Test Entries",
+          message: `
+            <div class="pb-2">Are you sure you wish to re-score all test entries?</div>
+            <div>
+              This process is processor-intensive and may slow down the application for all
+              users while scores are being re-calculated.  You should only continue if it is
+              necessary for tests to be re-scored immediately.
+            </div>
+          `,
+        });
+
+        if (response) {
+          this.constructor.set_disabled(rescore_btn_el, true);
+          await this.constructor.wait_for(
+            async () => await CN_api.count("transcription", { rescore: 1 }),
+            0, // show wait-for message immediately
+          );
+          this.constructor.set_disabled(rescore_btn_el, false);
+        }
+      });
+      btn_group_el.append(rescore_btn_el);
+    }
+
+    return footer_el;
+  }
+}
+
 export class CN_transcription_view extends CN_action_view {
   /**
    * Extends the parent method
@@ -399,5 +484,32 @@ export class CN_transcription_view extends CN_action_view {
       return this.get_property_value("uid");
     }
     return await super.get_text(type);
+  }
+
+  /**
+   * Extends the parent method
+   */
+  create_footer_element() {
+    const footer_el = super.create_footer_element();
+    const btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
+
+    if (2 < CN_session.get("role", "tier")) {
+      const rescore_btn_el = this.constructor.html(
+        '<button name="rescore" type="button" class="btn btn-light btn-outline-primary">Rescore</button>'
+      );
+      rescore_btn_el.addEventListener("click", async () => {
+        this.constructor.set_disabled(rescore_btn_el, true);
+        await this.constructor.wait_for(
+          async () => await CN_api.count(this.get_model().get_view_url(null, "api"), { rescore: 1 }),
+        );
+        this.constructor.set_disabled(rescore_btn_el, false);
+        this.get_model().get_child_model_list()
+          .filter(child_model => "test_entry" == child_model.get_name())
+          .forEach(child_model => child_model.run());
+      });
+      btn_group_el.append(rescore_btn_el);
+    }
+
+    return footer_el;
   }
 }

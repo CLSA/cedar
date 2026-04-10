@@ -36,6 +36,16 @@ export class CN_test_entry_model extends CN_base_model {
           help: "Which languages the test entry has been associated with",
         },
         state: { title: "State" },
+        score: {
+          title: "Score",
+          type: "integer",
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
+        },
+        alt_score: {
+          title: "Alt Score",
+          type: "integer",
+          is_hidden: () => "typist" == CN_session.get("role", "name"),
+        },
       },
       properties: {
         data_type: { meta: { table: "test_type", column: "data_type" } },
