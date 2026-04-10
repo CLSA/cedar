@@ -399,52 +399,6 @@ class test_type extends \cenozo\database\record
       $letter_sequence_mod->get_sql()
     ) );
 
-    /*
-    $base_sequence_sel = lib::create( 'database\select' );
-    $base_sequence_sel->from( 'test_entry' );
-    $base_sequence_sel->add_column(
-      '( @sequence_rank := IF( @test_entry_id = test_entry_id, @sequence_rank + 1, 1 ) )',
-      'srank',
-      false
-    );
-    $base_sequence_sel->add_column(
-      '( @test_entry_id := test_entry_id )',
-      'test_entry_id',
-      false
-    );
-    $base_sequence_sel->add_table_column( 'mat_data', 'rank' );
-    $base_sequence_sel->add_table_column( 'mat_data', 'value' );
-
-    $base_sequence_mod = clone $modifier;
-    $base_sequence_mod->join( 'mat_data', 'test_entry.id', 'mat_data.test_entry_id' );
-    $base_sequence_mod->order( 'test_entry_id' );
-    $base_sequence_mod->order( 'rank' );
-
-    $number_sequence_sel = clone $base_sequence_sel;
-    $number_sequence_mod = clone $base_sequence_mod;
-    $number_sequence_mod->where( 'value', 'RLIKE', '[0-9]' );
-    static::db()->execute( 'SET @sequence_rank := 0' );
-    static::db()->execute( 'SET @test_entry_id := 0' );
-    static::db()->execute( sprintf(
-      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank, value ) %s %s'."\n".
-      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
-      $number_sequence_sel->get_sql(),
-      $number_sequence_mod->get_sql()
-    ) );
-
-    $letter_sequence_sel = clone $base_sequence_sel;
-    $letter_sequence_mod = clone $base_sequence_mod;
-    $letter_sequence_mod->where( 'value', 'RLIKE', '[a-z]' );
-    static::db()->execute( 'SET @sequence_rank := 0' );
-    static::db()->execute( 'SET @test_entry_id := 0' );
-    static::db()->execute( sprintf(
-      'INSERT INTO mat_data( sequence_rank, test_entry_id, rank, value ) %s %s'."\n".
-      'ON DUPLICATE KEY UPDATE sequence_rank = VALUES( sequence_rank )',
-      $letter_sequence_sel->get_sql(),
-      $letter_sequence_mod->get_sql()
-    ) );
-    */
-
     // now score the test using the sequence ranks
     $mat_sel = clone $select;
     $mat_sel->add_column( 'COUNT(*)', 'score', false );
@@ -488,6 +442,55 @@ class test_type extends \cenozo\database\record
     $homophone_mod->where( 'homophone.rank', '>', 1 );
     $homophone_mod->where( 'test_type.name', 'LIKE', '%(REY1)' );
 
+    // remove all homophones whose base word is already selected
+    $homophone_sel = lib::create( 'database\select' );
+    $homophone_sel->from( 'test_entry' );
+    $homophone_sel->add_table_column( 'rey_data_has_word', 'rey_data_id' );
+    $homophone_sel->add_table_column( 'rey_data_has_word', 'word_id' );
+    $homophone_sel->add_table_column( 'homophone', 'first_word_id' );
+
+    static::db()->execute( sprintf(
+      'CREATE TEMPORARY TABLE rey_data_has_word_temp %s %s',
+      $homophone_sel->get_sql(),
+      $homophone_mod->get_sql()
+    ) );
+
+    static::db()->execute(
+      "ALTER TABLE rey_data_has_word_temp\n".
+      "ADD INDEX fk_rey_data_id (rey_data_id),\n".
+      "ADD INDEX fk_word_id (word_id)"
+    );
+
+    $remove_sel = lib::create( 'database\select' );
+    $remove_sel->from( 'rey_data_has_word_temp' );
+    $remove_sel->add_table_column( 'rey_data_has_word_temp', 'rey_data_id' );
+    $remove_sel->add_table_column( 'rey_data_has_word_temp', 'word_id' );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'rey_data_has_word_temp.rey_data_id', '=', 'rey_data_has_word.rey_data_id', false );
+    $join_mod->where( 'rey_data_has_word_temp.first_word_id', '=', 'rey_data_has_word.word_id', false );
+    $remove_mod = lib::create( 'database\modifier' );
+    $remove_mod->join_modifier( 'rey_data_has_word', $join_mod );
+
+    static::db()->execute( 'CREATE TEMPORARY TABLE rey_data_has_word_remove LIKE rey_data_has_word' );
+    static::db()->execute( sprintf(
+      'INSERT INTO rey_data_has_word_remove (rey_data_id, word_id) %s %s',
+      $remove_sel->get_sql(),
+      $remove_mod->get_sql()
+    ) );
+
+    $delete_mod = lib::create( 'database\modifier' );
+    $join_mod = lib::create( 'database\modifier' );
+    $join_mod->where( 'rey_data_has_word.rey_data_id', '=', 'rey_data_has_word_remove.rey_data_id', false );
+    $join_mod->where( 'rey_data_has_word.word_id', '=', 'rey_data_has_word_remove.word_id', false );
+    $delete_mod->join_modifier( 'rey_data_has_word_remove', $join_mod );
+    static::db()->execute( sprintf(
+      "DELETE rey_data_has_word\n".
+      "FROM rey_data_has_word\n".
+      "%s",
+      $delete_mod->get_sql()
+    ) );
+
+    // now convert the remaining homophones
     static::db()->execute( sprintf(
       "UPDATE test_entry %s\n".
       "SET rey_data_has_word.word_id = homophone.first_word_id\n".
