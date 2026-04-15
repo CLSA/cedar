@@ -1,5 +1,6 @@
 import { CN_word_model } from "./word.mjs"
 
+const { CN_action_add } = await import(`${CENOZO_URL}/js/element/action/add.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
@@ -18,15 +19,56 @@ export class CN_compound_model extends CN_base_model {
         sub_word_id: { type: "hidden" },
       },
       properties: {
-        // TODO: this property isn't showing when trying to add a new subword
         sub_word_id: {
           title: "Subword",
           type: "typeahead",
-          typeahead: CN_word_model.get_typeahead(),
+          typeahead: {}, // dynamic, determined in the add action classes below
         },
         rank: { title: "Rank", type: "rank" },
       },
     });
+  }
+}
+
+export class CN_compound_add extends CN_action_add {
+  /**
+   * Extend parent method
+   */
+  async on_load() {
+    await super.on_load();
+
+    const parent_model = this.get_model().get_parent_model();
+    const parent_word_id = parent_model.get_identifier();
+    const parent_language_id = await parent_model.get_action().get_property_value_for_record("language_id");
+    this.get_property("sub_word_id").form_input.set_config(
+      "typeahead",
+      CN_word_model.get_typeahead([
+        { column: "word.id", operator: "!=", value: parent_word_id },
+        { column: "word.language_id", operator: "=", value: parent_language_id },
+        { bracket: true, open: true },
+        { column: "IFNULL(aft, '')", operator: "!=", value: "invalid" },
+        { column: "IFNULL(fas, '')", operator: "!=", value: "invalid", or: true },
+        { bracket: true, open: false },
+      ])
+    );
+  }
+
+  /**
+   * Extend parent method
+   */
+  create_footer_element() {
+    const footer_el = super.create_footer_element();
+
+    // add a button to add a new word
+    const add_word_btn_el = this.constructor.html(
+      '<button name="add-word" type="button" class="btn btn-light btn-outline-primary">Add Word</button>'
+    );
+    add_word_btn_el.addEventListener("click", async () => {
+      CN_session.navigate_to("word/add");
+    });
+    footer_el.querySelector("div[name=left-btn-group]").append(add_word_btn_el);
+
+    return footer_el;
   }
 }
 

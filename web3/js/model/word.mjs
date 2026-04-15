@@ -28,6 +28,7 @@ export class CN_word_model extends CN_base_model {
         rey_total: { column: "word_test_type_total.rey_total", title: "#REY", type: "number" },
         update_timestamp: { column: "word.update_timestamp", title: "Timestamp", type: "datetime" },
       },
+      get_default_order: () => "word",
       properties: {
         language_id: {
           title: "Language",
@@ -56,7 +57,7 @@ export class CN_word_model extends CN_base_model {
           type: "typeahead",
           typeahead: CN_word_model.get_typeahead(),
           on_change: async (form_input, valid) => {
-            const sister_word_id = await form_input.get_action().get_formatted_property("sister_word_id");
+            const sister_word_id = await form_input.get_action().get_property_value_for_record("sister_word_id");
 
             let proceed = true;
             if (sister_word_id) {
@@ -141,44 +142,51 @@ export class CN_word_model extends CN_base_model {
 
   /**
    * Returns a typeahead object for models that have a typeahead property referencing this model
-   * @param integer|[] language_id: Restricts words to the provided language id or array of language ids
+   * @param [{}] where: An array of where statements to include when searching for words
    * @return object
    * @static
    */
-  static get_typeahead(language_id = null) {
+  static get_typeahead(where = []) {
     return {
-      get_list: async (value) => {
-        // build the where statement
-        const where = [{ column: 'word.word', operator: "LIKE", value: `${value}%` }];
-        if (language_id) {
-          if (CN_common.is_array(language_id)) {
-            where.push({ column: "word.language_id", operator: "IN", value: language_id });
-          } else {
-            where.push({ column: "word.language_id", operator: "=", value: language_id });
-          }
+      min_length: 1,
+      on_select: async (form_input, item) => {
+        form_input.set_value(null == item.value ? null : `${item.word} [${item.code}]`);
+        form_input.commit_value();
+        if (form_input.has_config("on_change")) {
+          form_input.get_config("on_change")(form_input, await form_input.validate());
         }
-
+      },
+      get_list: async (value) => {
         // put the exact match at the top of the returned list
         const special_order = {};
         special_order[`word="${value}"`] = true;
+
+        const modifier = {
+          where: CN_common.clone(where),
+          order: [special_order, "word"],
+          limit: 20,
+        };
+
+        // add defaults to the where statement
+        modifier.where.push({ column: "misspelled", operator: "=", value: false });
+        modifier.where.push({
+          column: 'word.word',
+          operator: 3 > value.length ? "=" : "LIKE",
+          value: 3 > value.length ? value : `${value}%`
+        });
 
         return (await CN_api.get("word", {
           select: {
             column: [
               { column: "id", alias: "key" },
               "word",
-              "misspelled",
               "aft",
               "fas",
               "language_id",
               { table: "language", column: "code" },
             ],
           },
-          modifier: {
-            where: where,
-            order: [special_order, "word"],
-            limit: 20,
-          },
+          modifier: modifier,
         })).map(item => {
           item.value = this.get_word_html(item);
           return item;
@@ -195,6 +203,16 @@ export class CN_word_view extends CN_action_view {
   get_selector_child_list() {
     const animal_code = this.get_property_value("animal_code");
     return super.get_selector_child_list().filter(c => null == animal_code || "compound" != c.model.get_name());
+  }
+
+  /**
+   * Extends the parent method
+   */
+  async get_text(type) {
+    if (["crumb", "name"].includes(type)) {
+      return this.get_property_value("word");
+    }
+    return await super.get_text(type);
   }
 
   /**
@@ -216,7 +234,9 @@ export class CN_word_view extends CN_action_view {
     const data = { correct_word: null, note: null };
 
     if ("misspelled" == prop_name) {
-      const typeahead = CN_word_model.get_typeahead(language_id);
+      const typeahead = CN_word_model.get_typeahead([
+        { column: "word.language_id", operator: "=", value: language_id }
+      ]);
       data.correct_word = await CN_modal_input.create_and_open({
         title: "Select Correct Word",
         message: `
@@ -272,7 +292,7 @@ export class CN_word_view extends CN_action_view {
 
     // we now re-implement the parent's on_set_property method but with customizations
     try {
-      data[prop_name] = await this.get_formatted_property(prop_name);
+      data[prop_name] = await this.get_property_value_for_record(prop_name);
       await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
     } catch (error) {
       this.get_property(prop_name).form_input.undo_value();

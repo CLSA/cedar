@@ -189,7 +189,7 @@ export class CN_transcription_multiedit extends CN_base_action {
    */
   async get_text(type) {
     if ("crumb" == type) {
-      return "Mutli-Edit";
+      return "Multi-Edit";
     }
 
     if ("header" == type) {
@@ -442,7 +442,7 @@ export class CN_transcription_list extends CN_action_list {
       btn_group_el.append(multiedit_btn_el);
     }
 
-    if (2 < CN_session.get("role", "tier")) {
+    if (2 < CN_session.get("role", "tier") && "transcription" == CN_session.get_leaf_model().get_name()) {
       const rescore_btn_el = this.constructor.html(
         '<button name="rescore" type="button" class="btn btn-light btn-outline-primary">Rescore All</button>'
       );
