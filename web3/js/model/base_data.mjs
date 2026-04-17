@@ -150,6 +150,8 @@ export class CN_base_data_test extends CN_base_action {
 
     this.#sound_file_list.forEach(sound_file => {
       if (sound_file.form_input) sound_file.form_input.set_disabled(disabled);
+      // TODO: the identyfing dropdown isn't being disabled
+      if (sound_file.identifying_form_input) sound_file.identifying_form_input.set_disabled(disabled);
     });
   }
 
@@ -318,7 +320,7 @@ export class CN_base_data_test extends CN_base_action {
             });
           },
           postfix: (el) => {
-            CN_input_boolean.append(el, {
+            sound_file.identifying_form_input = CN_input_boolean.append(el, {
               id: `identifying_${sound_file.id}`,
               class: "ms-2",
               placeholder: "(select identifying)",

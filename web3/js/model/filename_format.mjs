@@ -14,7 +14,6 @@ export class CN_filename_format_model extends CN_base_model {
       properties: {
         format: {
           title: "Format",
-          type: "string",
           help: "A regular expression used to match recording filenames to the parent test type.",
         },
       },

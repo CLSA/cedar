@@ -1,7 +1,34 @@
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
-const classes = await import(`${CENOZO_URL}/js/model/language.mjs`);
+const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
+const classes = await import(`${CENOZO_URL}/js/model/language.mjs`);
 const base_list_class = classes.CN_language_list ? classes.CN_language_list : CN_action_list;
+
+export class CN_language_model extends classes.CN_language_model {
+  /**
+   * Extend parent method
+   */
+  allow_choose() {
+    const parent_model = this.get_parent_model(); 
+
+    return (
+      super.allow_choose() && !(
+        parent_model &&
+        "test_entry" == parent_model.get_name() &&
+        "submitted" == parent_model.get_action().get_property_value("state")
+      )
+    );
+  }
+
+  /**
+   * Extend parent method
+   */
+  allow_view() {
+    return super.allow_view && 3 <= CN_session.get("role", "tier");
+  }
+}
+
+
 export class CN_language_list extends base_list_class {
   /**
    * Extend parent method

@@ -58,7 +58,7 @@ export class CN_test_entry_model extends CN_base_model {
         audio_status_type_id: {},
         audio_status_type_other: {},
         participant_status_type_id: {},
-        participant_status_type_other: { },
+        participant_status_type_other: {},
         admin_status_type_id: {},
         admin_status_type_other: {},
       },
@@ -109,7 +109,7 @@ export class CN_test_entry_view extends CN_action_view {
     const model = this.get_model();
 
     if (["crumb", "header"].includes(type)) {
-      return this.#test_type.name;
+      return this.#test_type ? this.#test_type.name : this.get_property_value("data_type").toUpperCase();
     }
 
     return await super.get_text(type);
@@ -119,7 +119,7 @@ export class CN_test_entry_view extends CN_action_view {
    * Extend parent method
    */
   set_disabled(disabled) {
-    this.#data_model.get_action().set_disabled(disabled);
+    if (this.#data_model) this.#data_model.get_action().set_disabled(disabled);
 
     const state = this.get_property_value("state");
     if (this.#state_btn_el) {
@@ -180,8 +180,9 @@ export class CN_test_entry_view extends CN_action_view {
       }
     }
 
+    const disabled = this.get_disabled();
     try {
-      this.set_disabled(true);
+      if (!disabled) this.set_disabled(true);
       await CN_api.patch(test_entry_path, { state: state });
       if ("assigned" != state && "typist" == CN_session.get("role", "name")) {
         await this.transition("next");
@@ -193,8 +194,10 @@ export class CN_test_entry_view extends CN_action_view {
         await CN_modal_message.create_and_open({
           title: "Conflict",
           message: "The test-entry cannot be submitted if it " + (
-            "aft" == this.#test_type.data_type || "fas" == this.#test_type.data_type ? "contains invalid words or placeholders." :
-            "rey" == this.#test_type.data_type ? "contains invalid words or there is missing data." :
+            "aft" == this.#test_type.data_type || "fas" == this.#test_type.data_type ?
+            "contains invalid words or placeholders." :
+            "rey" == this.#test_type.data_type ?
+            "contains invalid words or there is missing data." :
             "is missing data."
           ),
           type: "danger",
@@ -203,7 +206,7 @@ export class CN_test_entry_view extends CN_action_view {
         throw error;
       }
     } finally {
-      this.set_disabled(false);
+      if (!disabled) this.set_disabled(false);
     }
   }
 
@@ -243,13 +246,14 @@ export class CN_test_entry_view extends CN_action_view {
     }
 
     const footer_el = this.get_footer_element();
+    const role = CN_session.get("role", "name");
     const state = this.get_property_value("state");
     const options = [];
     if ("assigned" == state) {
       options.push({ name: "deferred", title: "Defer" });
       options.push({
         name: "submitted",
-        title: "typist" == CN_session.get("role", "name") ? "Submit" : "Force Submit"
+        title: "typist" == role ? "Submit" : "Force Submit"
       });
     } else if ("deferred" == state) {
       options.push({ name: "assigned", title: "Return to Typist" });
@@ -270,18 +274,10 @@ export class CN_test_entry_view extends CN_action_view {
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
         btn_el.addEventListener("click", this.set_state.bind(this, option.name, "deferred" == option.name));
       });
-      this.constructor.set_disabled(
-        this.#state_btn_el, this.get_disabled() ||
-        ("assigned" != state && "typist" == CN_session.get("role", "name"))
-      );
     }
 
-    if (this.#reset_btn_el) {
-      this.constructor.set_disabled(
-        this.#reset_btn_el, this.get_disabled() ||
-        ("assigned" != state && "typist" == CN_session.get("role", "name"))
-      );
-    }
+    // only enabled for typists
+    this.set_disabled("typist" != role || "assigned" != state);
   }
 
   /**

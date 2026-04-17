@@ -57,7 +57,8 @@ export class CN_word_model extends CN_base_model {
           type: "typeahead",
           typeahead: CN_word_model.get_typeahead(),
           on_change: async (form_input, valid) => {
-            const sister_word_id = await form_input.get_action().get_property_value_for_record("sister_word_id");
+            const action = form_input.get_action();
+            const sister_word_id = await action.get_property_value_for_record("sister_word_id");
 
             let proceed = true;
             if (sister_word_id) {
@@ -74,7 +75,7 @@ export class CN_word_model extends CN_base_model {
               }
             }
 
-            await form_input.get_action().on_property_change("sister_word_id", proceed ? valid : false);
+            await action.on_property_change("sister_word_id", proceed ? valid : false);
           },
           is_constant: (model) =>
             "view" == model.get_action_name() &&
@@ -101,11 +102,12 @@ export class CN_word_model extends CN_base_model {
    * Non admins can only edit words under certain circumstances
    */
   allow_edit() {
+    const action = this.get_action();
     return super.allow_edit() && !(
       3 > CN_session.get("role", "tier") &&
-      null != this.get_action().get_property_value("misspelled") &&
-      null != this.get_action().get_property_value("aft") &&
-      null != this.get_action().get_property_value("fas")
+      null != action.get_property_value("misspelled") &&
+      null != action.get_property_value("aft") &&
+      null != action.get_property_value("fas")
     );
   }
 
@@ -227,7 +229,7 @@ export class CN_word_view extends CN_action_view {
 
     const word = this.get_property_value("word");
     const language_id = this.get_property_value("language_id");
-    const language = this.get_property("language_id").form_input.enum.values.find(
+    const language = this.get_property("language_id").form_input.get_config("enum").values.find(
       option => option.key == language_id
     ).value;
 

@@ -431,10 +431,15 @@ export class CN_transcription_list extends CN_action_list {
   create_footer_element() {
     const footer_el = super.create_footer_element();
     const btn_group_el = footer_el.querySelector("div.btn-group");
+    const leaf_model = CN_session.get_leaf_model();
 
-    if (this.get_model().get_module().action_allowed("multiedit")) {
+    if (
+      leaf_model &&
+      "transcription" == leaf_model.get_name() &&
+      this.get_model().get_module().action_allowed("multiedit")
+    ) {
       const multiedit_btn_el = this.constructor.html(
-        '<button name="multiedit" type="button" class="btn btn-light btn-outline-primary">Multiedit</button>'
+        '<button name="multiedit" type="button" class="btn btn-light btn-outline-primary">Multi-Edit</button>'
       );
       multiedit_btn_el.addEventListener("click", () => {
         CN_session.navigate_to("transcription/multiedit");
