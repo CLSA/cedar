@@ -1,12 +1,12 @@
-const { CN_action_notes } = await import(`${CENOZO_URL}/js/element/action/notes.mjs`);
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
+const { CN_action_notes } = await import(`${CENOZO_URL}/js/action/notes.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
-const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
-const { CN_modal_input } = await import(`${CENOZO_URL}/js/element/modal/input.mjs`);
-const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
+const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 export class CN_test_entry_model extends CN_base_model {

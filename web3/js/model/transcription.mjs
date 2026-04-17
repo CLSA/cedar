@@ -1,13 +1,13 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
-const { CN_action_view } = await import(`${CENOZO_URL}/js/element/action/view.mjs`);
-const { CN_base_action } = await import(`${CENOZO_URL}/js/element/action/base_action.mjs`);
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
+const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
+const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-const { CN_input_enum } = await import(`${CENOZO_URL}/js/element/input/enum.mjs`);
-const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
-const { CN_modal_message } = await import(`${CENOZO_URL}/js/element/modal/message.mjs`);
+const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
+const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 

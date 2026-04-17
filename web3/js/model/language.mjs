@@ -1,4 +1,4 @@
-const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const classes = await import(`${CENOZO_URL}/js/model/language.mjs`);
 
 const base_list_class = classes.CN_language_list ? classes.CN_language_list : CN_action_list;

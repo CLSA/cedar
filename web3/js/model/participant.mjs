@@ -1,6 +1,6 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_action_list } = await import(`${CENOZO_URL}/js/element/action/list.mjs`);
-const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/element/modal/confirm.mjs`);
+const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const classes = await import(`${CENOZO_URL}/js/model/participant.mjs`);

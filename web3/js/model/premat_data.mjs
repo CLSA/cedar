@@ -2,7 +2,7 @@ import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
 
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
-const { CN_input_boolean } = await import(`${CENOZO_URL}/js/element/input/boolean.mjs`);
+const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 
 export class CN_premat_data_model extends CN_base_data_model {
   constructor() {
