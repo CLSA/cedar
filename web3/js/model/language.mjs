@@ -9,7 +9,7 @@ export class CN_language_model extends classes.CN_language_model {
    * Extend parent method
    */
   allow_choose() {
-    const parent_model = this.get_parent_model(); 
+    const parent_model = this.get_parent_model();
 
     return (
       super.allow_choose() && !(
