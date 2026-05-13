@@ -2,7 +2,7 @@ const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 const classes = await import(`${CENOZO_URL}/js/model/home.mjs`);
 
-export class CN_home_model extends classes.CN_home_model {
+export class CN_model_home extends classes.CN_model_home {
   #transcription_model;
 
   /**

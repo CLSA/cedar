@@ -1,7 +1,7 @@
 const { CN_action_notes } = await import(`${CENOZO_URL}/js/action/notes.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_loading_box } = await import(`${CENOZO_URL}/js/element/loading_box.mjs`);
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
@@ -9,7 +9,7 @@ const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_test_entry_model extends CN_base_model {
+export class CN_model_test_entry extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -73,7 +73,7 @@ export class CN_test_entry_model extends CN_base_model {
   }
 }
 
-export class CN_test_entry_notes extends CN_action_notes {
+export class CN_notes_test_entry extends CN_action_notes {
   constructor(parent_el, model) {
     super(parent_el, model);
     this.set_footer_at_top(false);
@@ -96,7 +96,7 @@ export class CN_test_entry_notes extends CN_action_notes {
   }
 }
 
-export class CN_test_entry_view extends CN_action_view {
+export class CN_view_test_entry extends CN_action_view {
   #test_type;
   #data_model;
   #state_btn_el;

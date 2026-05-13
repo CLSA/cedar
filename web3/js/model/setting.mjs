@@ -1,6 +1,6 @@
 const classes = await import(`${CENOZO_URL}/js/model/setting.mjs`);
 
-export class CN_setting_model extends classes.CN_setting_model {
+export class CN_model_setting extends classes.CN_model_setting {
   /**
    * Extends parent method
    */

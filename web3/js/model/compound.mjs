@@ -1,11 +1,11 @@
-import { CN_word_model } from "./word.mjs"
+import { CN_model_word } from "./word.mjs"
 
 const { CN_action_add } = await import(`${CENOZO_URL}/js/action/add.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_compound_model extends CN_base_model {
+export class CN_model_compound extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -30,7 +30,7 @@ export class CN_compound_model extends CN_base_model {
   }
 }
 
-export class CN_compound_add extends CN_action_add {
+export class CN_add_compound extends CN_action_add {
   /**
    * Extend parent method
    */
@@ -42,7 +42,7 @@ export class CN_compound_add extends CN_action_add {
     const parent_language_id = await parent_model.get_action().get_property_value_for_record("language_id");
     this.get_property("sub_word_id").form_input.set_config(
       "typeahead",
-      CN_word_model.get_typeahead([
+      CN_model_word.get_typeahead([
         { column: "word.id", operator: "!=", value: parent_word_id },
         { column: "word.language_id", operator: "=", value: parent_language_id },
         { bracket: true, open: true },
@@ -72,7 +72,7 @@ export class CN_compound_add extends CN_action_add {
   }
 }
 
-export class CN_compound_list extends CN_action_list {
+export class CN_list_compound extends CN_action_list {
   /**
    * Extend parent method to make clicking on a compound bring you to the word
    */

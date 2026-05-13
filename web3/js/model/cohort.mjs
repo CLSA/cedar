@@ -1,7 +1,7 @@
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const classes = await import(`${CENOZO_URL}/js/model/cohort.mjs`);
-export class CN_cohort_model extends classes.CN_cohort_model {
+export class CN_model_cohort extends classes.CN_model_cohort {
   /**
    * Extend parent method
    */

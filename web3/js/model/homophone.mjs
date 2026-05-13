@@ -1,8 +1,8 @@
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_homophone_model extends CN_base_model {
+export class CN_model_homophone extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -22,7 +22,7 @@ export class CN_homophone_model extends CN_base_model {
   }
 }
 
-export class CN_homophone_list extends CN_action_list {
+export class CN_list_homophone extends CN_action_list {
   /**
    * Extend parent method to make clicking on a homophone bring you to the word
    */

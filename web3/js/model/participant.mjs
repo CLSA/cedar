@@ -4,9 +4,9 @@ const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const classes = await import(`${CENOZO_URL}/js/model/participant.mjs`);
-const base_list_class = classes.CN_participant_list ? classes.CN_participant_list : CN_action_list;
+const base_list_class = classes.CN_list_participant ? classes.CN_list_participant : CN_action_list;
 
-export class CN_participant_model extends classes.CN_participant_model {
+export class CN_model_participant extends classes.CN_model_participant {
   /**
    * Extends parent method
    */
@@ -33,7 +33,7 @@ export class CN_participant_model extends classes.CN_participant_model {
   }
 }
 
-export class CN_participant_list extends base_list_class {
+export class CN_list_participant extends base_list_class {
   /**
    * Extends the parent method
    */

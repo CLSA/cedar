@@ -1,16 +1,16 @@
-import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
+import { CN_model_base_data, CN_test_base_data } from "./base_data.mjs"
 
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 
-export class CN_premat_data_model extends CN_base_data_model {
+export class CN_model_premat_data extends CN_model_base_data {
   constructor() {
     super("pre-MAT");
   }
 }
 
-export class CN_premat_data_test extends CN_base_data_test {
+export class CN_test_premat_data extends CN_test_base_data {
   #record;
   #counting_form_input;
   #alphabet_form_input;

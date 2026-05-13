@@ -2,16 +2,16 @@ const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
-const { CN_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
+const { CN_element_participant_selection }  = await import(`${CENOZO_URL}/js/model/participant.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_transcription_model extends CN_base_model {
+export class CN_model_transcription extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -154,7 +154,7 @@ export class CN_transcription_model extends CN_base_model {
   }
 }
 
-export class CN_transcription_multiedit extends CN_base_action {
+export class CN_multiedit_transcription extends CN_base_action {
   #restriction_form_input;
   #site_form_input;
   #user_form_input;
@@ -171,7 +171,7 @@ export class CN_transcription_multiedit extends CN_base_action {
     key: "any",
     value: "ANY: Do not restrict participants (unavailable participants will be imported)",
   }];
-  #participant_selection = new CN_participant_selection(null, {
+  #participant_selection = new CN_element_participant_selection(null, {
     path: "transcription",
     data: { import_restriction: this.#import_restrictions[0].key },
   });
@@ -424,7 +424,7 @@ export class CN_transcription_multiedit extends CN_base_action {
   }
 }
 
-export class CN_transcription_list extends CN_action_list {
+export class CN_list_transcription extends CN_action_list {
   /**
    * Extends the parent method
    */
@@ -480,7 +480,7 @@ export class CN_transcription_list extends CN_action_list {
   }
 }
 
-export class CN_transcription_view extends CN_action_view {
+export class CN_view_transcription extends CN_action_view {
   /**
    * Extends the parent method
    */

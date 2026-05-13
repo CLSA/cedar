@@ -1,11 +1,11 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_test_type_model extends CN_base_model {
+export class CN_model_test_type extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -32,7 +32,7 @@ export class CN_test_type_model extends CN_base_model {
   }
 }
 
-export class CN_test_type_list extends CN_action_list {
+export class CN_list_test_type extends CN_action_list {
   /**
    * Extends the parent method
    */
@@ -73,7 +73,7 @@ export class CN_test_type_list extends CN_action_list {
   }
 }
 
-export class CN_test_type_view extends CN_action_view {
+export class CN_view_test_type extends CN_action_view {
   /**
    * Extends the parent method
    */

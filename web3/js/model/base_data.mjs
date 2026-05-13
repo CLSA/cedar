@@ -1,6 +1,6 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_audio_url } = await import(`${CENOZO_URL}/js/input/audio_url.mjs`);
@@ -8,7 +8,7 @@ const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 
-export class CN_base_data_model extends CN_base_model {
+export class CN_model_base_data extends CN_model_base {
   #data_name;
 
   constructor(data_name) {
@@ -20,8 +20,8 @@ export class CN_base_data_model extends CN_base_model {
       },
     });
 
-    if ("CN_base_data_model" == this.constructor) {
-      throw new Error("Abstract class CN_base_data_model can't be instantiated.");
+    if ("CN_model_base_data" == this.constructor) {
+      throw new Error("Abstract class CN_model_base_data can't be instantiated.");
     }
 
     this.#data_name = data_name.toLowerCase().replace(/[^a-z]/g, "");
@@ -30,7 +30,7 @@ export class CN_base_data_model extends CN_base_model {
   get_data_name() { return this.#data_name; }
 }
 
-export class CN_base_data_test extends CN_base_action {
+export class CN_test_base_data extends CN_base_action {
   #language_list = [];
   #status_type_list = [];
   #sound_file_list = [];

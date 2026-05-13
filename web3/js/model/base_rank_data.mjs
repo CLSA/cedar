@@ -1,5 +1,5 @@
-import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
-import { CN_word_model } from "./word.mjs"
+import { CN_model_base_data, CN_test_base_data } from "./base_data.mjs"
+import { CN_model_word } from "./word.mjs"
 
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
@@ -9,17 +9,17 @@ const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/input/typeahead.mj
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 
-export class CN_base_rank_data_model extends CN_base_data_model {
+export class CN_model_base_rank_data extends CN_model_base_data {
   constructor(data_name) {
     super(data_name);
 
-    if ("CN_base_rank_data_model" == this.constructor) {
-      throw new Error("Abstract class CN_base_rank_data_model can't be instantiated.");
+    if ("CN_model_base_rank_data" == this.constructor) {
+      throw new Error("Abstract class CN_model_base_rank_data can't be instantiated.");
     }
   }
 }
 
-export class CN_base_rank_data_test extends CN_base_data_test {
+export class CN_test_base_rank_data extends CN_test_base_data {
   #entry_type;
   #entry_list;
   #new_entry_form_input;
@@ -145,7 +145,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
               "character" == this.#entry_type ?
               entry.value :
               entry.word ?
-              CN_word_model.get_word_html(entry) :
+              CN_model_word.get_word_html(entry) :
               "(placeholder)"
             }
           </button>
@@ -213,7 +213,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
         },
       });
     } else { // "word" == this.#entry_type
-      const typeahead = CN_word_model.get_typeahead([
+      const typeahead = CN_model_word.get_typeahead([
         { column: "word.language_id", operator: "IN", value: this.get_language_list().map(l => l.id) },
         { column: this.get_model().get_data_name(), operator: "!=", value: "invalid" },
       ]);
@@ -229,7 +229,7 @@ export class CN_base_rank_data_test extends CN_base_data_test {
         } else {
           // remove en-/em-dashes, and remove case and double quotes if they are found at the start/end
           const new_entry = item.value.toLowerCase().replace(/[—–]/g, "-").replace(/^"|"$/g, "").toLowerCase();
-          if (!CN_word_model.is_word_valid(new_entry) && !new_entry.match(/^-+$/)) {
+          if (!CN_model_word.is_word_valid(new_entry) && !new_entry.match(/^-+$/)) {
             await CN_modal_message.create_and_open({
               title: "Invalid Word",
               message: `

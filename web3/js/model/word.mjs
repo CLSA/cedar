@@ -1,12 +1,12 @@
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
-const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_word_model extends CN_base_model {
+export class CN_model_word extends CN_model_base {
   constructor() {
     super({
       wording: {
@@ -55,7 +55,7 @@ export class CN_word_model extends CN_base_model {
         sister_word_id: {
           title: "Parent Sister Word",
           type: "typeahead",
-          typeahead: CN_word_model.get_typeahead(),
+          typeahead: CN_model_word.get_typeahead(),
           on_change: async (form_input, valid) => {
             const action = form_input.get_action();
             const sister_word_id = await action.get_property_value_for_record("sister_word_id");
@@ -198,7 +198,7 @@ export class CN_word_model extends CN_base_model {
   }
 }
 
-export class CN_word_view extends CN_action_view {
+export class CN_view_word extends CN_action_view {
   /**
    * Remove the compound model from the selector's child list when the animal code is defined
    */
@@ -236,7 +236,7 @@ export class CN_word_view extends CN_action_view {
     const data = { correct_word: null, note: null };
 
     if ("misspelled" == prop_name) {
-      const typeahead = CN_word_model.get_typeahead([
+      const typeahead = CN_model_word.get_typeahead([
         { column: "word.language_id", operator: "=", value: language_id }
       ]);
       data.correct_word = await CN_modal_input.create_and_open({

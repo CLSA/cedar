@@ -2,9 +2,9 @@ const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
 const classes = await import(`${CENOZO_URL}/js/model/site.mjs`);
-const base_view_class = classes.CN_site_view ? classes.CN_site_view : CN_action_view;
+const base_view_class = classes.CN_view_site ? classes.CN_view_site : CN_action_view;
 
-export class CN_site_view extends base_view_class {
+export class CN_view_site extends base_view_class {
   /**
    * Extends the parent method
    */

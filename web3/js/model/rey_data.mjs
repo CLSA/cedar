@@ -1,5 +1,5 @@
-import { CN_base_data_model, CN_base_data_test } from "./base_data.mjs"
-import { CN_word_model } from "./word.mjs"
+import { CN_model_base_data, CN_test_base_data } from "./base_data.mjs"
+import { CN_model_word } from "./word.mjs"
 
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
@@ -9,13 +9,13 @@ const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/input/typeahead.mj
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 
-export class CN_rey_data_model extends CN_base_data_model {
+export class CN_model_rey_data extends CN_model_base_data {
   constructor() {
     super("REY");
   }
 }
 
-export class CN_rey_data_test extends CN_base_data_test {
+export class CN_test_rey_data extends CN_test_base_data {
   #base_language_id;
   #language_form_input;
   #new_entry_form_input;
@@ -257,7 +257,7 @@ export class CN_rey_data_test extends CN_base_data_test {
         const button_div_el = this.constructor.html(`
           <div class="pb-1 px-2 w-25">
             <button type="button" class="btn btn-${btn_class} w-100">
-              ${CN_word_model.get_word_html(intrusion)}
+              ${CN_model_word.get_word_html(intrusion)}
             </button>
           </div>
         `);
@@ -335,7 +335,7 @@ export class CN_rey_data_test extends CN_base_data_test {
     // add word entry
     const word_row_el = test_entry_el.querySelector("div[name=word-add] div.row");
     CN_element_label.append(word_row_el, { for: "new_entry", value: "Enter Word", class: "col-sm-3" });
-    const typeahead = CN_word_model.get_typeahead([
+    const typeahead = CN_model_word.get_typeahead([
       { column: "word.language_id", operator: "IN", value: this.get_language_list().map(l => l.id) },
     ])
     typeahead.allow_new = true;
@@ -359,7 +359,7 @@ export class CN_rey_data_test extends CN_base_data_test {
             header_class: "text-bg-danger",
           });
           return;
-        } else if (!CN_word_model.is_word_valid(new_entry, this.get_language_list())) {
+        } else if (!CN_model_word.is_word_valid(new_entry, this.get_language_list())) {
           await CN_modal_message.create_and_open({
             title: `
               The word you have provided is invalid.\n\n
