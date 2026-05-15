@@ -2,10 +2,10 @@ import { CN_model_word } from "./word.mjs"
 
 const { CN_action_add } = await import(`${CENOZO_URL}/js/action/add.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
-const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
 
-export class CN_model_compound extends CN_model_base {
+export class CN_model_compound extends CN_base_model {
   constructor() {
     super({
       wording: {

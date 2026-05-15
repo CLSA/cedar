@@ -1,6 +1,6 @@
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
-const { CN_model_base } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_audio_url } = await import(`${CENOZO_URL}/js/input/audio_url.mjs`);
@@ -8,7 +8,7 @@ const { CN_input_boolean } = await import(`${CENOZO_URL}/js/input/boolean.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 
-export class CN_model_base_data extends CN_model_base {
+export class CN_model_base_data extends CN_base_model {
   #data_name;
 
   constructor(data_name) {
