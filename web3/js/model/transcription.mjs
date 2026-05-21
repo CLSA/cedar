@@ -69,7 +69,7 @@ export class CN_model_transcription extends CN_base_model {
           type: "enum",
           enum: {
             path: "user",
-            get_enums: async (model) => {
+            get_enums: async () => {
               const user_list = await CN_api.get( "user", {
                 select: { distinct: true, column: ["id", "name", "first_name", "last_name"] },
                 modifier: {
@@ -312,7 +312,7 @@ export class CN_multiedit_transcription extends CN_base_action {
       class: "col-sm-9",
       get_default: () => null,
       enum: {
-        get_enums: async (form_input) => (
+        get_enums: async () => (
           await CN_api.get("site", { select: { column: ["id", "name"] } })
         ).map(site => ({ key: site.id, value: site.name })),
       },
