@@ -228,7 +228,9 @@ export class CN_test_base_data extends CN_base_action {
         const other_id = `${cat_name}_status_type_other`;
         const other_value = parent_action.get_property_value(other_id);
 
-        category.element = this.constructor.html('<div name="${cat_name}" class="w-100 m-2"></div>');
+        category.element = this.constructor.html(
+          `<div name="${CN_common.encode_html(cat_name)}" class="w-100 m-2"></div>`
+        );
         CN_element_label.append(category.element, {
           for: status_id,
           value: `${CN_common.uc_words(cat_name)} Status`,
