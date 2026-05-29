@@ -19,13 +19,13 @@ export class CN_model_word extends CN_base_model {
         word: { column: "word.word", title: "Word" },
         animal_code: { column: "word.animal_code", title: "Animal Code" },
         sister_word: { column: "sister_word.word", title: "Parent Sister" },
-        compound_count: { title: "Compounds", type: "number", table_prefix: false },
+        compound_count: { title: "Compounds", type: "integer", table_prefix: false },
         misspelled: { column: "word.misspelled", title: "Misspelled", type: "boolean" },
         aft: { column: "word.aft", title: "AFT Type" },
         fas: { column: "word.fas", title: "FAS Type" },
-        aft_total: { column: "word_test_type_total.aft_total", title: "#AFT", type: "number" },
-        fas_total: { column: "word_test_type_total.fas_total", title: "#FAS", type: "number" },
-        rey_total: { column: "word_test_type_total.rey_total", title: "#REY", type: "number" },
+        aft_total: { column: "word_test_type_total.aft_total", title: "#AFT", type: "integer" },
+        fas_total: { column: "word_test_type_total.fas_total", title: "#FAS", type: "integer" },
+        rey_total: { column: "word_test_type_total.rey_total", title: "#REY", type: "integer" },
         update_timestamp: { column: "word.update_timestamp", title: "Timestamp", type: "datetime" },
       },
       get_default_order: () => "word",
@@ -143,12 +143,9 @@ export class CN_model_word extends CN_base_model {
   }
 
   /**
-   * Returns a typeahead object for models that have a typeahead property referencing this model
-   * @param [{}] where: An array of where statements to include when searching for words
-   * @return object
-   * @static
+   * Replace the parent method
    */
-  static get_typeahead(where = []) {
+  static get_typeahead(params = {}) {
     return {
       min_length: 1,
       on_select: async (form_input, item) => {
@@ -163,21 +160,7 @@ export class CN_model_word extends CN_base_model {
         const special_order = {};
         special_order[`word="${value}"`] = true;
 
-        const modifier = {
-          where: CN_common.clone(where),
-          order: [special_order, "word"],
-          limit: 20,
-        };
-
-        // add defaults to the where statement
-        modifier.where.push({ column: "misspelled", operator: "=", value: false });
-        modifier.where.push({
-          column: 'word.word',
-          operator: 3 > value.length ? "=" : "LIKE",
-          value: 3 > value.length ? value : `${value}%`
-        });
-
-        return (await CN_api.get("word", {
+        const api_params = CN_common.merge_objects({
           select: {
             column: [
               { column: "id", alias: "key" },
@@ -188,8 +171,22 @@ export class CN_model_word extends CN_base_model {
               { table: "language", column: "code" },
             ],
           },
-          modifier: modifier,
-        })).map(item => {
+          modifier: {
+            where: [{
+              column: "misspelled",
+              operator: "=",
+              value: false,
+            }, {
+              column: 'word.word',
+              operator: 3 > value.length ? "=" : "LIKE",
+              value: 3 > value.length ? value : `${value}%`
+            }],
+            order: [special_order, "word"],
+            limit: 20,
+          },
+        }, params);
+
+        return (await CN_api.get("word", api_params)).map(item => {
           item.value = this.get_word_html(item);
           return item;
         });
@@ -212,6 +209,7 @@ export class CN_view_word extends CN_action_view {
    */
   async get_text(type) {
     if (["crumb", "name"].includes(type)) {
+      await this.after_first_load();
       return this.get_property_value("word");
     }
     return await super.get_text(type);

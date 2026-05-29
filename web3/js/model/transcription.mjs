@@ -210,6 +210,8 @@ export class CN_multiedit_transcription extends CN_base_action {
    * Extend parent method
    */
   async on_load() {
+    await super.on_load();
+
     const model = this.get_model();
 
     // reset the list and transcription components
@@ -486,6 +488,7 @@ export class CN_view_transcription extends CN_action_view {
    */
   async get_text(type) {
     if (["crumb", "name"].includes(type)) {
+      await this.after_first_load();
       return this.get_property_value("uid");
     }
     return await super.get_text(type);

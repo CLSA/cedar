@@ -8,7 +8,7 @@ export class CN_model_setting extends classes.CN_model_setting {
     const columns = super.clone_columns();
     columns.max_working_transcriptions = {
       title: "Max Transcriptions",
-      type: "number",
+      type: "integer",
       help: "The maximum number of transcriptions a typist may work on at one time.",
     };
     return columns;

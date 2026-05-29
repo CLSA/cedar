@@ -109,7 +109,8 @@ export class CN_view_test_entry extends CN_action_view {
     const model = this.get_model();
 
     if (["crumb", "header"].includes(type)) {
-      return this.#test_type ? this.#test_type.name : this.get_property_value("data_type").toUpperCase();
+      await this.after_first_load();
+      return this.#test_type ? this.#test_type.name : this.get_property_value("data_type");
     }
 
     return await super.get_text(type);

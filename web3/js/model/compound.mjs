@@ -42,14 +42,18 @@ export class CN_add_compound extends CN_action_add {
     const parent_language_id = await parent_model.get_action().get_property_value_for_record("language_id");
     this.get_property("sub_word_id").form_input.set_config(
       "typeahead",
-      CN_model_word.get_typeahead([
-        { column: "word.id", operator: "!=", value: parent_word_id },
-        { column: "word.language_id", operator: "=", value: parent_language_id },
-        { bracket: true, open: true },
-        { column: "IFNULL(aft, '')", operator: "!=", value: "invalid" },
-        { column: "IFNULL(fas, '')", operator: "!=", value: "invalid", or: true },
-        { bracket: true, open: false },
-      ])
+      CN_model_word.get_typeahead({
+        modifier: {
+          where: [
+            { column: "word.id", operator: "!=", value: parent_word_id },
+            { column: "word.language_id", operator: "=", value: parent_language_id },
+            { bracket: true, open: true },
+            { column: "IFNULL(aft, '')", operator: "!=", value: "invalid" },
+            { column: "IFNULL(fas, '')", operator: "!=", value: "invalid", or: true },
+            { bracket: true, open: false },
+          ],
+        },
+      }),
     );
   }
 

@@ -277,14 +277,14 @@ export class CN_test_base_data extends CN_base_action {
       }
     }
 
-    // rebuild the audio list
-    const audio_el = this.get_body_element().querySelector("[name=audio]");
-    audio_el.innerHTML = "";
+    // rebuild the recordings list
+    const recordings_el = this.get_body_element().querySelector("[name=recordings]");
+    recordings_el.innerHTML = "";
 
     if (0 == this.#sound_file_list.length) {
-      audio_el.innerHTML = "There are no sound files available for this test.";
+      recordings_el.innerHTML = "There are no sound files available for this test.";
     } else {
-      audio_el.append(this.constructor.html(`
+      recordings_el.append(this.constructor.html(`
         <div class="d-flex justify-content-center pb-2">
           <div class="mx-2 fst-italic"><span class="fw-bold">Play/Pause:</span> Ctrl⋅Shift⋅L</div>
           <div class="mx-2 fst-italic"><span class="fw-bold">Backward:</span> Ctrl⋅Shift⋅&lt;</div>
@@ -350,7 +350,7 @@ export class CN_test_base_data extends CN_base_action {
           },
         });
         row_el.append(sound_file.form_input.get_element());
-        audio_el.append(row_el);
+        recordings_el.append(row_el);
       });
     }
   }
@@ -372,7 +372,7 @@ export class CN_test_base_data extends CN_base_action {
         <hr />
         <div name="status" class="d-flex mx-1"></div>
         <hr />
-        <div name="audio" class="mb-2"></div>
+        <div name="recordings" class="mb-2"></div>
       </div>
     `);
 

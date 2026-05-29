@@ -335,9 +335,15 @@ export class CN_test_rey_data extends CN_test_base_data {
     // add word entry
     const word_row_el = test_entry_el.querySelector("div[name=word-add] div.row");
     CN_element_label.append(word_row_el, { for: "new_entry", value: "Enter Word", class: "col-sm-3" });
-    const typeahead = CN_model_word.get_typeahead([
-      { column: "word.language_id", operator: "IN", value: this.get_language_list().map(l => l.id) },
-    ])
+    const typeahead = CN_model_word.get_typeahead({
+      modifier: {
+        where: {
+          column: "word.language_id",
+          operator: "IN",
+          value: this.get_language_list().map(l => l.id)
+        },
+      }
+    });
     typeahead.allow_new = true;
     typeahead.on_select = async (form_input, item) => {
       // ignore empty values

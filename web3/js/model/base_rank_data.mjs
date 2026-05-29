@@ -213,10 +213,14 @@ export class CN_test_base_rank_data extends CN_test_base_data {
         },
       });
     } else { // "word" == this.#entry_type
-      const typeahead = CN_model_word.get_typeahead([
-        { column: "word.language_id", operator: "IN", value: this.get_language_list().map(l => l.id) },
-        { column: this.get_model().get_data_name(), operator: "!=", value: "invalid" },
-      ]);
+      const typeahead = CN_model_word.get_typeahead({
+        modifier: {
+          where: [
+            { column: "word.language_id", operator: "IN", value: this.get_language_list().map(l => l.id) },
+            { column: this.get_model().get_data_name(), operator: "!=", value: "invalid" },
+          ],
+        },
+      });
       typeahead.allow_new = true;
       typeahead.on_select = async (form_input, item) => {
         // ignore empty values
