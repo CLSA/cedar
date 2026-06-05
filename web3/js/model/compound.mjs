@@ -60,8 +60,8 @@ export class CN_add_compound extends CN_action_add {
   /**
    * Extend parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
 
     // add a button to add a new word
     const add_word_btn_el = this.constructor.html(

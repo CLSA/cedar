@@ -38,7 +38,7 @@ export class CN_model_home extends classes.CN_model_home {
       const transcription_module = CN_session.get_module("transcription");
       await transcription_module.load_classes();
       this.#transcription_model = transcription_module.create_model();
-      this.#transcription_model.configure(this.get_element().querySelector("div.row"), "list");
+      this.#transcription_model.configure(this.get_element().querySelector("div.row"), "list", null, null, true);
       await this.#transcription_model.run();
     }
 

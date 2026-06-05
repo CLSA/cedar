@@ -48,6 +48,7 @@ export class CN_test_base_data extends CN_base_action {
     }
 
     this.set_simple_mode(true);
+    this.set_placeholder_show_delay(600); // reduce how often the placeholder shows
 
     this.#on_keydown = (event) => {
       if (event.shiftKey && event.ctrlKey) {
@@ -365,7 +366,7 @@ export class CN_test_base_data extends CN_base_action {
   /**
    * Replace parent method
    */
-  create_body_element() {
+  _create_body_element() {
     const body_el = this.constructor.html(`
       <div class="conatiner-fluid">
         <div name="test-entry" class="container-fluid"></div>

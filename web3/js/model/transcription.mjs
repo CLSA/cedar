@@ -212,8 +212,6 @@ export class CN_multiedit_transcription extends CN_base_action {
   async on_load() {
     await super.on_load();
 
-    const model = this.get_model();
-
     // reset the list and transcription components
     this.#participant_selection.reset();
   }
@@ -245,7 +243,7 @@ export class CN_multiedit_transcription extends CN_base_action {
   /**
    * Extend parent method
    */
-  create_body_element() {
+  _create_body_element() {
     const body_el = this.constructor.html(`
       <div class="container-fluid text-info-emphasis">
         <div class="pb-2">
@@ -415,7 +413,7 @@ export class CN_multiedit_transcription extends CN_base_action {
   /**
    * Extend parent method
    */
-  create_footer_element() {
+  _create_footer_element() {
     const footer_el = this.constructor.html(`
       <div class="btn-group" role="group">
         <button name="back" type="button" class="btn btn-primary">View Application</button>
@@ -430,8 +428,8 @@ export class CN_list_transcription extends CN_action_list {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
     const btn_group_el = footer_el.querySelector("div.btn-group");
     const leaf_model = CN_session.get_leaf_model();
 
@@ -497,8 +495,8 @@ export class CN_view_transcription extends CN_action_view {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
     const btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
 
     if (2 < CN_session.get("role", "tier")) {

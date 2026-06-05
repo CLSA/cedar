@@ -37,8 +37,8 @@ export class CN_list_participant extends base_list_class {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
 
     if ("participant" == CN_session.get_leaf_model().get_name()) {
       const update_sound_files_btn_el = this.constructor.html(

@@ -36,8 +36,8 @@ export class CN_list_test_type extends CN_action_list {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
     const btn_group_el = footer_el.querySelector("div.btn-group");
 
     if (2 < CN_session.get("role", "tier")) {
@@ -77,8 +77,8 @@ export class CN_view_test_type extends CN_action_view {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
     const btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
 
     if (2 < CN_session.get("role", "tier")) {

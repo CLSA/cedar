@@ -8,8 +8,8 @@ export class CN_view_site extends base_view_class {
   /**
    * Extends the parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
 
     const settings_btn_el = this.constructor.html(
       '<button name="settings" class="btn btn-light btn-outline-primary">Settings</button>'

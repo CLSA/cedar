@@ -284,22 +284,22 @@ export class CN_view_test_entry extends CN_action_view {
   /**
    * Replace parent method
    */
-  create_placeholder_element() {
+  _create_placeholder_element() {
     return CN_element_loading_box.create();
   }
 
   /**
    * Replace parent method
    */
-  create_body_element() {
+  _create_body_element() {
     return this.constructor.html("<div></div>");
   }
 
   /**
    * Extends parent method
    */
-  create_footer_element() {
-    const footer_el = super.create_footer_element();
+  _create_footer_element() {
+    const footer_el = super._create_footer_element();
     const right_btn_group_el = footer_el.querySelector("div[name=right-btn-group]");
     const left_btn_group_el = footer_el.querySelector("div[name=left-btn-group]");
 
@@ -365,12 +365,11 @@ export class CN_view_test_entry extends CN_action_view {
    * Replace parent method
    */
   async run(children = false) {
-    if (null == this.get_model().get_action_name()) return;
+    const model = this.get_model();
+    if (null == model.get_action_name()) return;
 
     // create and configure the data model
     if (null == this.#data_model) {
-      const model = this.get_model();
-
       // get the data type
       this.#test_type = await CN_api.get(model.get_view_url(null, "api"), {
         select: {
@@ -384,8 +383,11 @@ export class CN_view_test_entry extends CN_action_view {
       const data_module = CN_session.get_module(`${this.#test_type.data_type}_data`);
       await data_module.load_classes();
       this.#data_model = data_module.create_model();
-      // note that we set the identifier to an empty string because data models are customized to not use them
-      this.#data_model.configure(this.get_body_element(), "test", null, model);
+
+      if (model.is_rendered()) {
+        // note that we set the identifier to an empty string because data models are customized to not use them
+        this.#data_model.configure(this.get_body_element(), "test", null, model, true);
+      }
     }
 
     const data_action = this.#data_model.get_action();
@@ -399,12 +401,14 @@ export class CN_view_test_entry extends CN_action_view {
     this.on_post_loading();
     data_action.on_post_loading();
 
-    this.update_element();
-    data_action.update_element();
+    if (model.is_rendered()) {
+      this.update_element();
+      data_action.update_element();
+    }
 
-    if (children) {
+    if (model.is_rendered() && children) {
       // run all children as well
-      this.get_model().get_child_model_list().forEach(model => model.run());
+      model.get_child_model_list().forEach(model => model.run());
     }
   }
 }
