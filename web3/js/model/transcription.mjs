@@ -426,6 +426,30 @@ export class CN_multiedit_transcription extends CN_base_action {
 
 export class CN_list_transcription extends CN_action_list {
   /**
+   * Replace parent method
+   */
+  async on_add() {
+    if ("typist" == CN_session.get("role", "name")) {
+      try {
+        const response = await CN_api.post("transcription", { user_id: CN_session.get("user", "id") });
+        CN_session.navigate_to(`transcription/view/${response}`);
+      } catch (error) {
+        if (409 == error.response.status) {
+          await CN_modal_message.create_and_open({
+            title: "Cannot Begin New Transcription",
+            message: JSON.parse(error.body),
+            type: "danger",
+          });
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      await super.on_add();
+    }
+  }
+
+  /**
    * Extends the parent method
    */
   _create_footer_element() {

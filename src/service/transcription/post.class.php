@@ -129,8 +129,9 @@ class post extends \cenozo\service\post
             if( 0 == count( $participant_list ) )
             {
               $this->set_data(
-                'There are no participants available for a transcription at this time, please try again later.' );
-              $this->status->set_code( 408 );
+                'There are no participants available for a transcription at this time, please try again later.'
+              );
+              $this->status->set_code( 409 );
             }
             else
             {

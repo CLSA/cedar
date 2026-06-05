@@ -655,15 +655,8 @@ cenozoApp.defineModule({
                     path: "transcription",
                     data: { user_id: CnSession.user.id },
                     onError: async function (error) {
-                      if (408 == error.status) {
-                        // 408 means there are currently no participants available
-                        CnModalMessageFactory.instance({
-                          title: "No Participants Available",
-                          message: error.data,
-                          error: true,
-                        }).show();
-                      } else if (409 == error.status) {
-                        // 409 means there is a conflict (user cannot start new transcriptions)
+                      if (409 == error.status) {
+                        // 409 means there are no participants or a conflict (user cannot start new transcriptions)
                         await CnModalMessageFactory.instance({
                           title: "Cannot Begin New Transcription",
                           message: error.data,
