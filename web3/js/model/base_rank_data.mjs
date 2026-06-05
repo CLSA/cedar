@@ -153,8 +153,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
         this.constructor.set_disabled(entry.entry_btn_el, this.get_disabled());
         entry.entry_btn_el.addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/${entry.id}`);
-          await this.on_load();
-          this.update_element();
+          await this.run();
         });
         button_div_el.append(entry.entry_btn_el);
       });
@@ -243,7 +242,6 @@ export class CN_test_base_rank_data extends CN_test_base_data {
               `,
               header_class: "text-bg-danger",
             });
-            return;
           } else {
             const participant_language_id =
               this.get_model().get_parent_model().get_action().get_property_value("participant_language_id");
@@ -261,17 +259,15 @@ export class CN_test_base_rank_data extends CN_test_base_data {
               },
             });
 
-            if (!language_id) {
-              await this.on_load();
-              return; // if the user hits cancel the ignore the entry
-            }
-
-            input = { language_id: language_id, word: new_entry };
+            // if the user hits cancel the ignore the entry
+            if (language_id) input = { language_id: language_id, word: new_entry };
           }
         }
 
-        await this.#submit_entry(input);
-        form_input.undo_value(true);
+        if (null != input) {
+          await this.#submit_entry(input);
+          form_input.undo_value(true);
+        }
       };
       this.#new_entry_form_input = new CN_input_typeahead(entry_row_el, {
         id: "new_entry",
@@ -284,8 +280,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           );
           btn_el.addEventListener("click", async () => {
             await this.#submit_entry({ word_id: null });
-            await this.on_load();
-            this.update_element();
+            await this.run();
           });
           el.append(btn_el);
         },
@@ -329,7 +324,6 @@ export class CN_test_base_rank_data extends CN_test_base_data {
       await CN_api.delete(`${this.get_api_path()}/${action_entry.id}`);
     }
 
-    await this.on_load();
-    this.update_element();
+    await this.run();
   }
 }

@@ -263,8 +263,7 @@ export class CN_test_rey_data extends CN_test_base_data {
         `);
         button_div_el.querySelector("button").addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/word/${intrusion.id}`);
-          await this.on_load();
-          this.update_element();
+          await this.run();
         });
 
         buttons_el.append(button_div_el);
