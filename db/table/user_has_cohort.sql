@@ -1,11 +1,12 @@
 CREATE TABLE user_has_cohort (
-  user_id INT(10) UNSIGNED NOT NULL,
-  cohort_id INT(10) UNSIGNED NOT NULL,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  PRIMARY KEY (user_id, cohort_id),
-  INDEX fk_cohort_id (cohort_id ASC),
-  INDEX fk_user_id (user_id ASC),
+  user_id int(10) unsigned NOT NULL,
+  cohort_id int(10) unsigned NOT NULL,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (user_id,cohort_id),
+  KEY fk_cohort_id (cohort_id),
+  KEY fk_user_id (user_id),
   CONSTRAINT fk_user_has_cohort_cohort_id
     FOREIGN KEY (cohort_id)
     REFERENCES cenozo.cohort (id)
@@ -15,7 +16,5 @@ CREATE TABLE user_has_cohort (
     FOREIGN KEY (user_id)
     REFERENCES cenozo.user (id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

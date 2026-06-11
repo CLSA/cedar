@@ -1,5 +1,4 @@
-CREATE TRIGGER rey_data_has_word_AFTER_DELETE
-AFTER DELETE ON cedar.rey_data_has_word FOR EACH ROW
+CREATE TRIGGER rey_data_has_word_AFTER_DELETE AFTER DELETE ON rey_data_has_word FOR EACH ROW
 BEGIN
   SET @test = (
     SELECT SUM( total ) FROM (
@@ -17,4 +16,4 @@ BEGIN
 
   SET @test_entry_id = ( SELECT test_entry_id FROM rey_data WHERE id = OLD.rey_data_id );
   CALL update_test_entry_has_word( @test_entry_id );
-END$$
+END ;;

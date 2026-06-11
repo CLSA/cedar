@@ -1,5 +1,4 @@
-CREATE TRIGGER aft_data_AFTER_DELETE
-AFTER DELETE ON cedar.aft_data FOR EACH ROW
+CREATE TRIGGER aft_data_AFTER_DELETE AFTER DELETE ON aft_data FOR EACH ROW
 BEGIN
   SET @test = (
     SELECT SUM( total ) FROM (
@@ -16,4 +15,4 @@ BEGIN
   END IF;
 
   CALL update_test_entry_has_word( OLD.test_entry_id );
-END$$
+END ;;

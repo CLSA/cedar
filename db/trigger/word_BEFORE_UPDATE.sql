@@ -1,6 +1,6 @@
-CREATE TRIGGER word_BEFORE_UPDATE
-BEFORE UPDATE ON cedar.word FOR EACH ROW
+CREATE TRIGGER word_BEFORE_UPDATE BEFORE UPDATE ON word FOR EACH ROW
 BEGIN
+
   IF NEW.misspelled = true AND NEW.misspelled <> OLD.misspelled THEN
     SET NEW.aft = "invalid";
     SET NEW.fas = "invalid";
@@ -10,5 +10,4 @@ BEGIN
      ( NEW.fas IN ( "intrusion", "primary" ) AND NEW.fas <> OLD.fas ) THEN
     SET NEW.misspelled = false;
   END IF;
-END$$
-
+END ;;

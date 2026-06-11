@@ -1,17 +1,18 @@
 CREATE TABLE sound_file (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  participant_id INT(10) UNSIGNED NOT NULL,
-  test_type_id INT(10) UNSIGNED NULL DEFAULT NULL,
-  filename VARCHAR(255) NOT NULL,
-  datetime DATETIME NOT NULL,
-  identifying TINYINT(1) NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  participant_id int(10) unsigned NOT NULL,
+  test_type_id int(10) unsigned DEFAULT NULL,
+  filename varchar(255) NOT NULL,
+  datetime datetime NOT NULL,
+  identifying tinyint(1) DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_participant_id_filename (participant_id ASC, filename ASC),
-  INDEX fk_participant_id (participant_id ASC),
-  INDEX fk_test_type_id (test_type_id ASC),
-  INDEX dk_datetime (datetime ASC),
+  UNIQUE KEY uq_participant_id_filename (participant_id,filename),
+  KEY fk_participant_id (participant_id),
+  KEY fk_test_type_id (test_type_id),
+  KEY dk_datetime (datetime),
   CONSTRAINT fk_sound_file_participant_id
     FOREIGN KEY (participant_id)
     REFERENCES cenozo.participant (id)
@@ -21,7 +22,5 @@ CREATE TABLE sound_file (
     FOREIGN KEY (test_type_id)
     REFERENCES test_type (id)
     ON DELETE SET NULL
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

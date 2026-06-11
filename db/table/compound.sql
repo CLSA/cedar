@@ -1,14 +1,15 @@
 CREATE TABLE compound (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  word_id INT(10) UNSIGNED NOT NULL,
-  sub_word_id INT(10) UNSIGNED NOT NULL,
-  rank INT(11) NOT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  word_id int(10) unsigned NOT NULL,
+  sub_word_id int(10) unsigned NOT NULL,
+  rank int(11) NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX uq_word_id_rank (word_id ASC, rank ASC),
-  INDEX fk_word_id (word_id ASC),
-  INDEX fk_sub_word_id (sub_word_id ASC),
+  UNIQUE KEY uq_word_id_rank (word_id,rank),
+  KEY fk_word_id (word_id),
+  KEY fk_sub_word_id (sub_word_id),
   CONSTRAINT fk_compound_sub_word_id
     FOREIGN KEY (sub_word_id)
     REFERENCES word (id)
@@ -18,7 +19,5 @@ CREATE TABLE compound (
     FOREIGN KEY (word_id)
     REFERENCES word (id)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

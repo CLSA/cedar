@@ -1,5 +1,4 @@
-CREATE TRIGGER fas_data_AFTER_DELETE
-AFTER DELETE ON cedar.fas_data FOR EACH ROW
+CREATE TRIGGER fas_data_AFTER_DELETE AFTER DELETE ON fas_data FOR EACH ROW
 BEGIN
   SET @test = (
     SELECT SUM( total ) FROM (
@@ -16,4 +15,4 @@ BEGIN
   END IF;
 
   CALL update_test_entry_has_word( OLD.test_entry_id );
-END$$
+END ;;

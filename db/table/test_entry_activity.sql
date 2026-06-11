@@ -1,16 +1,17 @@
 CREATE TABLE test_entry_activity (
-  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  test_entry_id INT(10) UNSIGNED NOT NULL,
-  user_id INT(10) UNSIGNED NOT NULL,
-  start_datetime DATETIME NOT NULL,
-  end_datetime DATETIME NULL DEFAULT NULL,
+  id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  test_entry_id int(10) unsigned NOT NULL,
+  user_id int(10) unsigned NOT NULL,
+  start_datetime datetime NOT NULL,
+  end_datetime datetime DEFAULT NULL,
   PRIMARY KEY (id),
-  INDEX fk_test_entry_id (test_entry_id ASC),
-  INDEX fk_user_id (user_id ASC),
-  INDEX dk_start_datetime (start_datetime ASC),
-  INDEX dk_end_datetime (end_datetime ASC),
+  KEY fk_test_entry_id (test_entry_id),
+  KEY fk_user_id (user_id),
+  KEY dk_start_datetime (start_datetime),
+  KEY dk_end_datetime (end_datetime),
   CONSTRAINT fk_test_entry_activity_test_entry_id
     FOREIGN KEY (test_entry_id)
     REFERENCES test_entry (id)
@@ -20,7 +21,5 @@ CREATE TABLE test_entry_activity (
     FOREIGN KEY (user_id)
     REFERENCES cenozo.user (id)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

@@ -1,19 +1,18 @@
 CREATE TABLE word_test_type_total (
-  word_id INT(10) UNSIGNED NOT NULL,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  aft_total INT(10) UNSIGNED NOT NULL DEFAULT 0,
-  fas_total INT(10) UNSIGNED NOT NULL DEFAULT 0,
-  rey_total INT(10) UNSIGNED NOT NULL DEFAULT 0,
+  word_id int(10) unsigned NOT NULL,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  aft_total int(10) unsigned NOT NULL DEFAULT 0,
+  fas_total int(10) unsigned NOT NULL DEFAULT 0,
+  rey_total int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (word_id),
-  INDEX dk_aft_total (aft_total ASC),
-  INDEX dk_fas_total (fas_total ASC),
-  INDEX dk_rey_total (rey_total ASC),
+  KEY dk_aft_total (aft_total),
+  KEY dk_fas_total (fas_total),
+  KEY dk_rey_total (rey_total),
   CONSTRAINT fk_word_test_type_total_word_id
     FOREIGN KEY (word_id)
     REFERENCES word (id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

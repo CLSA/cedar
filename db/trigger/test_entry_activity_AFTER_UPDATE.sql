@@ -1,5 +1,4 @@
-CREATE TRIGGER test_entry_activity_AFTER_UPDATE
-AFTER UPDATE ON cedar.test_entry_activity FOR EACH ROW
+CREATE TRIGGER test_entry_activity_AFTER_UPDATE AFTER UPDATE ON test_entry_activity FOR EACH ROW
 BEGIN
   IF OLD.user_id != NEW.user_id THEN
     SET @transcription_id = (
@@ -9,4 +8,4 @@ BEGIN
     );
     CALL update_transcription_has_user( @transcription_id );
   END IF;
-END$$
+END ;;

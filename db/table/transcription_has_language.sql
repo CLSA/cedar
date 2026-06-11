@@ -1,11 +1,12 @@
 CREATE TABLE transcription_has_language (
-  transcription_id INT(10) UNSIGNED NOT NULL,
-  language_id INT(10) UNSIGNED NOT NULL,
-  update_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-  create_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-  PRIMARY KEY (transcription_id, language_id),
-  INDEX fk_language_id (language_id ASC),
-  INDEX fk_transcription_id (transcription_id ASC),
+  transcription_id int(10) unsigned NOT NULL,
+  language_id int(10) unsigned NOT NULL,
+  update_timestamp timestamp NOT NULL DEFAULT current_timestamp()
+    ON UPDATE current_timestamp(),
+  create_timestamp timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (transcription_id,language_id),
+  KEY fk_language_id (language_id),
+  KEY fk_transcription_id (transcription_id),
   CONSTRAINT fk_transcription_has_language_language_id
     FOREIGN KEY (language_id)
     REFERENCES cenozo.language (id)
@@ -15,7 +16,5 @@ CREATE TABLE transcription_has_language (
     FOREIGN KEY (transcription_id)
     REFERENCES transcription (id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_general_ci;
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
