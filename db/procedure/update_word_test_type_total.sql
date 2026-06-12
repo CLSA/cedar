@@ -24,3 +24,4 @@ BEGIN
     ON DUPLICATE KEY UPDATE rey_total = VALUES( rey_total );
   END IF;
 END ;;
+
