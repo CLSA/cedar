@@ -199,7 +199,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           const re = new RegExp(form_input.get_config("regex"));
           if (!re.test(value)) value = "";
 
-          form_input.set_value(value);
+          await form_input.set_value(value);
         },
         on_change: async (form_input, valid) => {
           const value = await form_input.get_value_for_record();

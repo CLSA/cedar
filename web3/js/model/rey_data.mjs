@@ -156,7 +156,7 @@ export class CN_test_rey_data extends CN_test_base_data {
 
     this.#base_language_id = language_response.id;
 
-    this.#language_form_input.set_value(record_response.language_id);
+    await this.#language_form_input.set_value(record_response.language_id);
 
     this.#sister_list = sister_response.map(sister => {
       sister.word_list = sister.sister_list ? sister.sister_list.split(",") : [];

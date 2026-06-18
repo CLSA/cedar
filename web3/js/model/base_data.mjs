@@ -401,7 +401,7 @@ export class CN_test_base_data extends CN_base_action {
     data[status_id] = status_value;
     data[other_id] = other_value;
     await CN_api.patch(`test_entry/${test_entry_id}`, data);
-    category.other_form_input.set_value(other_value);
+    await category.other_form_input.set_value(other_value);
 
     this.update_element();
   }

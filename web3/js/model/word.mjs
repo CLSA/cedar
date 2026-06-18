@@ -149,7 +149,7 @@ export class CN_model_word extends CN_base_model {
     return {
       min_length: 1,
       on_select: async (form_input, item) => {
-        form_input.set_value(null == item.value ? null : `${item.word} [${item.code}]`);
+        await form_input.set_value(null == item.value ? null : `${item.word} [${item.code}]`);
         form_input.commit_value();
         if (form_input.has_config("on_change")) {
           form_input.get_config("on_change")(form_input, await form_input.validate());

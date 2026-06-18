@@ -28,12 +28,12 @@ export class CN_model_test_entry extends CN_base_model {
           title: "User List",
           table_prefix: false,
           is_hidden: () => "typist" == CN_session.get("role", "name"),
-          help: "Which users have worked with the test-entry, ordered by first access date",
+          help: "Which users have worked with the test-entry, ordered by first access date.",
         },
         language_list: {
           title: "Language List",
           table_prefix: false,
-          help: "Which languages the test entry has been associated with",
+          help: "Which languages the test entry has been associated with.",
         },
         state: { title: "State" },
         score: {

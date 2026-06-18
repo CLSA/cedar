@@ -26,18 +26,18 @@ export class CN_model_transcription extends CN_base_model {
           column: "user.name",
           title: "Assigned",
           is_hidden: () => "typist" == CN_session.get("role", "name"),
-          help: "Which user the transcription is assigned to",
+          help: "Which user the transcription is assigned to.",
         },
         user_list: {
           title: "User List",
           table_prefix: false,
           is_hidden: () => "typist" == CN_session.get("role", "name"),
-          help: "Which users have worked with at least one test-entry, ordered by first access date",
+          help: "Which users have worked with at least one test-entry, ordered by first access date.",
         },
         language_list: {
           title: "Language List",
           table_prefix: false,
-          help: "Which languages the transcription has been associated with (based on all test-entries)",
+          help: "Which languages the transcription has been associated with (based on all test-entries).",
         },
         site: {
           column: "site.name",
@@ -48,13 +48,13 @@ export class CN_model_transcription extends CN_base_model {
           title: "State",
           table_prefix: false,
           is_hidden: () => "typist" == CN_session.get("role", "name"),
-          help: 'One of "assigned", "deferred" or "completed"',
+          help: 'One of "assigned", "deferred" or "completed".',
         },
         start_datetime: { title: "Start", type: "datetimesecond" },
         end_datetime: {
           title: "End",
           type: "datetimesecond",
-          help: "Only set once all test entries have been submitted",
+          help: "Only set once all test entries have been submitted.",
         },
       },
       properties: {
@@ -87,7 +87,7 @@ export class CN_model_transcription extends CN_base_model {
             },
           },
           is_hidden: () => "typist" == CN_session.get("role", "name"),
-          help: "Which user the transcription is assigned to",
+          help: "Which user the transcription is assigned to.",
         },
         site_id: {
           title: "Credited Site",
@@ -101,7 +101,7 @@ export class CN_model_transcription extends CN_base_model {
           title: "State",
           is_constant: () => true,
           is_hidden: model => "add" == model.get_action_name(),
-          help: 'One of "assigned", "deferred" or "completed"',
+          help: 'One of "assigned", "deferred" or "completed".',
         },
         start_datetime: {
           meta: {},
@@ -116,7 +116,7 @@ export class CN_model_transcription extends CN_base_model {
           type: "datetimesecond",
           is_constant: () => true,
           is_hidden: model => "add" == model.get_action_name(),
-          help: 'Only set when the state is "completed"',
+          help: 'Only set when the state is "completed".',
         },
       },
     });
@@ -318,7 +318,7 @@ export class CN_multiedit_transcription extends CN_base_action {
       },
       on_change: async (form_input) => {
         // update the user dropdown to update its enum list
-        this.#user_form_input.set_value(null);
+        await this.#user_form_input.set_value(null);
         await this.#user_form_input.update();
         this.update_element();
       },
