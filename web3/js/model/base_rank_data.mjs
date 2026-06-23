@@ -234,13 +234,13 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           const new_entry = item.value.toLowerCase().replace(/[—–]/g, "-").replace(/^"|"$/g, "").toLowerCase();
           if (!CN_model_word.is_word_valid(new_entry) && !new_entry.match(/^-+$/)) {
             await CN_modal_message.create_and_open({
+              header_class: "text-bg-danger",
               title: "Invalid Word",
               message: `
                 The word you have provided is invalid.\n\n
                 Please enter a word at least two characters long using only letters, single-quotes ('),
                 dashes (-) and spaces, and which starts with at least one alphabetic letter.
               `,
-              header_class: "text-bg-danger",
             });
           } else {
             const participant_language_id =

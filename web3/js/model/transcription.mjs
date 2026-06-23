@@ -436,9 +436,9 @@ export class CN_list_transcription extends CN_action_list {
       } catch (error) {
         if (409 == error.response.status) {
           await CN_modal_message.create_and_open({
+            header_class: "text-bg-danger",
             title: "Cannot Begin New Transcription",
             message: JSON.parse(error.body),
-            type: "danger",
           });
         } else {
           throw error;

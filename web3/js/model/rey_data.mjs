@@ -359,19 +359,19 @@ export class CN_test_rey_data extends CN_test_base_data {
         const new_entry = item.value.toLowerCase().replace(/[—–]/g, "-");
         if (new_entry.match(/^-+$/)) {
           await CN_modal_message.create_and_open({
+            header_class: "text-bg-danger",
             title: "Placeholders Not Allowed",
             message: "You cannot use placeholders for the REY test.",
-            header_class: "text-bg-danger",
           });
           return;
         } else if (!CN_model_word.is_word_valid(new_entry, this.get_language_list())) {
           await CN_modal_message.create_and_open({
+            header_class: "text-bg-danger",
             title: `
               The word you have provided is invalid.\n\n
               Please enter a word at least two characters long using only letters, single-quotes ('),
               dashes (-) and spaces, and which starts with at least one alphabetic letter.
             `,
-            header_class: "text-bg-danger",
           });
           return;
         }
@@ -429,8 +429,8 @@ export class CN_test_rey_data extends CN_test_base_data {
             await (this.get_language_list().find(l => l.id == variant.variant_language_id) ?
               this.set_word_value(variant.word, variant.id) :
               CN_modal_message.create_and_open({
-                title: "Variant Not Allowed",
                 header_class: "text-bg-danger",
+                title: "Variant Not Allowed",
                 message: `
                   You have selected the variant word "${word_str}" which is currently disabled
                   because the test-entry has not been identified as using the variant's language.\n\n
@@ -475,8 +475,8 @@ export class CN_test_rey_data extends CN_test_base_data {
           i.word == new_intrusion.word
         )) {
           await CN_modal_message.create_and_open({
-            title: "Intrusion Already Exists",
             header_class: "text-bg-danger",
+            title: "Intrusion Already Exists",
             message: `
               The intrusion you have submitted has already been added to this REY test and does
               need to be added multiple times.
@@ -495,8 +495,8 @@ export class CN_test_rey_data extends CN_test_base_data {
           if (406 == error.response.status) {
             // the word is misspelled
             return CN_modal_message.create_and_open({
-              title: "Misspelled Word",
               header_class: "text-bg-danger",
+              title: "Misspelled Word",
               message: "You have selected a misspelled word. This word cannot be used.",
             });
           } else {

@@ -35,10 +35,12 @@ export class CN_model_home extends classes.CN_model_home {
    */
   async run() {
     if ("typist" == CN_session.get("role", "name")) {
-      const transcription_module = CN_session.get_module("transcription");
-      await transcription_module.load_classes();
-      this.#transcription_model = transcription_module.create_model();
-      this.#transcription_model.configure(this.get_element().querySelector("div.row"), "list", null, null, true);
+      if (!this.#transcription_model) {
+        const transcription_module = CN_session.get_module("transcription");
+        await transcription_module.load_classes();
+        this.#transcription_model = transcription_module.create_model();
+        this.#transcription_model.configure(this.get_element().querySelector("div.row"), "list", null, null, true);
+      }
       await this.#transcription_model.run();
     }
 

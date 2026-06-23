@@ -193,6 +193,7 @@ export class CN_view_test_entry extends CN_action_view {
     } catch (error) {
       if (409 == error.response.status) {
         await CN_modal_message.create_and_open({
+          header_class: "text-bg-danger",
           title: "Conflict",
           message: "The test-entry cannot be submitted if it " + (
             "aft" == this.#test_type.data_type || "fas" == this.#test_type.data_type ?
@@ -201,7 +202,6 @@ export class CN_view_test_entry extends CN_action_view {
             "contains invalid words or there is missing data." :
             "is missing data."
           ),
-          type: "danger",
         });
       } else {
         throw error;
@@ -369,7 +369,7 @@ export class CN_view_test_entry extends CN_action_view {
     if (null == model.get_action_name()) return;
 
     // create and configure the data model
-    if (null == this.#data_model) {
+    if (!this.#data_model) {
       // get the data type
       this.#test_type = await CN_api.get(model.get_view_url(null, "api"), {
         select: {
