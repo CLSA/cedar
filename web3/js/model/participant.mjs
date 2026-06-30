@@ -41,9 +41,13 @@ export class CN_list_participant extends base_list_class {
     const footer_el = super._create_footer_element();
 
     if ("participant" == CN_session.get_leaf_model().get_name()) {
-      const update_sound_files_btn_el = this.constructor.html(
-        '<button name="update_sound_files" class="btn btn-light btn-outline-primary">Update Sound Files</button>'
-      );
+      const update_sound_files_btn_el = this.constructor.html(`
+        <button
+          type="button"
+          name="update_sound_files"
+          class="btn btn-light btn-outline-primary"
+        >Update Sound Files</button>
+      `);
       update_sound_files_btn_el.addEventListener("click", async () => {
         const response = await CN_modal_confirm.create_and_open({
           title: "Update Sound Files",

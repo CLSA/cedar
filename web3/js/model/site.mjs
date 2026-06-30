@@ -12,7 +12,7 @@ export class CN_view_site extends base_view_class {
     const footer_el = super._create_footer_element();
 
     const settings_btn_el = this.constructor.html(
-      '<button name="settings" class="btn btn-light btn-outline-primary">Settings</button>'
+      '<button type="button" name="settings" class="btn btn-light btn-outline-primary">Settings</button>'
     );
     settings_btn_el.addEventListener("click", async () => {
       const model = this.get_model();
