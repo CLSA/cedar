@@ -218,10 +218,10 @@ export class CN_view_word extends CN_action_view {
   /**
    * Additional actions must be taken after changing some properties
    */
-  async on_set_property(prop_name) {
+  async on_set_property(prop_name, run = true) {
     if (!["misspelled", "aft", "fas"].includes(prop_name)) {
       // no change in functionality required
-      await super.on_set_property(prop_name);
+      await super.on_set_property(prop_name, run);
       return;
     }
 
@@ -252,7 +252,7 @@ export class CN_view_word extends CN_action_view {
 
       if (undefined === data.correct_word) {
         this.get_property(prop_name).form_input.undo_value();
-        await this.run();
+        if (run) await this.run();
         return; // the update has been cancelled, do not proceed
       }
 
@@ -286,7 +286,7 @@ export class CN_view_word extends CN_action_view {
 
     if (undefined === data.note) {
       this.get_property(prop_name).form_input.undo_value();
-      await this.run();
+      if (run) await this.run();
       return; // the update has been cancelled, do not proceed
     }
 
@@ -301,11 +301,11 @@ export class CN_view_word extends CN_action_view {
           this.get_property(prop_name).element.show_error("Conflicts with existing record", 5000);
         });
       } else {
-        this.run();
+        if (run) this.run();
         throw error;
       }
     }
 
-    await this.run();
+    if (run) await this.run();
   }
 }
