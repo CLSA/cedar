@@ -492,7 +492,7 @@ export class CN_test_rey_data extends CN_test_base_data {
             })
           );
         } catch (error) {
-          if (406 == error.response.status) {
+          if (CN_common.is_uri_error(error, 406)) {
             // the word is misspelled
             return CN_modal_message.create_and_open({
               header_class: "text-bg-danger",

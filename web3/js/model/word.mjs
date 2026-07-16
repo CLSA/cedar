@@ -296,7 +296,7 @@ export class CN_view_word extends CN_action_view {
       await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
     } catch (error) {
       this.get_property(prop_name).form_input.undo_value();
-      if (409 == error.response.status) {
+      if (CN_common.is_uri_error(error, 409)) {
         JSON.parse(error.body).forEach(prop_name => {
           this.get_property(prop_name).element.show_error("Conflicts with existing record", 5000);
         });

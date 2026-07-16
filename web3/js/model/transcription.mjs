@@ -3,6 +3,7 @@ const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
+const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_enum } = await import(`${CENOZO_URL}/js/input/enum.mjs`);
@@ -434,7 +435,7 @@ export class CN_list_transcription extends CN_action_list {
         const response = await CN_api.post("transcription", { user_id: CN_session.get("user", "id") });
         CN_session.navigate_to(`transcription/view/${response}`);
       } catch (error) {
-        if (409 == error.response.status) {
+        if (CN_common.is_uri_error(error, 409)) {
           await CN_modal_message.create_and_open({
             header_class: "text-bg-danger",
             title: "Cannot Begin New Transcription",

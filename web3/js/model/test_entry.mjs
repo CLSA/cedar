@@ -191,7 +191,7 @@ export class CN_view_test_entry extends CN_action_view {
         await this.run();
       }
     } catch (error) {
-      if (409 == error.response.status) {
+      if (CN_common.is_uri_error(error, 409)) {
         await CN_modal_message.create_and_open({
           header_class: "text-bg-danger",
           title: "Conflict",
@@ -226,7 +226,7 @@ export class CN_view_test_entry extends CN_action_view {
         this.on_navigate_to_parent()
       );
     } catch (error) {
-      if (403 == error.response.status) {
+      if (CN_common.is_uri_error(error, 403)) {
         // 403 means the user no longer has access to the transcription, so go back to the list instead
         await this.on_navigate_to_parent();
       } else {
