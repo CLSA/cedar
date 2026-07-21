@@ -60,7 +60,7 @@ export class CN_list_test_type extends CN_action_list {
         if (response) {
           this.constructor.set_disabled(rescore_btn_el, true);
           await this.constructor.wait_for(
-            async () => await CN_api.count("test_type", { rescore: 1 }),
+            CN_api.count("test_type", { rescore: 1 }),
             0, // show wait-for message immediately
           );
           this.constructor.set_disabled(rescore_btn_el, false);
@@ -102,7 +102,7 @@ export class CN_view_test_type extends CN_action_view {
         if (response) {
           this.constructor.set_disabled(rescore_btn_el, true);
           await this.constructor.wait_for(
-            async () => await CN_api.count(this.get_model().get_view_url(null, "api"), { rescore: 1 }),
+            CN_api.count(this.get_model().get_view_url(null, "api"), { rescore: 1 }),
             0, // show wait-for message immediately
           );
           this.constructor.set_disabled(rescore_btn_el, false);

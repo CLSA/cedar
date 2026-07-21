@@ -380,15 +380,13 @@ export class CN_multiedit_transcription extends CN_base_action {
     this.#proceed_btn_el.addEventListener("click", async () => {
       const identifier_list = this.#participant_selection.get_identifier_list();
 
-      await this.constructor.wait_for(async () => {
-        await CN_api.post("transcription", {
-          identifier_id: this.#participant_selection.get_idtype(),
-          identifier_list: identifier_list,
-          site_id: this.#site_form_input.get_value_for_record(),
-          user_id: this.#user_form_input.get_value_for_record(),
-          process: true,
-        });
-      });
+      await this.constructor.wait_for(CN_api.post("transcription", {
+        identifier_id: this.#participant_selection.get_idtype(),
+        identifier_list: identifier_list,
+        site_id: this.#site_form_input.get_value_for_record(),
+        user_id: this.#user_form_input.get_value_for_record(),
+        process: true,
+      }));
 
       let message = `A total of ${identifier_list.length} transcription(s) have been processed`;
       const user_name = this.#user_form_input.get_value_label();
@@ -491,7 +489,7 @@ export class CN_list_transcription extends CN_action_list {
         if (response) {
           this.constructor.set_disabled(rescore_btn_el, true);
           await this.constructor.wait_for(
-            async () => await CN_api.count("transcription", { rescore: 1 }),
+            CN_api.count("transcription", { rescore: 1 }),
             0, // show wait-for message immediately
           );
           this.constructor.set_disabled(rescore_btn_el, false);
@@ -528,9 +526,10 @@ export class CN_view_transcription extends CN_action_view {
       );
       rescore_btn_el.addEventListener("click", async () => {
         this.constructor.set_disabled(rescore_btn_el, true);
-        await this.constructor.wait_for(
-          async () => await CN_api.count(this.get_model().get_view_url(null, "api"), { rescore: 1 }),
-        );
+        await this.constructor.wait_for(CN_api.count(
+          this.get_model().get_view_url(null, "api"),
+          { rescore: 1 }
+        ));
         this.constructor.set_disabled(rescore_btn_el, false);
         this.get_model().get_child_model_list()
           .filter(child_model => "test_entry" == child_model.get_name())
