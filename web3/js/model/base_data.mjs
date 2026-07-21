@@ -339,7 +339,7 @@ export class CN_test_base_data extends CN_base_action {
                 try {
                   // update the server
                   let data = {};
-                  data.identifying = await form_input.get_value_for_record();
+                  data.identifying = form_input.get_value_for_record();
                   await CN_api.patch(`sound_file/${sound_file.id}`, data);
                   sound_file.identifying = form_input.get_value();
                 } finally {
@@ -390,10 +390,10 @@ export class CN_test_base_data extends CN_base_action {
     const category = this.#status_categories[cat_name];
     const status_id = `${cat_name}_status_type_id`;
     const other_id = `${cat_name}_status_type_other`;
-    const status_value = await category.status_form_input.get_value_for_record();
+    const status_value = category.status_form_input.get_value_for_record();
     const other_value = (
       category.is_other_selected() ?
-      await category.other_form_input.get_value_for_record() :
+      category.other_form_input.get_value_for_record() :
       null
     );
 

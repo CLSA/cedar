@@ -16,7 +16,7 @@ export class CN_model_homophone extends CN_base_model {
         rank: { title: "Rank", type: "rank" },
         word: { column: "word.word", title: "Word" },
         language: { column: "language.code", title: "Language" },
-        word_id: { type: "hidden" },
+        word_id: { is_hidden: () => true },
       },
     });
   }

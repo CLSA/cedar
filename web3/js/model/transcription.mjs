@@ -380,13 +380,12 @@ export class CN_multiedit_transcription extends CN_base_action {
     this.#proceed_btn_el.addEventListener("click", async () => {
       const identifier_list = this.#participant_selection.get_identifier_list();
 
-      let response = null;
       await this.constructor.wait_for(async () => {
-        response = await CN_api.post("transcription", {
+        await CN_api.post("transcription", {
           identifier_id: this.#participant_selection.get_idtype(),
           identifier_list: identifier_list,
-          site_id: await this.#site_form_input.get_value_for_record(),
-          user_id: await this.#user_form_input.get_value_for_record(),
+          site_id: this.#site_form_input.get_value_for_record(),
+          user_id: this.#user_form_input.get_value_for_record(),
           process: true,
         });
       });
@@ -511,7 +510,6 @@ export class CN_view_transcription extends CN_action_view {
    */
   async get_text(type) {
     if (["crumb", "name"].includes(type)) {
-      await this.after_first_load();
       return this.get_property_value("uid");
     }
     return await super.get_text(type);

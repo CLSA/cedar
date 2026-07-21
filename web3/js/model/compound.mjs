@@ -16,7 +16,7 @@ export class CN_model_compound extends CN_base_model {
       columns: {
         rank: { title: "Rank", type: "rank" },
         subword: { column: "sub_word.word", title: "Subword" },
-        sub_word_id: { type: "hidden" },
+        sub_word_id: { is_hidden: () => true },
       },
       properties: {
         sub_word_id: {
@@ -39,7 +39,7 @@ export class CN_add_compound extends CN_action_add {
 
     const parent_model = this.get_model().get_parent_model();
     const parent_word_id = parent_model.get_identifier();
-    const parent_language_id = await parent_model.get_action().get_property_value_for_record("language_id");
+    const parent_language_id = parent_model.get_action().get_property_value_for_record("language_id");
     this.get_property("sub_word_id").form_input.set_config(
       "typeahead",
       CN_model_word.get_typeahead({

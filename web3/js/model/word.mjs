@@ -58,7 +58,7 @@ export class CN_model_word extends CN_base_model {
           typeahead: CN_model_word.get_typeahead(),
           on_change: async (form_input, valid) => {
             const action = form_input.get_action();
-            const sister_word_id = await action.get_property_value_for_record("sister_word_id");
+            const sister_word_id = action.get_property_value_for_record("sister_word_id");
 
             let proceed = true;
             if (sister_word_id) {
@@ -209,7 +209,6 @@ export class CN_view_word extends CN_action_view {
    */
   async get_text(type) {
     if (["crumb", "name"].includes(type)) {
-      await this.after_first_load();
       return this.get_property_value("word");
     }
     return await super.get_text(type);
@@ -292,7 +291,7 @@ export class CN_view_word extends CN_action_view {
 
     // we now re-implement the parent's on_set_property method but with customizations
     try {
-      data[prop_name] = await this.get_property_value_for_record(prop_name);
+      data[prop_name] = this.get_property_value_for_record(prop_name);
       await CN_api.patch(this.get_model().get_view_url(null, "api"), data);
     } catch (error) {
       this.get_property(prop_name).form_input.undo_value();

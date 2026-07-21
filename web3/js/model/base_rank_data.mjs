@@ -202,7 +202,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           await form_input.set_value(value);
         },
         on_change: async (form_input, valid) => {
-          const value = await form_input.get_value_for_record();
+          const value = form_input.get_value_for_record();
 
           // ignore empty values
           if (!value) return;
