@@ -21,7 +21,7 @@ export class CN_model_test_entry extends CN_base_model {
         transcription_uid: {
           column: "participant.uid",
           title: "UID",
-          is_hidden: (model) => "transcription" == model.get_parent_model().get_name(),
+          is_hidden: () => "transcription" == this.get_parent_model().get_name(),
         },
         test_type_name: { column: "test_type.name", title: "Type" },
         user_list: {

@@ -16,7 +16,7 @@ export class CN_model_special_letter extends CN_base_model {
           meta: { table: "language", column: "name" },
           title: "Language",
           is_constant: () => true,
-          is_hidden: (model) => "add" == model.get_action_name(),
+          is_hidden: () => "add" == this.get_action_name(),
         },
         letter: {
           title: "Letter",

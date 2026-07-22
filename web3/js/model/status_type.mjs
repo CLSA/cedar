@@ -18,7 +18,7 @@ export class CN_model_status_type extends CN_base_model {
         category: {
           title: "Category",
           type: "enum",
-          is_constant: (model) => "view" == model.get_action_name(),
+          is_constant: () => "view" == this.get_action_name(),
           on_change: async (form_input, valid) => {
             const action = form_input.get_action();
 

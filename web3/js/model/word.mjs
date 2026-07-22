@@ -40,12 +40,12 @@ export class CN_model_word extends CN_base_model {
               order: "language.name",
             },
           },
-          is_constant: (model) => "view" == model.get_action_name(),
+          is_constant: () => "view" == this.get_action_name(),
         },
         word: {
           title: "Word",
           format: "identifier",
-          is_constant: (model) => "view" == model.get_action_name(),
+          is_constant: () => "view" == this.get_action_name(),
         },
         animal_code: {
           title: "Animal Code",
@@ -77,17 +77,18 @@ export class CN_model_word extends CN_base_model {
 
             await action.on_property_change("sister_word_id", proceed ? valid : false);
           },
-          is_constant: (model) =>
-            "view" == model.get_action_name() &&
-            0 < model.get_action().get_property_value('compound_count'),
+          is_constant: () => (
+            "view" == this.get_action_name() &&
+            0 < this.get_action().get_property_value('compound_count')
+          ),
         },
         misspelled: {
           title: "Misspelled",
           type: "boolean",
           // misspelled must stay as false once either the aft or fas is set to intrusion or primary
-          is_constant: (model) => [
-            model.get_action().get_property_value("aft"),
-            model.get_action().get_property_value("fas")
+          is_constant: () => [
+            this.get_action().get_property_value("aft"),
+            this.get_action().get_property_value("fas")
           ].some(value => ["intrusion", "primary"].includes(value)),
         },
         aft: { title: "AFT Type", type: "enum" },
