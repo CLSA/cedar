@@ -21,7 +21,8 @@ export class CN_model_setting extends classes.CN_model_setting {
     const properties = super.clone_properties();
     properties.max_working_transcriptions = {
       title: "Max Working Transcriptions",
-      format: "integer",
+      type: "integer",
+      get_min: () => 1,
       help: `
         The maximum number of transcriptions a typist may work on at one time.  Note that typist
         may get beyond than this limit as a result of deferred transcriptions being returned to
