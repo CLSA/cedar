@@ -209,7 +209,7 @@ export class CN_view_word extends CN_action_view {
    * Extends the parent method
    */
   async get_text(type) {
-    if (["crumb", "name"].includes(type)) {
+    if ("crumb" == type) {
       return this.get_property_value("word");
     }
     return await super.get_text(type);
