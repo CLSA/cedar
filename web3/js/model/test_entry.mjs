@@ -66,10 +66,31 @@ export class CN_model_test_entry extends CN_base_model {
   }
 
   /**
-   * Never allow word to choose test-entries
+   * Extend parent method
    */
   allow_choose() {
+    // Never allow word to choose test-entries
     return super.allow_choose() && "word" != this.get_parent_model().get_name();
+  }
+
+  /**
+   * Extend parent method
+   */
+  allow_edit() {
+    const action = this.get_action();
+    return (
+      super.allow_edit() &&
+      (
+        "typist" != CN_session.get("role", "name") || (
+          "assigned" == action.get_property_value("state") &&
+          "Unusable" != action.get_property_value("audio_status") &&
+          "Unavailable" != action.get_property_value("audio_status") &&
+          "Refused" != action.get_property_value("participant_status")
+        )
+      ) &&
+      action.get_property_value("data_type") &&
+      (action.get_data_model().allow_edit() || action.get_data_model().allow_add())
+    );
   }
 }
 
@@ -105,11 +126,20 @@ export class CN_view_test_entry extends CN_action_view {
   /**
    * Extend parent method
    */
+  get_data_model() {
+    return this.#data_model;
+  }
+
+  /**
+   * Extend parent method
+   */
   async get_text(type) {
     const model = this.get_model();
 
     if (["crumb", "header"].includes(type)) {
-      return this.#test_type ? this.#test_type.name : this.get_property_value("data_type");
+      let name = this.#test_type ? this.#test_type.name : this.get_property_value("data_type");
+      if ("header" == type && !this.get_model().allow_edit()) name += " (read-only)";
+      return name;
     }
 
     return await super.get_text(type);

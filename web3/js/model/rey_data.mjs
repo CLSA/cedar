@@ -19,6 +19,7 @@ export class CN_test_rey_data extends CN_test_base_data {
   #base_language_id;
   #language_form_input;
   #new_entry_form_input;
+  #all_no_btn_el;
   #intrusion_list = [];
   #sister_list = {};
 
@@ -99,6 +100,12 @@ export class CN_test_rey_data extends CN_test_base_data {
 
     if (this.#language_form_input) this.#language_form_input.set_disabled(disabled);
     if (this.#new_entry_form_input) this.#new_entry_form_input.set_disabled(disabled);
+    if (this.#all_no_btn_el) this.constructor.set_disabled(this.#all_no_btn_el, disabled);
+
+    const yes_no_radio_list = this.get_element().querySelectorAll("input[type=radio]");
+    if (yes_no_radio_list) {
+      Array.from(yes_no_radio_list).forEach(el => this.constructor.set_disabled(el, disabled));
+    }
   }
 
   /**
@@ -184,6 +191,7 @@ export class CN_test_rey_data extends CN_test_base_data {
   update_element() {
     super.update_element();
 
+    const disabled = !this.get_model().allow_edit();
     const words_el = this.get_body_element().querySelector("div[name=words]");
     const intrusions_el = this.get_body_element().querySelector("[name=intrusion-list]");
     const rey_language_id = Number(this.#language_form_input.get_value());
@@ -213,6 +221,11 @@ export class CN_test_rey_data extends CN_test_base_data {
           </span>
         `);
 
+        /*
+        // if the the model doesn't allow editing then disable all variant radio inputs
+        this.constructor.set_disabled(variant_el.querySelector("input"), disabled);
+        */
+
         // check that the variant is allowed (language is in the test-entry's language list)
         if (!this.get_language_list().some(l => l.id == variant.variant_language_id)) {
           variant_el.querySelector("label").classList.add("text-black", "text-opacity-50");
@@ -236,7 +249,7 @@ export class CN_test_rey_data extends CN_test_base_data {
     intrusions_el.innerHTML = "";
 
     if (0 == this.#intrusion_list.length) {
-      if (!this.get_model().allow_edit()) {
+      if (disabled) {
         intrusions_el.append(this.constructor.html(
           '<div class="text-info">No intrusions have been entered.</div>'
         ));
@@ -271,6 +284,8 @@ export class CN_test_rey_data extends CN_test_base_data {
 
       intrusions_el.append(buttons_el);
     }
+
+    this.set_disabled(disabled);
   }
 
   /**
@@ -516,10 +531,10 @@ export class CN_test_rey_data extends CN_test_base_data {
       typeahead: typeahead,
       postfix: (el) => {
         el.classList.add("flex-fill");
-        const btn_el = this.constructor.html(
-          '<button type="button" class="btn btn-outline-primary w-100 ms-2">Mark Remaining As No</button>'
+        this.#all_no_btn_el = this.constructor.html(
+          '<button type="button" class="btn btn-outline-primary w-100 ms-2" >Mark Remaining As No</button>'
         );
-        btn_el.addEventListener("click", async () => {
+        this.#all_no_btn_el.addEventListener("click", async () => {
           await Promise.all(
             Object.keys(this.#word_list).map(word_name => {
               const word = this.#word_list[word_name];
@@ -528,7 +543,7 @@ export class CN_test_rey_data extends CN_test_base_data {
           );
           this.update_element();
         });
-        el.append(btn_el);
+        el.append(this.#all_no_btn_el);
       },
     });
 
