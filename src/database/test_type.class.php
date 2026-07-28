@@ -192,7 +192,7 @@ class test_type extends \cenozo\database\record
     static::db()->execute( sprintf(
       "INSERT INTO temp_rescore\n%s %s\n".
       "ON DUPLICATE KEY UPDATE\n".
-        "score = IFNULL( VALUES( score ), 0 ) + score,\n".
+        "score = IFNULL( VALUES( score ), 0 ) + IFNULL( score, 0 ),\n".
         "alt_score = IFNULL( VALUES( alt_score ), alt_score )",
       $aft_sel2->get_sql(),
       $aft_mod2->get_sql()
