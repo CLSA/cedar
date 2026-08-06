@@ -18,6 +18,7 @@ export class CN_model_sound_file extends CN_base_model {
         uid: { meta: { table: "participant", column: "uid" }, title: "Participant", is_constant: () => true },
         test_type: { meta: { table: "test_type", column: "name" }, title: "Test Type", is_constant: () => true },
         name: { meta: {}, title: "Name", is_constant: () => true },
+        extension: { title: "Extension", is_constant: () => true },
         datetime: { title: "Date & Time", type: "datetimesecond" },
         identifying: {
           title: "Identifying",
