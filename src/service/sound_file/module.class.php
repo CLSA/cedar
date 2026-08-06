@@ -46,7 +46,13 @@ class module extends \cenozo\service\site_restricted_participant_module
       // convert filename into a name
       $select->add_column(
         sprintf(
-          'CONCAT_WS( "/", "%s", "%s", participant.uid, CONCAT( sound_file.filename, ".wav" ) )',
+          'CONCAT_WS( '.
+            '"/", '.
+            '"%s", '.
+            '"%s", '.
+            'participant.uid, '.
+            'CONCAT( sound_file.filename, ".", sound_file.extension ) '.
+          ')',
           str_replace( '/api', '', ROOT_URL ),
           RECORDINGS_URL
         ),

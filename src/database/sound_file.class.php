@@ -32,6 +32,7 @@ class sound_file extends \cenozo\database\record
       'CREATE TEMPORARY TABLE temp_sound_file ( '.
         'uid char(7) NOT NULL, '.
         'filename varchar(255) NOT NULL, '.
+        'extension char(7) NOT NULL, '.
         'datetime DATETIME NOT NULL, '.
         'KEY dk_uid ( uid )'.
       ')'
@@ -40,7 +41,7 @@ class sound_file extends \cenozo\database\record
     // If the last sync file is present then only get files which were created after it was
     // Note: we're reverse-grepping for "-operator." to ignore asterisk-recorded interviewer recordings
     $command = sprintf(
-      'find -L %s -type f %s -printf "%s" | grep "/%s/.*\.wav" | grep -v "\-operator."',
+      'find -L %s -type f %s -printf "%s" | grep "/%s/.*\.(ogg|wav)" | grep -v "\-operator."',
       RECORDINGS_PATH,
       file_exists( $last_sync_file ) ? sprintf( '-newer %s', $last_sync_file ) : '',
       '%p\t%TY-%Tm-%Td %TT\n',
@@ -54,15 +55,17 @@ class sound_file extends \cenozo\database\record
     foreach( $file_list as $row )
     {
       $parts = explode( "\t", $row );
-      preg_match( sprintf( '#.*/(%s)/([^/]+).wav#', $uid_regex ), $parts[0], $matches );
+      preg_match( sprintf( '#.*/(%s)/([^/]+).(ogg|wav)#', $uid_regex ), $parts[0], $matches );
       $uid = $matches[1];
       $filename = $matches[2];
+      $extension = $matches[3];
       $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
 
       $insert_list[] = sprintf(
-        '( %s, %s, %s )',
+        '( %s, %s, %s, %s )',
         static::db()->format_string( $uid ),
         static::db()->format_string( $filename ),
+        static::db()->format_string( $extension ),
         static::db()->format_string( $datetime )
       );
 
@@ -70,7 +73,7 @@ class sound_file extends \cenozo\database\record
       if( 1000 <= count( $insert_list ) )
       {
         static::db()->execute( sprintf(
-          'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s',
+          'INSERT INTO temp_sound_file( uid, filename, extension, datetime ) VALUES %s',
           implode( ',', $insert_list )
         ) );
         $insert_list = array();
@@ -80,15 +83,15 @@ class sound_file extends \cenozo\database\record
     if( 0 < count( $insert_list ) )
     {
       static::db()->execute( sprintf(
-        'INSERT INTO temp_sound_file( uid, filename, datetime ) VALUES %s',
+        'INSERT INTO temp_sound_file( uid, filename, extension, datetime ) VALUES %s',
         implode( ',', $insert_list )
       ) );
     }
 
     // now convert from temporary records into the sound_file table
     $result = static::db()->execute(
-      'REPLACE INTO sound_file( participant_id, test_type_id, filename, datetime ) '.
-      'SELECT participant.id, test_type.id, filename, datetime '.
+      'REPLACE INTO sound_file( participant_id, test_type_id, filename, extension, datetime ) '.
+      'SELECT participant.id, test_type.id, filename, extension, datetime '.
       'FROM temp_sound_file '.
       'JOIN participant ON temp_sound_file.uid = participant.uid '.
       'LEFT JOIN test_type ON filename RLIKE ( '.
