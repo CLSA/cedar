@@ -56,6 +56,11 @@ cenozoApp.defineModule({
         type: "string",
         isConstant: true,
       },
+      extension: {
+        title: "Extension",
+        type: "string",
+        isConstant: true,
+      },
       datetime: {
         column: "datetime",
         title: "Date & Time",
