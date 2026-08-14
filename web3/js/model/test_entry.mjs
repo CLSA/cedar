@@ -415,7 +415,7 @@ export class CN_view_test_entry extends CN_action_view {
 
       if (model.is_rendered()) {
         // note that we set the identifier to an empty string because data models are customized to not use them
-        this.#data_model.configure(this.get_body_element(), "test", null, model, true);
+        await this.#data_model.configure(this.get_body_element(), "test", null, model, true);
       }
     }
 

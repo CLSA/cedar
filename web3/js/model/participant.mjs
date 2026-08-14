@@ -10,8 +10,8 @@ export class CN_model_participant extends classes.CN_model_participant {
   /**
    * Extends parent method
    */
-  clone_columns() {
-    const columns = super.clone_columns();
+  async clone_columns() {
+    const columns = await super.clone_columns();
 
     // remove the note column and add the transcription state, start and end columns
     delete columns.global_note;

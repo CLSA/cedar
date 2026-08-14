@@ -4,8 +4,8 @@ export class CN_model_setting extends classes.CN_model_setting {
   /**
    * Extends parent method
    */
-  clone_columns() {
-    const columns = super.clone_columns();
+  async clone_columns() {
+    const columns = await super.clone_columns();
     columns.max_working_transcriptions = {
       title: "Max Transcriptions",
       type: "integer",
@@ -17,8 +17,8 @@ export class CN_model_setting extends classes.CN_model_setting {
   /**
    * Extends parent method
    */
-  clone_properties() {
-    const properties = super.clone_properties();
+  async clone_properties() {
+    const properties = await super.clone_properties();
     properties.max_working_transcriptions = {
       title: "Max Working Transcriptions",
       type: "integer",
