@@ -122,18 +122,25 @@ class ui3 extends \cenozo\ui\ui3
     ];
 
     // remove menu items that aren't necessary
+    unset( $data['menu']['lists']['Availability Types'] );
     unset( $data['menu']['lists']['Consent Types'] );
     unset( $data['menu']['lists']['Event Types'] );
     unset( $data['menu']['lists']['Hold Types'] );
     unset( $data['menu']['lists']['Identifiers'] );
     unset( $data['menu']['lists']['Proxy Types'] );
+    unset( $data['menu']['lists']['Trace Types'] );
     unset( $data['menu']['utilities']['Participant Export'] );
     unset( $data['menu']['utilities']['Participant Multi-Edit'] );
     unset( $data['menu']['utilities']['Tracing'] );
 
-    if( 'typist' != $db_role->name )
+    if( 'typist' == $db_role->name )
     {
-      unset( $data['menu']['lists']['Availability Types'] );
+      unset( $data['menu']['lists']['Users'] );
+    unset( $data['menu']['utilities']['Participant Search'] );
+    unset( $data['menu']['utilities']['User Overview'] );
+    }
+    else
+    {
       unset( $data['menu']['lists']['Form Types'] );
       unset( $data['menu']['lists']['Sources'] );
       unset( $data['menu']['lists']['Strata'] );

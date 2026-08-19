@@ -19,6 +19,7 @@ class post extends \cenozo\service\post
   protected function validate()
   {
     parent::validate();
+    sleep(2);
 
     if( $this->may_continue() )
     {

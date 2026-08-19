@@ -154,14 +154,14 @@ export class CN_view_test_entry extends CN_action_view {
     const state = this.get_property_value("state");
     if (this.#state_btn_el) {
       this.constructor.set_disabled(
-        this.#state_btn_el, disabled ||
-        ("assigned" != state && "typist" == CN_session.get("role", "name"))
+        this.#state_btn_el,
+        "assigned" != state && "typist" == CN_session.get("role", "name")
       );
     }
     if (this.#reset_btn_el) {
       this.constructor.set_disabled(
-        this.#reset_btn_el, disabled ||
-        ("assigned" != state && "typist" == CN_session.get("role", "name"))
+        this.#reset_btn_el,
+        disabled || ("assigned" != state && "typist" == CN_session.get("role", "name"))
       );
     }
   }

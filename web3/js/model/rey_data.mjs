@@ -238,10 +238,13 @@ export class CN_test_rey_data extends CN_test_base_data {
       });
 
       // fill in the yes/no buttons
+      word.element.querySelector(`#${word_name}_no`).checked = false;
+      word.element.querySelector(`#${word_name}_yes`).checked = false;
       if (true === word.value) {
         word.element.querySelector(`#${word_name}_yes`).checked = true;
       } else if (false === word.value) {
         word.element.querySelector(`#${word_name}_no`).checked = true;
+      } else {
       }
     });
 

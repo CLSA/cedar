@@ -2,6 +2,7 @@ const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_action_view } = await import(`${CENOZO_URL}/js/action/view.mjs`);
 const { CN_base_action } = await import(`${CENOZO_URL}/js/action/base_action.mjs`);
+const { CN_base_element } = await import(`${CENOZO_URL}/js/element/base_element.mjs`);
 const { CN_base_model } = await import(`${CENOZO_URL}/js/model/base_model.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_card } = await import(`${CENOZO_URL}/js/element/card.mjs`);
@@ -428,20 +429,22 @@ export class CN_list_transcription extends CN_action_list {
    */
   async on_add() {
     if ("typist" == CN_session.get("role", "name")) {
-      try {
-        const response = await CN_api.post("transcription", { user_id: CN_session.get("user", "id") });
-        CN_session.navigate_to(`transcription/view/${response}`);
-      } catch (error) {
-        if (CN_common.is_uri_error(error, 409)) {
-          await CN_modal_message.create_and_open({
-            header_class: "text-bg-danger",
-            title: "Cannot Begin New Transcription",
-            message: JSON.parse(error.body),
-          });
-        } else {
-          throw error;
+      await this.constructor.wait_for(async () => {
+        try {
+          const response = await CN_api.post("transcription", { user_id: CN_session.get("user", "id") });
+          CN_session.navigate_to(`transcription/view/${response}`);
+        } catch (error) {
+          if (CN_common.is_uri_error(error, 409)) {
+            await CN_modal_message.create_and_open({
+              header_class: "text-bg-danger",
+              title: "Cannot Begin New Transcription",
+              message: JSON.parse(error.body),
+            });
+          } else {
+            throw error;
+          }
         }
-      }
+      });
     } else {
       await super.on_add();
     }

@@ -33,7 +33,7 @@ export class CN_model_base_data extends CN_base_model {
 export class CN_test_base_data extends CN_base_action {
   #language_list = [];
   #status_type_list = [];
-  #sound_file_list = [];
+  #sound_file_list = null;
   #status_categories = {};
   #on_keydown;
 
@@ -165,23 +165,24 @@ export class CN_test_base_data extends CN_base_action {
     const test_entry_id = this.get_model().get_parent_model().get_identifier();
 
     // get additional data required for this data type
-    const [
-      language_response,
-      status_type_response,
-      sound_file_response
-    ] = await Promise.all([
+    const promise_list = [
       CN_api.get(`test_entry/${test_entry_id}/language`),
 
       CN_api.get("status_type", {
         select: { column: ["category", "name"] },
         modifier: { order: ["category", "rank"] },
       }),
+    ];
 
-      CN_api.get(`test_entry/${test_entry_id}/sound_file`, {
-        select: { column: ["id", "name", "url", "identifying"] },
-        modifier: { order: "name" },
-      }),
-    ]);
+    if (null == this.#sound_file_list) {
+      promise_list.push(
+        CN_api.get(`test_entry/${test_entry_id}/sound_file`, {
+          select: { column: ["id", "name", "url", "identifying"] },
+          modifier: { order: "name" },
+        })
+      );
+    }
+    const [language_response, status_type_response, sound_file_response] = await Promise.all(promise_list);
 
     // track which languages the test-entry uses
     this.#language_list = language_response;
@@ -190,8 +191,10 @@ export class CN_test_base_data extends CN_base_action {
     this.#status_type_list = status_type_response;
 
     // get a list of all sound files
-    this.#sound_file_list = sound_file_response;
-    this.#sound_file_list.forEach((sound_file, index) => sound_file.active = 0 == index);
+    if (null == this.#sound_file_list) {
+      this.#sound_file_list = sound_file_response;
+      this.#sound_file_list.forEach((sound_file, index) => sound_file.active = 0 == index);
+    }
   }
 
   /**
@@ -278,81 +281,85 @@ export class CN_test_base_data extends CN_base_action {
       }
     }
 
-    // rebuild the recordings list
+    // only rebuild the recordings list if they've never been built
     const recordings_el = this.get_body_element().querySelector("[name=recordings]");
-    recordings_el.innerHTML = "";
+    if (0 == recordings_el.innerHTML.length) {
+      if (0 == this.#sound_file_list.length) {
+        recordings_el.innerHTML = "There are no sound files available for this test.";
+      } else {
+        recordings_el.append(this.constructor.html(`
+          <div class="d-flex justify-content-center pb-2">
+            <div class="mx-2 fst-italic"><span class="fw-bold">Play/Pause:</span> Ctrl⋅Shift⋅L</div>
+            <div class="mx-2 fst-italic"><span class="fw-bold">Backward:</span> Ctrl⋅Shift⋅&lt;</div>
+            <div class="mx-2 fst-italic"><span class="fw-bold">Forward:</span> Ctrl⋅Shift⋅&gt;</div>
+            <div class="mx-2 fst-italic">
+              <span class="fw-bold">Prev Recording:</span> Ctrl⋅Shift⋅<i class="bi bi-arrow-left"></i>
+            </div>
+            <div class="mx-2 fst-italic">
+              <span class="fw-bold">Next Recording:</span> Ctrl⋅Shift⋅<i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        `));
 
-    if (0 == this.#sound_file_list.length) {
-      recordings_el.innerHTML = "There are no sound files available for this test.";
-    } else {
-      recordings_el.append(this.constructor.html(`
-        <div class="d-flex justify-content-center pb-2">
-          <div class="mx-2 fst-italic"><span class="fw-bold">Play/Pause:</span> Ctrl⋅Shift⋅L</div>
-          <div class="mx-2 fst-italic"><span class="fw-bold">Backward:</span> Ctrl⋅Shift⋅&lt;</div>
-          <div class="mx-2 fst-italic"><span class="fw-bold">Forward:</span> Ctrl⋅Shift⋅&gt;</div>
-          <div class="mx-2 fst-italic"><span class="fw-bold">Prev Recording:</span> Ctrl⋅Shift⋅←</div>
-          <div class="mx-2 fst-italic"><span class="fw-bold">Next Recording:</span> Ctrl⋅Shift⋅→</div>
-        </div>
-      `));
+        this.#sound_file_list.forEach(sound_file => {
+          const sound_file_id = `sound_file_${sound_file.id}`;
+          const row_el = this.constructor.html('<div class="row ms-2 me-0 mb-3"></div>');
+          sound_file.label = CN_element_label.append(row_el, {
+            for: `sound_file_${sound_file.id}`,
+            value: CN_common.uc_words(sound_file.name),
+            class: `col-sm-3 rounded ${sound_file.active ? "text-bg-info" : ""}`,
+          });
+          sound_file.form_input = new CN_input_audio_url(row_el, {
+            id: `sound_file_${sound_file.id}`,
+            class: "col-sm-9",
+            get_default: () => sound_file.url,
+            on_focus: () => {
+              // make the focused sound file active
+              this.#sound_file_list.forEach(sf => {
+                sf.active = sf.id == sound_file.id;
 
-      this.#sound_file_list.forEach(sound_file => {
-        const sound_file_id = `sound_file_${sound_file.id}`;
-        const row_el = this.constructor.html('<div class="row ms-2 me-0 mb-3"></div>');
-        sound_file.label = CN_element_label.append(row_el, {
-          for: `sound_file_${sound_file.id}`,
-          value: CN_common.uc_words(sound_file.name),
-          class: `col-sm-3 rounded ${sound_file.active ? "text-bg-info" : ""}`,
-        });
-        sound_file.form_input = new CN_input_audio_url(row_el, {
-          id: `sound_file_${sound_file.id}`,
-          class: "col-sm-9",
-          get_default: () => sound_file.url,
-          on_focus: () => {
-            // make the focused sound file active
-            this.#sound_file_list.forEach(sf => {
-              sf.active = sf.id == sound_file.id;
-
-              // update the audio elements based on which is active
-              if (sf.active) {
-                sf.label.get_element().classList.add("text-bg-info");
-              } else {
-                sf.label.get_element().classList.remove("text-bg-info");
-                sf.form_input.get_control_element().pause();
-              }
-            });
-          },
-          postfix: (el) => {
-            sound_file.identifying_form_input = CN_input_boolean.append(el, {
-              id: `identifying_${sound_file.id}`,
-              class: "ms-2",
-              placeholder: "(select identifying)",
-              disabled: this.get_disabled(),
-              get_default: () => sound_file.identifying,
-              enum: {
-                values: [
-                  { key: true, value: "Identifying" },
-                  { key: false, value: "Not Identifying" },
-                ],
-              },
-              on_change: async (form_input, valid) => {
-                form_input.set_disabled(true);
-                try {
-                  // update the server
-                  let data = {};
-                  data.identifying = form_input.get_value_for_record();
-                  await CN_api.patch(`sound_file/${sound_file.id}`, data);
-                  sound_file.identifying = form_input.get_value();
-                } finally {
-                  form_input.set_disabled(false);
-                  this.update_element();
+                // update the audio elements based on which is active
+                if (sf.active) {
+                  sf.label.get_element().classList.add("text-bg-info");
+                } else {
+                  sf.label.get_element().classList.remove("text-bg-info");
+                  sf.form_input.get_control_element().pause();
                 }
-              },
-            });
-          },
+              });
+            },
+            postfix: (el) => {
+              sound_file.identifying_form_input = CN_input_boolean.append(el, {
+                id: `identifying_${sound_file.id}`,
+                class: "ms-2",
+                placeholder: "(select identifying)",
+                disabled: this.get_disabled(),
+                get_default: () => sound_file.identifying,
+                enum: {
+                  values: [
+                    { key: true, value: "Identifying" },
+                    { key: false, value: "Not Identifying" },
+                  ],
+                },
+                on_change: async (form_input, valid) => {
+                  form_input.set_disabled(true);
+                  try {
+                    // update the server
+                    let data = {};
+                    data.identifying = form_input.get_value_for_record();
+                    await CN_api.patch(`sound_file/${sound_file.id}`, data);
+                    sound_file.identifying = form_input.get_value();
+                  } finally {
+                    form_input.set_disabled(false);
+                    this.update_element();
+                  }
+                },
+              });
+            },
+          });
+          row_el.append(sound_file.form_input.get_element());
+          recordings_el.append(row_el);
         });
-        row_el.append(sound_file.form_input.get_element());
-        recordings_el.append(row_el);
-      });
+      }
     }
   }
 
