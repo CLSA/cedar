@@ -55,11 +55,19 @@ class sound_file extends \cenozo\database\record
     foreach( $file_list as $row )
     {
       $parts = explode( "\t", $row );
-      preg_match( sprintf( '#.*/(%s)/([^/]+).(ogg|wav)#', $uid_regex ), $parts[0], $matches );
-      $uid = $matches[1];
-      $filename = $matches[2];
-      $extension = $matches[3];
+      preg_match( sprintf( '#(.*)/(%s)/([^/]+).(ogg|wav)#', $uid_regex ), $parts[0], $matches );
+      $uid = $matches[2];
+      $filename = $matches[3];
+      $extension = $matches[4];
       $datetime = preg_replace( '/\..*/', '', $parts[1] ); // remove the decimal seconds part of the date
+
+      // use the path to search for a filename if the filename is "audio"
+      if( 'audio' == $filename )
+      {
+        // /usr/local/lib/cedar_f1-ghost/web/recordings/COG_AUDIO_1
+        $path_parts = explode( "/", $matches[1] );
+        $filename = $path_parts[count( $path_parts ) - 1];
+      }
 
       $insert_list[] = sprintf(
         '( %s, %s, %s, %s )',

@@ -31,6 +31,9 @@ $SETTINGS['interface']['assignment_retention_time'] = 8;
 $SETTINGS['path']['RECORDINGS'] = NULL;
 $SETTINGS['url']['RECORDINGS'] = NULL;
 
+// what is the source of the recordings?  Either 'vault' or 'pine'.
+$SETTINGS['general']['recordings_source'] = 'vault';
+
 // where to store the file which tracks when the last sync was performed
 $SETTINGS['general']['last_sync_file'] = $SETTINGS['path']['APPLICATION'].'/last_sync';
 

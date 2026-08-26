@@ -27,6 +27,7 @@ class module extends \cenozo\service\site_restricted_participant_module
   public function prepare_read( $select, $modifier )
   {
     parent::prepare_read( $select, $modifier );
+    $source = lib::create( 'business\setting_manager' )->get_setting( 'general', 'recordings_source' );
 
     $modifier->join( 'participant', 'sound_file.participant_id', 'participant.id' );
     $modifier->left_join( 'test_type', 'sound_file.test_type_id', 'test_type.id' );
@@ -44,21 +45,43 @@ class module extends \cenozo\service\site_restricted_participant_module
     if( $select->has_column( 'url' ) )
     {
       // convert filename into a name
-      $select->add_column(
-        sprintf(
-          'CONCAT_WS( '.
-            '"/", '.
-            '"%s", '.
-            '"%s", '.
-            'participant.uid, '.
-            'CONCAT( sound_file.filename, ".", sound_file.extension ) '.
-          ')',
-          str_replace( '/api', '', ROOT_URL ),
-          RECORDINGS_URL
-        ),
-        'url',
-        false
-      );
+      if( 'vault' == $source )
+      {
+        $select->add_column(
+          sprintf(
+            'CONCAT_WS( '.
+              '"/", '.
+              '"%s", '.
+              '"%s", '.
+              'participant.uid, '.
+              'CONCAT( sound_file.filename, ".", sound_file.extension ) '.
+            ')',
+            str_replace( '/api', '', ROOT_URL ),
+            RECORDINGS_URL
+          ),
+          'url',
+          false
+        );
+      }
+      else
+      {
+        $select->add_column(
+          sprintf(
+            'CONCAT_WS( '.
+              '"/", '.
+              '"%s", '.
+              '"%s", '.
+              'sound_file.filename, '.
+              'participant.uid, '.
+              'CONCAT( "audio.", sound_file.extension ) '.
+            ')',
+            str_replace( '/api', '', ROOT_URL ),
+            RECORDINGS_URL
+          ),
+          'url',
+          false
+        );
+      }
     }
   }
 }
