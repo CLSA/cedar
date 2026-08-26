@@ -642,6 +642,21 @@ class export
    * @access private
    */
   private $settings = [];
+
+  /**
+   * The mysqli object used to communicate with the database
+   * @var mysqli
+   */
+  private $db = NULL;
+
+  /**
+   * The cenozo database name
+   * @var string
+   */
+  private $cenozo_database_name = NULL;
+
+  // Other private members
+  private $study_phase = NULL;
 }
 
 $export = new export();
