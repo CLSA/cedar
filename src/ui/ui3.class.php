@@ -16,165 +16,120 @@ class ui3 extends \cenozo\ui\ui3
   /**
    * Extends the parent method
    */
-  public static function generate()
+  protected function generate_modules()
   {
-    $data = parent::generate();
+    parent::generate_modules();
 
     $db_role = lib::create( 'business\session' )->get_role();
 
-    if( array_key_exists( 'language', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['language'];
-      $module->add_child( 'special_letter' );
-    }
+    $module = $this->get_module( 'language' );
+    if( !is_null( $module ) ) $module->add_child( 'special_letter' );
 
-    if( array_key_exists( 'participant', $data['module_list'] ) )
+    $module = $this->get_module( 'participant' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['participant'];
       $module->add_child( 'transcription', 'address' );
       $module->add_child( 'sound_file', 'address' );
     }
 
-    if( array_key_exists( 'aft_data', $data['module_list'] ) )
+    foreach( ['aft', 'fas', 'mat', 'premat', 'rey'] as $type )
     {
-      $module = $data['module_list']['aft_data'];
-      $module->add_action( 'test' );
+      $module = $this->get_module( sprintf( '%s_data', $type ) );
+      if( !is_null( $module ) ) $module->add_action( 'test' );
     }
 
-    if( array_key_exists( 'fas_data', $data['module_list'] ) )
+    $module = $this->get_module( 'test_entry' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['fas_data'];
-      $module->add_action( 'test' );
-    }
-
-    if( array_key_exists( 'mat_data', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['mat_data'];
-      $module->add_action( 'test' );
-    }
-
-    if( array_key_exists( 'premat_data', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['premat_data'];
-      $module->add_action( 'test' );
-    }
-
-    if( array_key_exists( 'rey_data', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['rey_data'];
-      $module->add_action( 'test' );
-    }
-
-    if( array_key_exists( 'fas_data', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['fas_data'];
-      $module->add_action( 'test' );
-    }
-
-    if( array_key_exists( 'test_entry', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['test_entry'];
       $module->add_child( 'test_entry_activity' );
       $module->add_choose( 'language' );
       $module->add_action( 'notes', '/{identifier}?{search}' );
     }
 
-    if( array_key_exists( 'status_type', $data['module_list'] ) )
-    {
-      $module = $data['module_list']['status_type'];
-      $module->add_choose( 'test_type' );
-    }
+    $module = $this->get_module( 'status_type' );
+    if( !is_null( $module ) ) $module->add_choose( 'test_type' );
 
-    if( array_key_exists( 'test_type', $data['module_list'] ) )
+    $module = $this->get_module( 'test_type' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['test_type'];
       $module->add_child( 'cohort' );
       $module->add_child( 'filename_format' );
       $module->add_choose( 'status_type' );
     }
 
-    if( array_key_exists( 'transcription', $data['module_list'] ) )
+    $module = $this->get_module( 'transcription' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['transcription'];
       $module->add_child( 'test_entry' );
       $module->add_choose( 'language' );
     }
 
-    if( array_key_exists( 'user', $data['module_list'] ) )
+    $module = $this->get_module( 'user' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['user'];
       $module->add_child( 'transcription', 'access' );
       $module->add_choose( 'cohort' );
     }
 
-    if( array_key_exists( 'word', $data['module_list'] ) )
+    $module = $this->get_module( 'word' );
+    if( !is_null( $module ) )
     {
-      $module = $data['module_list']['word'];
       $module->add_child( 'compound' );
       $module->add_child( 'homophone' );
       $module->add_choose( 'test_entry' );
     }
 
-    // add application-specific menu items
-    $menu_list_items = [
-      ['subject' => 'transcription', 'title' => 'Transcriptions'],
-      ['subject' => 'transcription_event_type', 'title' => 'Transcription Event Types'],
-    ];
+    $module = $this->get_module( 'transcription' );
+    if ( !is_null( $module ) && 2 < $db_role->tier ) $module->add_action( 'multiedit' );
+  }
 
-    // remove menu items that aren't necessary
-    unset( $data['menu']['lists']['Availability Types'] );
-    unset( $data['menu']['lists']['Consent Types'] );
-    unset( $data['menu']['lists']['Event Types'] );
-    unset( $data['menu']['lists']['Hold Types'] );
-    unset( $data['menu']['lists']['Identifiers'] );
-    unset( $data['menu']['lists']['Proxy Types'] );
-    unset( $data['menu']['lists']['Trace Types'] );
-    unset( $data['menu']['utilities']['Participant Export'] );
-    unset( $data['menu']['utilities']['Participant Multi-Edit'] );
-    unset( $data['menu']['utilities']['Tracing'] );
+  /**
+   * Extends the parent method
+   */
+  protected function generate_menus()
+  {
+    parent::generate_menus();
+
+    $db_role = lib::create( 'business\session' )->get_role();
+
+    // remove menus items that aren't necessary
+    $this->remove_menu_item( 'list', 'Availability Types' );
+    $this->remove_menu_item( 'list', 'Consent Types' );
+    $this->remove_menu_item( 'list', 'Event Types' );
+    $this->remove_menu_item( 'list', 'Hold Types' );
+    $this->remove_menu_item( 'list', 'Identifiers' );
+    $this->remove_menu_item( 'list', 'Proxy Types' );
+    $this->remove_menu_item( 'list', 'Trace Types' );
+    $this->remove_menu_item( 'utility', 'Participant Export' );
+    $this->remove_menu_item( 'utility', 'Participant Multi-Edit' );
+    $this->remove_menu_item( 'utility', 'Tracing' );
+
+    $this->add_menu_item( 'list', 'Transcriptions', 'transcription' );
+    $this->add_menu_item( 'list', 'Transcription Event Types', 'transcription_event_type' );
 
     if( 'typist' == $db_role->name )
     {
-      unset( $data['menu']['lists']['Users'] );
-    unset( $data['menu']['utilities']['Participant Search'] );
-    unset( $data['menu']['utilities']['User Overview'] );
+      $this->remove_menu_item( 'list', 'Users' );
+      $this->remove_menu_item( 'utility', 'Participant Search' );
+      $this->remove_menu_item( 'utility', 'User Overview' );
     }
     else
     {
-      unset( $data['menu']['lists']['Form Types'] );
-      unset( $data['menu']['lists']['Sources'] );
-      unset( $data['menu']['lists']['Strata'] );
+      $this->remove_menu_item( 'list', 'Form Types' );
+      $this->remove_menu_item( 'list', 'Sources' );
+      $this->remove_menu_item( 'list', 'Strata' );
 
-      $menu_list_items = array_merge( $menu_list_items, [
-        ['subject' => 'test_type', 'title' => 'Test Types'],
-        ['subject' => 'word', 'title' => 'Words'],
-        ['subject' => 'homophone', 'title' => 'Homophones']
-      ]);
+      $this->add_menu_item( 'list', 'Test Types', 'test_type' );
+      $this->add_menu_item( 'list', 'Words', 'word' );
+      $this->add_menu_item( 'list', 'Homophones', 'homophone' );
 
       if( 2 < $db_role->tier )
       {
-        $menu_list_items = array_merge( $menu_list_items, [
-          ['subject' => 'sound_file', 'title' => 'Sound Files'],
-          ['subject' => 'status_type', 'title' => 'Status Types']
-        ]);
-        $data['module_list']['transcription']->add_action( 'multiedit' );
-        $data['menu']['utilities']['Transcription Multi-Edit'] = [
-          'subject' => 'transcription',
-          'action' => 'multiedit'
-        ];
+        $this->add_menu_item( 'list', 'REY Variants', 'rey_data_variant' );
+        $this->add_menu_item( 'list', 'Sound Files', 'sound_file' );
+        $this->add_menu_item( 'list', 'Status Types', 'status_type' );
+        $this->add_menu_item( 'utility', 'Transcription Multi-Edit', 'transcription', 'multiedit' );
       }
     }
-
-    foreach( $menu_list_items as $item )
-    {
-      if( array_key_exists( $item['subject'], $data['module_list'] ) )
-      {
-        $module = $data['module_list'][$item['subject']];
-        if( $module->get_list_menu() && $module->has_action( 'list' ) )
-          $data['menu']['lists'][$item['title']] = $item['subject'];
-      }
-    }
-
-    return $data;
   }
 }
