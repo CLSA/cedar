@@ -127,6 +127,10 @@ class module extends \cenozo\service\site_restricted_participant_module
       $modifier->where( 'transcription.end_datetime', '=', NULL );
     }
 
+    // add the note count column if requested
+    if( $select->has_column( 'note_count' ) )
+      $this->add_count_column( 'note_count', 'test_entry_note', $select, $modifier );
+
     if( $select->has_column( 'user_list' ) )
     {
       $modifier->left_join( 'test_entry_activity', 'test_entry.id', 'test_entry_activity.test_entry_id' );

@@ -56,11 +56,15 @@ export class CN_model_test_entry extends CN_base_model {
 
         // used by the data type test actions
         audio_status_type_id: {},
+        audio_status_type_name: { meta: { table: "audio_status_type", column: "name" } },
         audio_status_type_other: {},
         participant_status_type_id: {},
+        participant_status_type_name: { meta: { table: "participant_status_type", column: "name" } },
         participant_status_type_other: {},
         admin_status_type_id: {},
+        admin_status_type_name: { meta: { table: "admin_status_type", column: "name" } },
         admin_status_type_other: {},
+        note_count: { meta: {} },
       },
     });
   }
@@ -123,12 +127,8 @@ export class CN_view_test_entry extends CN_action_view {
   #state_btn_el;
   #reset_btn_el;
 
-  /**
-   * Extend parent method
-   */
-  get_data_model() {
-    return this.#data_model;
-  }
+  get_test_type() { return this.#test_type; }
+  get_data_model() { return this.#data_model; }
 
   /**
    * Extend parent method
@@ -306,6 +306,9 @@ export class CN_view_test_entry extends CN_action_view {
       });
     }
 
+    const notes_btn_el = footer_el.querySelector("button[name=notes]");
+    notes_btn_el.innerHTML = `Notes (${this.get_property_value("note_count")})`;
+
     // only enabled for typists
     this.set_disabled("typist" != role || "assigned" != state);
   }
@@ -403,6 +406,7 @@ export class CN_view_test_entry extends CN_action_view {
       this.#test_type = await CN_api.get(model.get_view_url(null, "api"), {
         select: {
           column: [
+            { table: "test_type", column: "id", alias: "test_type_id" },
             { table: "test_type", column: "data_type" },
             { table: "test_type", column: "name" },
           ],

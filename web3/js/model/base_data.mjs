@@ -161,16 +161,18 @@ export class CN_test_base_data extends CN_base_action {
   async on_load() {
     await super.on_load();
 
-    // get the current language
-    const test_entry_id = this.get_model().get_parent_model().get_identifier();
+    const parent_model = this.get_model().get_parent_model();
+    const parent_action = parent_model.get_action();
+    const test_entry_id = parent_model.get_identifier();
+    const test_type_id = parent_action.get_test_type().test_type_id;
 
     // get additional data required for this data type
     const promise_list = [
       CN_api.get(`test_entry/${test_entry_id}/language`),
 
-      CN_api.get("status_type", {
+      CN_api.get(`test_type/${test_type_id}/status_type`, {
         select: { column: ["category", "name"] },
-        modifier: { order: ["category", "rank"] },
+        modifier: { order: ["category", "status_type.rank"] },
       }),
     ];
 
@@ -189,6 +191,18 @@ export class CN_test_base_data extends CN_base_action {
 
     // get a list of all status types
     this.#status_type_list = status_type_response;
+
+    // make sure to add any currently selected statuses that aren't in the list (legacy data)
+    ["audio", "participant", "admin"].forEach(category => {
+      const status_type_id = parent_action.get_property_value(`${category}_status_type_id`);
+      if (null != status_type_id && !this.#status_type_list.find(status => status.id == status_type_id)) {
+        this.#status_type_list.push({
+          category: category,
+          name: parent_action.get_property_value(`${category}_status_type_name`),
+          id: status_type_id,
+        });
+      }
+    });
 
     // get a list of all sound files
     if (null == this.#sound_file_list) {

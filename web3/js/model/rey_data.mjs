@@ -191,7 +191,7 @@ export class CN_test_rey_data extends CN_test_base_data {
   update_element() {
     super.update_element();
 
-    const disabled = !this.get_model().allow_edit();
+    const disabled = !this.get_model().get_parent_model().allow_edit();
     const words_el = this.get_body_element().querySelector("div[name=words]");
     const intrusions_el = this.get_body_element().querySelector("[name=intrusion-list]");
     const rey_language_id = Number(this.#language_form_input.get_value());

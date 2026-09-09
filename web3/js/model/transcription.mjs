@@ -96,13 +96,13 @@ export class CN_model_transcription extends CN_base_model {
           type: "enum",
           enum: { path: "site" },
           is_constant: () => 3 > CN_session.get("role", "tier"),
-          is_hidden: () => "add" == this.get_action_name(),
+          is_hidden: () => "add" == this.get_action_name() || 1 >= CN_session.get("role", "tier"),
         },
         state: {
           meta: {},
           title: "State",
           is_constant: () => true,
-          is_hidden: () => "add" == this.get_action_name(),
+          is_hidden: () => "add" == this.get_action_name() || 1 >= CN_session.get("role", "tier"),
           help: 'One of "assigned", "deferred" or "completed".',
         },
         start_datetime: {
