@@ -20,7 +20,7 @@ export class CN_model_status_type extends CN_base_model {
           type: "enum",
           is_constant: () => "view" == this.get_action_name(),
           on_change: async (form_input, valid) => {
-            const action = form_input.get_action();
+            const action = this.get_action();
 
             // run the default behaviour
             await action.on_property_change("category", valid);
@@ -32,8 +32,8 @@ export class CN_model_status_type extends CN_base_model {
         rank: {
           title: "Rank",
           type: "rank",
-          max_rank: async (form_input) => {
-            const action = form_input.get_action();
+          max_rank: async () => {
+            const action = this.get_action();
 
             // the max rank depends on which category has been selected
             let max_rank = 0;

@@ -57,7 +57,7 @@ export class CN_model_word extends CN_base_model {
           type: "typeahead",
           typeahead: CN_model_word.get_typeahead(),
           on_change: async (form_input, valid) => {
-            const action = form_input.get_action();
+            const action = this.get_action();
             const sister_word_id = action.get_property_value_for_record("sister_word_id");
 
             let proceed = true;

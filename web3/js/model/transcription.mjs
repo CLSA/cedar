@@ -338,7 +338,7 @@ export class CN_multiedit_transcription extends CN_base_action {
       id: "user_id",
       get_default: () => null,
       enum: {
-        get_enums: async (form_input) => (
+        get_enums: async () => (
           await CN_api.get("user", {
             select: { column: ["id", "name", "first_name", "last_name"] },
             modifier: {
