@@ -169,8 +169,10 @@ cenozoApp.defineModule({
               open: false,
             });
 
-            // and sort by word
-            data.modifier.order = { word: false };
+            // and sort by word (making sure to put exact matches at the top)
+            const special_order = {};
+            special_order['word="' + viewValue + '"'] = true;
+            data.modifier.order = [special_order, "word"];
 
             return data;
           };
