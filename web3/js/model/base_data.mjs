@@ -79,9 +79,9 @@ export class CN_test_base_data extends CN_base_action {
 
                 // update the audio elements based on which is active
                 if (sf.active) {
-                  sf.label.get_element().classList.add("text-bg-info");
+                  sf.label.get_element().classList.add("border");
                 } else {
-                  sf.label.get_element().classList.remove("text-bg-info");
+                  sf.label.get_element().classList.remove("border");
                   sf.form_input.get_control_element().pause();
                 }
               });
@@ -180,7 +180,8 @@ export class CN_test_base_data extends CN_base_action {
       promise_list.push(
         CN_api.get(`test_entry/${test_entry_id}/sound_file`, {
           select: { column: ["id", "name", "url", "identifying"] },
-          modifier: { order: "name" },
+          // this order is only because the pre-MAT test type has counting come before alphabet
+          modifier: { order: { name: true } },
         })
       );
     }
@@ -192,29 +193,6 @@ export class CN_test_base_data extends CN_base_action {
     // get a list of all status types
     this.#status_type_list = status_type_response;
 
-    // make sure to add any currently selected statuses that aren't in the list (legacy data)
-    ["audio", "participant", "admin"].forEach(category => {
-      const status_type_id = parent_action.get_property_value(`${category}_status_type_id`);
-      if (null != status_type_id && !this.#status_type_list.find(status => status.id == status_type_id)) {
-        this.#status_type_list.push({
-          category: category,
-          name: parent_action.get_property_value(`${category}_status_type_name`),
-          id: status_type_id,
-        });
-      }
-    });
-
-    // get a list of all sound files
-    if (null == this.#sound_file_list) {
-      this.#sound_file_list = sound_file_response;
-      this.#sound_file_list.forEach((sound_file, index) => sound_file.active = 0 == index);
-    }
-  }
-
-  /**
-   * Extends parent method
-   */
-  update_element() {
     // only define the status categories once
     if (0 < this.#status_type_list.length && 0 == Object.keys(this.#status_categories)) {
       const parent_action = this.get_model().get_parent_model().get_action();
@@ -222,15 +200,16 @@ export class CN_test_base_data extends CN_base_action {
       // create an enum for all status types
       this.#status_type_list.forEach(status_type => {
         if (!this.#status_categories[status_type.category]) {
-          this.#status_categories[status_type.category] = {
+          const category = {
             enum_list: [],
             status_form_input: null,
             other_form_input: null,
-            is_other_selected: function() {
-              const status = this.enum_list.find(obj => obj.key == this.status_form_input.get_value());
+            is_other_selected: () => {
+              const status = category.enum_list.find(obj => obj.key == category.status_form_input.get_value());
               return status && status.value.match(/\bother\b/i);
             },
           };
+          this.#status_categories[status_type.category] = category;
         }
         this.#status_categories[status_type.category].enum_list.push({
           key: status_type.id,
@@ -284,6 +263,29 @@ export class CN_test_base_data extends CN_base_action {
       }
     }
 
+    // make sure to add any currently selected statuses that aren't in the list (legacy data)
+    ["audio", "participant", "admin"].forEach(category => {
+      const status_type_id = parent_action.get_property_value(`${category}_status_type_id`);
+      if (null != status_type_id && !this.#status_type_list.find(status => status.id == status_type_id)) {
+        this.#status_type_list.push({
+          category: category,
+          name: parent_action.get_property_value(`${category}_status_type_name`),
+          id: status_type_id,
+        });
+      }
+    });
+
+    // get a list of all sound files
+    if (null == this.#sound_file_list) {
+      this.#sound_file_list = sound_file_response;
+      this.#sound_file_list.forEach((sound_file, index) => sound_file.active = 0 == index);
+    }
+  }
+
+  /**
+   * Extends parent method
+   */
+  update_element() {
     // show the other string input when an "Other" status is selected
     for (const cat_name in this.#status_categories) {
       const category = this.#status_categories[cat_name];
@@ -321,7 +323,7 @@ export class CN_test_base_data extends CN_base_action {
           sound_file.label = CN_element_label.append(row_el, {
             for: `sound_file_${sound_file.id}`,
             value: CN_common.uc_words(sound_file.name),
-            class: `col-sm-3 rounded ${sound_file.active ? "text-bg-info" : ""}`,
+            class: `col-sm-3 rounded border-primary ${sound_file.active ? "border" : ""}`,
           });
           sound_file.form_input = new CN_input_audio_url(row_el, {
             id: `sound_file_${sound_file.id}`,
@@ -334,9 +336,9 @@ export class CN_test_base_data extends CN_base_action {
 
                 // update the audio elements based on which is active
                 if (sf.active) {
-                  sf.label.get_element().classList.add("text-bg-info");
+                  sf.label.get_element().classList.add("border");
                 } else {
-                  sf.label.get_element().classList.remove("text-bg-info");
+                  sf.label.get_element().classList.remove("border");
                   sf.form_input.get_control_element().pause();
                 }
               });

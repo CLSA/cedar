@@ -71,22 +71,7 @@ export class CN_model_transcription extends CN_base_model {
           type: "enum",
           enum: {
             path: "user",
-            get_enums: async () => {
-              const user_list = await CN_api.get( "user", {
-                select: { distinct: true, column: ["id", "name", "first_name", "last_name"] },
-                modifier: {
-                  join: [
-                    { table: "access", onleft: "user.id", onright: "access.user_id" },
-                    { table: "role", onleft: "access.role_id", onright: "role.id" },
-                  ],
-                  where: [
-                    { column: "role.name", operator: "=", value: "typist" },
-                  ],
-                  order: "user.name",
-                },
-              });
-              return user_list.map(u => ({ key: u.id, value: `${u.first_name} ${u.last_name} (${u.name})` }));
-            },
+            get_enums: async () => await this.get_user_enums(),
           },
           is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which user the transcription is assigned to.",
@@ -153,6 +138,30 @@ export class CN_model_transcription extends CN_base_model {
     }
 
     return false;
+  }
+
+  /**
+   * ADD DOCS
+   */
+  async get_user_enums() {
+    const where = [{ column: "role.name", operator: "=", value: "typist" }];
+    if ("view" == this.get_action_name()) {
+      const site_id = this.get_action().get_property_value_for_record("site_id");
+      if (site_id) where.push({ column: "access.site_id", operator: "=", value: site_id });
+    }
+
+    const user_list = await CN_api.get( "user", {
+      select: { distinct: true, column: ["id", "name", "first_name", "last_name"] },
+      modifier: {
+        join: [
+          { table: "access", onleft: "user.id", onright: "access.user_id" },
+          { table: "role", onleft: "access.role_id", onright: "role.id" },
+        ],
+        where: where,
+        order: "user.name",
+      },
+    });
+    return user_list.map(u => ({ key: u.id, value: `${u.first_name} ${u.last_name} (${u.name})` }));
   }
 }
 

@@ -15,4 +15,11 @@ export class CN_model_test_entry_activity extends CN_base_model {
       },
     });
   }
+
+  /**
+   * Extend parent method
+   */
+  allow_view() {
+    return false;
+  }
 }

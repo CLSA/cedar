@@ -60,6 +60,7 @@ export class CN_test_premat_data extends CN_test_base_data {
       class: "col-sm-9",
       on_change: async (form_input, valid) => {
         await CN_api.patch(this.get_api_path(), { counting: form_input.get_value_for_record() });
+        await this.run();
       },
     });
     counting_row_el.append(this.#counting_form_input.get_element());
@@ -72,6 +73,7 @@ export class CN_test_premat_data extends CN_test_base_data {
       class: "col-sm-9",
       on_change: async (form_input, valid) => {
         await CN_api.patch(this.get_api_path(), { alphabet: form_input.get_value_for_record() });
+        await this.run();
       },
     });
     alphabet_row_el.append(this.#alphabet_form_input.get_element());

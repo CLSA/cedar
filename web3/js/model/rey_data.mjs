@@ -316,9 +316,10 @@ export class CN_test_rey_data extends CN_test_base_data {
     `));
 
     // add the word list
-    Object.keys(this.#word_list).forEach(word_name => {
+    Object.keys(this.#word_list).forEach((word_name, index) => {
       const word = this.#word_list[word_name];
       word.element = this.constructor.html('<div class="row"></div>');
+      if (0 == index % 2) word.element.classList.add("bg-light");
       words_el.append(word.element);
       CN_element_label.append(word.element, { value: "Loading...", class: "col-sm-3" });
 

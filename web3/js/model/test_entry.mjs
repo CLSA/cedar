@@ -51,6 +51,7 @@ export class CN_model_test_entry extends CN_base_model {
         data_type: { meta: { table: "test_type", column: "data_type" } },
         state: { type: "enum" },
         participant_language_id: { meta: { table: "participant", column: "language_id" } },
+        user_id: { meta: { table: "transcription", column: "user_id" } },
         prev_test_entry_id: { meta: {} },
         next_test_entry_id: { meta: {} },
 
@@ -181,9 +182,29 @@ export class CN_view_test_entry extends CN_action_view {
    * @param string state: One of "assigned", "deferred" or "submitted"
    * @param boolean force_note: Will make sure the last note was left by the current user
    */
-  async set_state(state, force_note = false) {
+  async set_state(state) {
     const test_entry_path = `test_entry/${this.get_model().get_identifier()}`;
-    if (force_note) {
+
+    // if the transcription has no user and we're assigning the entry then ask which user to assign it to
+    let user_id = null;
+    if ("assigned" == state && !this.get_property_value("user_id")) {
+      user_id = await CN_modal_input.create_and_open({
+        title: "Select Typist",
+        message: "Please select which typist this transcription should be re-assigned to.",
+        input: {
+          type: "enum",
+          enum: {
+            path: "user",
+            get_enums: async () => await this.get_model().get_parent_model().get_user_enums(),
+          },
+        },
+      });
+
+      if (undefined === user_id) return;
+    }
+
+    // force a note when setting the state to assigned, or if a typist is deferring
+    if ("assigned" == state || ("deferred" == state && "typist" == CN_session.get("role", "name"))) {
       // force a new message if the last one wasn't left by the current user
       const response = await CN_api.get(`${test_entry_path}/test_entry_note`, {
         select: { column: "user_id" },
@@ -196,7 +217,7 @@ export class CN_view_test_entry extends CN_action_view {
           title: "Test Entry Note",
           message: "Please provide the reason you are changing the test entry's state.",
           input: {
-            type:"text",
+            type: "text",
             min_length: 10,
           },
         });
@@ -214,6 +235,15 @@ export class CN_view_test_entry extends CN_action_view {
     try {
       if (!disabled) this.set_disabled(true);
       await CN_api.patch(test_entry_path, { state: state });
+
+      // also update the transcription's user, if required
+      if (user_id) {
+        await CN_api.patch(
+          this.get_model().get_parent_model().get_view_url(null, "api"),
+          { user_id: user_id },
+        );
+      }
+
       if ("assigned" != state && "typist" == CN_session.get("role", "name")) {
         await this.transition("next");
       } else {
@@ -245,22 +275,28 @@ export class CN_view_test_entry extends CN_action_view {
    * @param string direction: Either "previous" or "next"
    */
   async transition(direction) {
+    const model = this.get_model();
     const new_test_entry_column = `${"next" == direction ? "next" : "prev"}_test_entry_id`;
     const new_test_entry_id = this.get_property_value(new_test_entry_column);
+
+    // first check whether we have access to the transcription
     try {
-      // we still have access to the transcription so go to the next test-entry or parent transcription
-      await (
-        new_test_entry_id ?
-        CN_session.navigate_to(this.get_model().get_view_url(new_test_entry_id)) :
-        this.on_navigate_to_parent()
-      );
+      await CN_api.get(model.get_view_url(new_test_entry_id, "api"));
     } catch (error) {
       if (CN_common.is_uri_error(error, 403)) {
-        // 403 means the user no longer has access to the transcription, so go back to the list instead
-        await this.on_navigate_to_parent();
+        // go back to the parent's parent (transcription/list)
+        await model.get_parent_model().get_action().on_navigate_to_parent();
+        return;
       } else {
         throw error;
       }
+    }
+
+    // if we get here then we have access to the transcription
+    if (new_test_entry_id) {
+      await CN_session.navigate_to(model.get_view_url(new_test_entry_id));
+    } else {
+      await this.on_navigate_to_parent();
     }
   }
 
@@ -302,7 +338,7 @@ export class CN_view_test_entry extends CN_action_view {
           `<li><button name="${option.name}" type="button" class="dropdown-item">${option.title}</button></li>`
         ))
         const btn_el = dropdown_el.querySelector(`button[name=${option.name}]`);
-        btn_el.addEventListener("click", this.set_state.bind(this, option.name, "deferred" == option.name));
+        btn_el.addEventListener("click", this.set_state.bind(this, option.name));
       });
     }
 

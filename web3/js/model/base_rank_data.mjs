@@ -6,6 +6,7 @@ const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
 const { CN_input_string } = await import(`${CENOZO_URL}/js/input/string.mjs`);
 const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/input/typeahead.mjs`);
+const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
 
@@ -76,6 +77,16 @@ export class CN_test_base_rank_data extends CN_test_base_data {
   /**
    * Extends parent method
    */
+  async on_dom_remove() {
+    this.#entry_list.forEach(entry => {
+      if (entry.action_tooltip) entry.action_tooltip.dispose();
+      if (entry.entry_tooltip) entry.entry_tooltip.dispose();
+    });
+  }
+
+  /**
+   * Extends parent method
+   */
   update_element() {
     super.update_element();
 
@@ -107,10 +118,30 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           "fullscreen" // no action
         );
         entry.action_btn_el = this.constructor.html(`
-          <button type="button" name="action" class="btn btn-outline-primary me-1">
+          <button
+            type="button"
+            name="action"
+            class="btn btn-outline-primary me-1"
+          >
             <i class="bi bi-${i_class}"></i>
           </button>
         `);
+
+        if (entry.action_tooltip) {
+          entry.action_tooltip.dispose();
+          entry.action_tooltip = null;
+        }
+
+        if (entry.action) {
+          entry.action_btn_el.setAttribute("data-bs-toggle", "tooltip");
+          entry.action_btn_el.setAttribute("data-bs-html", true);
+          entry.action_btn_el.setAttribute(
+            "data-bs-title",
+            "insert" == entry.action ? "Insert here" : "Replace word"
+          );
+          entry.action_tooltip = new bootstrap.Tooltip(entry.action_btn_el);
+        }
+
         this.constructor.set_disabled(entry.action_btn_el, this.get_disabled());
         entry.action_btn_el.addEventListener("click", async () => {
           // remove the action from all entries and advance this entry to the next action
@@ -140,7 +171,14 @@ export class CN_test_base_rank_data extends CN_test_base_data {
           "secondary" // "placeholder" == entry.word_type
         );
         entry.entry_btn_el = this.constructor.html(`
-          <button type="button" name="entry" class="btn btn-${btn_class} w-100">
+          <button
+            type="button"
+            name="entry"
+            class="btn btn-${btn_class} w-100"
+            data-bs-toggle="tooltip"
+            data-bs-html="true"
+            data-bs-title="Click to remove"
+          >
             ${
               "character" == this.#entry_type ?
               entry.value :
@@ -150,6 +188,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
             }
           </button>
         `);
+        entry.entry_tooltip = new bootstrap.Tooltip(entry.entry_btn_el);
         this.constructor.set_disabled(entry.entry_btn_el, this.get_disabled());
         entry.entry_btn_el.addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/${entry.id}`);
@@ -180,7 +219,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
     const entry_row_el = test_entry_el.querySelector("div[name=entry-add] div.row");
     CN_element_label.append(entry_row_el, {
       for: "new_entry",
-      value: `Enter ${CN_common.uc_words(this.#entry_type)}`,
+      value: `Enter ${"word" == this.#entry_type ? "Word" : "Number or Letter"}`,
       class: "col-sm-3",
     });
 
@@ -290,7 +329,6 @@ export class CN_test_base_rank_data extends CN_test_base_data {
     entry_row_el.append(this.#new_entry_form_input.get_element());
     test_entry_el.querySelector("[name=entry-add]").append(entry_row_el);
 
-
     return test_entry_el;
   }
 
@@ -306,6 +344,26 @@ export class CN_test_base_rank_data extends CN_test_base_data {
         return true;
       }
     });
+
+    // warn when first MAT charater isn't a "1"
+    if (
+      "character" == this.#entry_type &&
+      (0 == this.#entry_list.length || (action_entry && 1 == action_entry.rank)) &&
+      "1" != entry
+    ) {
+      const response = await CN_modal_confirm.create_and_open({
+        title: 'First word should be "1"',
+        message: `
+          <p>Warning, the first word to this test should always be "1".</p>
+          <p>
+            Please confirm that the participant started with something other than the number "1"
+            and that this was not caused by the beginning of the recording being missing.
+          </p>
+          <p>Are you sure you wish to make "${entry}" the first word?</p>
+        `,
+      });
+      if (!response) return;
+    }
 
     // insert the entry if an action entry has been selected
     const data = (

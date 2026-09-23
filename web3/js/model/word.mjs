@@ -117,7 +117,7 @@ export class CN_model_word extends CN_base_model {
    * @return string
    */
   static get_word_html(word) {
-    return `<span class="text-bg-info rounded-1 p-1">${word.code}</span> ${word.word}`;
+    return `<span class="border border-secondary rounded-1 p-1">${word.code}</span> ${word.word}`;
   }
 
   /**
