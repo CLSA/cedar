@@ -70,8 +70,11 @@ export class CN_model_transcription extends CN_base_model {
           title: "User",
           type: "enum",
           enum: {
-            path: "user",
-            get_enums: async () => await this.get_user_enums(),
+            get_enums: async () => await this.get_user_enums(
+              "view" == this.get_action_name() ?
+              this.get_action().get_property_value_for_record("site_id") :
+              null
+            ),
           },
           is_hidden: () => "typist" == CN_session.get("role", "name"),
           help: "Which user the transcription is assigned to.",
@@ -143,22 +146,25 @@ export class CN_model_transcription extends CN_base_model {
   /**
    * ADD DOCS
    */
-  async get_user_enums() {
-    const where = [{ column: "role.name", operator: "=", value: "typist" }];
-    if ("view" == this.get_action_name()) {
-      const site_id = this.get_action().get_property_value_for_record("site_id");
-      if (site_id) where.push({ column: "access.site_id", operator: "=", value: site_id });
-    }
+  async get_user_enums(site_id = null) {
+    const where = [
+      { column: "role.name", operator: "=", value: "typist" },
+      { column: "user.active", operator: "=", value: true },
+    ];
+    if (site_id) where.push({ column: "access.site_id", operator: "=", value: site_id });
 
     const user_list = await CN_api.get( "user", {
-      select: { distinct: true, column: ["id", "name", "first_name", "last_name"] },
+      select: {
+        distinct: true,
+        column: ["id", "name", "first_name", "last_name"],
+      },
       modifier: {
         join: [
           { table: "access", onleft: "user.id", onright: "access.user_id" },
           { table: "role", onleft: "access.role_id", onright: "role.id" },
         ],
         where: where,
-        order: "user.name",
+        order: "user.first_name",
       },
     });
     return user_list.map(u => ({ key: u.id, value: `${u.first_name} ${u.last_name} (${u.name})` }));
@@ -347,26 +353,7 @@ export class CN_multiedit_transcription extends CN_base_action {
       id: "user_id",
       get_default: () => null,
       enum: {
-        get_enums: async () => (
-          await CN_api.get("user", {
-            select: { column: ["id", "name", "first_name", "last_name"] },
-            modifier: {
-              join: [
-                { table: "access", onleft: "user.id", onright: "access.user_id" },
-                { table: "role", onleft: "access.role_id", onright: "role.id" },
-              ],
-              where: [
-                { column: "access.site_id", operator: "=", value: this.#site_form_input.get_value() },
-                { column: "role.name", operator: "=", value: "typist" },
-                { column: "user.active", operator: "=", value: true },
-              ],
-              order: "user.name",
-            },
-          })
-        ).map(user => ({
-          key: user.id,
-          value: `${user.first_name} ${user.last_name} (${user.name})`,
-        })),
+        get_enums: async () => await this.get_model().get_user_enums(this.#site_form_input.get_value()),
       },
       on_change: () => {
         this.update_element();

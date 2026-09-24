@@ -195,7 +195,12 @@ export class CN_view_test_entry extends CN_action_view {
           type: "enum",
           enum: {
             path: "user",
-            get_enums: async () => await this.get_model().get_parent_model().get_user_enums(),
+            get_enums: async () => {
+              const parent_model = this.get_model().get_parent_model();
+              return await parent_model.get_user_enums(
+                parent_model.get_action().get_property_value_for_record("site_id")
+              );
+            },
           },
         },
       });
