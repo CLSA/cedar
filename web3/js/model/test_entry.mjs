@@ -192,7 +192,6 @@ export class CN_view_test_entry extends CN_action_view {
         title: "Select Typist",
         message: "Please select which typist this transcription should be re-assigned to.",
         input: {
-          type: "enum",
           enum: {
             path: "user",
             get_enums: async () => {
