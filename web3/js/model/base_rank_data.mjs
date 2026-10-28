@@ -22,7 +22,7 @@ export class CN_model_base_rank_data extends CN_model_base_data {
 
 export class CN_test_base_rank_data extends CN_test_base_data {
   #entry_type;
-  #entry_list;
+  #entry_list = [];
   #new_entry_form_input;
 
   constructor(parent_el, model, entry_type) {
@@ -68,6 +68,10 @@ export class CN_test_base_rank_data extends CN_test_base_data {
       column.push("value");
     }
 
+    this.#entry_list.forEach(entry => {
+      if (entry.action_tooltip) entry.action_tooltip.dispose();
+      if (entry.remove_tooltip) entry.remove_tooltip.dispose();
+    });
     this.#entry_list = await CN_api.get(this.get_api_path(), {
       select: { column: column },
       modifier: { order: `${this.get_model().get_data_name()}_data.rank` },
@@ -80,7 +84,7 @@ export class CN_test_base_rank_data extends CN_test_base_data {
   async on_dom_remove() {
     this.#entry_list.forEach(entry => {
       if (entry.action_tooltip) entry.action_tooltip.dispose();
-      if (entry.entry_tooltip) entry.entry_tooltip.dispose();
+      if (entry.remove_tooltip) entry.remove_tooltip.dispose();
     });
   }
 
@@ -175,9 +179,6 @@ export class CN_test_base_rank_data extends CN_test_base_data {
             type="button"
             name="entry"
             class="btn btn-${btn_class} w-100"
-            data-bs-toggle="tooltip"
-            data-bs-html="true"
-            data-bs-title="Click to remove"
           >
             ${
               "character" == this.#entry_type ?
@@ -188,10 +189,17 @@ export class CN_test_base_rank_data extends CN_test_base_data {
             }
           </button>
         `);
-        entry.entry_tooltip = new bootstrap.Tooltip(entry.entry_btn_el);
+
+        if (entry.remove_tooltip) {
+          entry.remove_tooltip.dispose();
+          entry.remove_tooltip = null;
+        }
+
+        entry.remove_tooltip = new bootstrap.Tooltip(entry.entry_btn_el, { title: "Click to remove" });
         this.constructor.set_disabled(entry.entry_btn_el, this.get_disabled());
         entry.entry_btn_el.addEventListener("click", async () => {
           await CN_api.delete(`${this.get_api_path()}/${entry.id}`);
+          if (entry.remove_tooltip) entry.remove_tooltip.dispose();
           await this.run();
         });
         button_div_el.append(entry.entry_btn_el);
@@ -227,16 +235,20 @@ export class CN_test_base_rank_data extends CN_test_base_data {
       this.#new_entry_form_input = new CN_input_string(entry_row_el, {
         id: "new_entry",
         class: "col-sm-9",
-        regex: "^[a-z0-9]$",
         on_input: async (form_input) => {
           let value = form_input.get_value();
 
-          // immediately force 1 character max
-          if (1 < value.length) value = value[0];
-
-          // immediately force regex
-          const re = new RegExp(form_input.get_config("regex"));
-          if (!re.test(value)) value = "";
+          // immediately test format
+          if (!value.match(/^[a-z1-9]/)) {
+            // make sure the input starts with a number or letter
+            value = "";
+          } else if (value.match(/^[a-z]/) && 1 < value.length) {
+            // if the input starts with a letter then don't allow anything else
+            value = value[0];
+          } else if (value.match(/^[1-9]/)) {
+            // if the input stars with a number then only allow numbers
+            value = value.replace(/[^0-9]/g, "");
+          }
 
           await form_input.set_value(value);
         },

@@ -106,9 +106,9 @@ export class CN_model_word extends CN_base_model {
     const action = this.get_action();
     return super.allow_edit() && !(
       3 > CN_session.get("role", "tier") &&
-      null != action.get_property_value("misspelled") &&
-      null != action.get_property_value("aft") &&
-      null != action.get_property_value("fas")
+      null != action.get_property_value_for_record("misspelled") &&
+      null != action.get_property_value_for_record("aft") &&
+      null != action.get_property_value_for_record("fas")
     );
   }
 
@@ -188,7 +188,8 @@ export class CN_model_word extends CN_base_model {
         }, params);
 
         return (await CN_api.get("word", api_params)).map(item => {
-          item.value = this.get_word_html(item);
+          item.value_prefix = `<span class="border border-secondary rounded-1 p-1">${item.code}</span> `;
+          item.value = item.word;
           return item;
         });
       },
@@ -219,10 +220,12 @@ export class CN_view_word extends CN_action_view {
    * Additional actions must be taken after changing some properties
    */
   async on_set_property(prop_name, run = true) {
-    if (!["misspelled", "aft", "fas"].includes(prop_name)) {
-      // no change in functionality required
-      await super.on_set_property(prop_name, run);
-      return;
+    // proceed as usual if setting misspelled to false or setting the aft or fas status
+    if (
+      ("misspelled" == prop_name && !this.get_property_value("misspelled")) ||
+      ["aft", "fas"].includes(prop_name)
+    ) {
+      return await super.on_set_property(prop_name, run);
     }
 
     const word = this.get_property_value("word");
@@ -251,8 +254,8 @@ export class CN_view_word extends CN_action_view {
       });
 
       if (undefined === data.correct_word) {
-        this.get_property(prop_name).form_input.undo_value();
         if (run) await this.run();
+        else this.get_property(prop_name).form_input.undo_value();
         return; // the update has been cancelled, do not proceed
       }
 
@@ -285,8 +288,8 @@ export class CN_view_word extends CN_action_view {
     });
 
     if (undefined === data.note) {
-      this.get_property(prop_name).form_input.undo_value();
       if (run) await this.run();
+      else this.get_property(prop_name).form_input.undo_value();
       return; // the update has been cancelled, do not proceed
     }
 
