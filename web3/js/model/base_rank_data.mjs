@@ -252,14 +252,18 @@ export class CN_test_base_rank_data extends CN_test_base_data {
 
           await form_input.set_value(value);
         },
-        on_change: async (form_input, valid) => {
-          const value = form_input.get_value_for_record();
+        on_keydown: async (form_input, event) => {
+          // Only submit when the enter key is pressed instead of using on_change, otherwise entries
+          // are submitted when the input loses focus.
+          if ("Enter" == event.key) {
+            const value = form_input.get_value_for_record();
 
-          // ignore empty values
-          if (!value) return;
+            // ignore empty values
+            if (!value) return;
 
-          await this.#submit_entry(value);
-          form_input.undo_value(true);
+            await this.#submit_entry(value);
+            form_input.undo_value(true);
+          }
         },
       });
     } else { // "word" == this.#entry_type
