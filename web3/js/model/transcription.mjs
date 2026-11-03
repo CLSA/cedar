@@ -213,7 +213,7 @@ export class CN_multiedit_transcription extends CN_base_action {
       return "Transcription Multi-Edit";
     }
 
-    return super.get_text(type);
+    return await super.get_text(type);
   }
 
   /**
