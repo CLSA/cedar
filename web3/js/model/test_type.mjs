@@ -58,12 +58,12 @@ export class CN_list_test_type extends CN_action_list {
         });
 
         if (response) {
-          this.constructor.set_disabled(rescore_btn_el, true);
+          this.constructor.disable(rescore_btn_el);
           await this.constructor.wait_for(
             CN_api.count("test_type", { rescore: 1 }),
             0, // show wait-for message immediately
           );
-          this.constructor.set_disabled(rescore_btn_el, false);
+          this.constructor.enable(rescore_btn_el);
         }
       });
       btn_group_el.append(rescore_btn_el);
@@ -100,12 +100,12 @@ export class CN_view_test_type extends CN_action_view {
         });
 
         if (response) {
-          this.constructor.set_disabled(rescore_btn_el, true);
+          this.constructor.disable(rescore_btn_el);
           await this.constructor.wait_for(
             CN_api.count(this.get_model().get_view_url(null, "api"), { rescore: 1 }),
             0, // show wait-for message immediately
           );
-          this.constructor.set_disabled(rescore_btn_el, false);
+          this.constructor.enable(rescore_btn_el);
           this.get_model().get_child_model_list()
             .filter(child_model => "test_entry" == child_model.get_name())
             .forEach(child_model => child_model.run());

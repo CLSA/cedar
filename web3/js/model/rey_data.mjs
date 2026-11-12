@@ -221,15 +221,10 @@ export class CN_test_rey_data extends CN_test_base_data {
           </span>
         `);
 
-        /*
-        // if the the model doesn't allow editing then disable all variant radio inputs
-        this.constructor.set_disabled(variant_el.querySelector("input"), disabled);
-        */
-
         // check that the variant is allowed (language is in the test-entry's language list)
         if (!this.get_language_list().some(l => l.id == variant.variant_language_id)) {
           variant_el.querySelector("label").classList.add("text-black", "text-opacity-50");
-          this.constructor.set_disabled(variant_el.querySelector("input"), true);
+          this.constructor.disable(variant_el.querySelector("input"));
         }
         variant_el.querySelector("input").addEventListener("click", async () => {
           await this.set_word_value(word_name, variant.id);

@@ -248,11 +248,7 @@ export class CN_multiedit_transcription extends CN_base_action {
 
       if (this.#user_warning_el) {
         // show or hide the user warning based on the selected restriction type
-        if ("no-import" == restriction_type) {
-          this.#user_warning_el.classList.add("d-none");
-        } else {
-          this.#user_warning_el.classList.remove("d-none");
-        }
+        this.constructor.set_hidden(this.#user_warning_el, "no-import" == restriction_type);
       }
     }
   }
@@ -285,11 +281,7 @@ export class CN_multiedit_transcription extends CN_base_action {
     this.#participant_selection.add_event_listener("selectionchanged", () => {
       this.update_element();
       const assignment_el = body_el.querySelector("[name=transcription-assignment]");
-      if (this.#participant_selection.get_identifier_list().length) {
-        assignment_el.classList.remove("d-none");
-      } else {
-        assignment_el.classList.add("d-none");
-      }
+      this.constructor.set_hidden(assignment_el, 0 == this.#participant_selection.get_identifier_list().length);
     });
 
     const restrict_row_el = this.constructor.html('<div class="row"></div>');
@@ -362,12 +354,13 @@ export class CN_multiedit_transcription extends CN_base_action {
     user_el.append(this.#user_form_input.get_element());
 
     this.#user_warning_el = this.constructor.html(`
-      <div name="user-warning" class="text-info d-none">
+      <div name="user-warning" class="text-info">
         Please note that if you leave this empty then imported participants will become available in the
         application's participant list without being assigned a transcription (they will be available for
         new transcription requests).
       </div>
     `);
+    this.constructor.hide(this.#user_warning_el);
     user_el.append(this.#user_warning_el);
 
     const assignment_footer_el = this.constructor.html('<div class="row"></div>');
@@ -486,12 +479,12 @@ export class CN_list_transcription extends CN_action_list {
         });
 
         if (response) {
-          this.constructor.set_disabled(rescore_btn_el, true);
+          this.constructor.disable(rescore_btn_el);
           await this.constructor.wait_for(
             CN_api.count("transcription", { rescore: 1 }),
             0, // show wait-for message immediately
           );
-          this.constructor.set_disabled(rescore_btn_el, false);
+          this.constructor.enable(rescore_btn_el);
         }
       });
       btn_group_el.append(rescore_btn_el);
@@ -524,12 +517,12 @@ export class CN_view_transcription extends CN_action_view {
         '<button name="rescore" type="button" class="btn btn-light btn-outline-primary">Rescore</button>'
       );
       rescore_btn_el.addEventListener("click", async () => {
-        this.constructor.set_disabled(rescore_btn_el, true);
+        this.constructor.disable(rescore_btn_el);
         await this.constructor.wait_for(CN_api.count(
           this.get_model().get_view_url(null, "api"),
           { rescore: 1 }
         ));
-        this.constructor.set_disabled(rescore_btn_el, false);
+        this.constructor.enable(rescore_btn_el);
         this.get_model().get_child_model_list()
           .filter(child_model => "test_entry" == child_model.get_name())
           .forEach(child_model => child_model.run());
