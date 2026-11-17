@@ -59,7 +59,7 @@ export class CN_model_status_type extends CN_base_model {
             return max_rank + ("add" == action.get_type() ? 1 : 0);
           },
         },
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
       },
     });
   }

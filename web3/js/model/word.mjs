@@ -42,11 +42,7 @@ export class CN_model_word extends CN_base_model {
           },
           is_constant: () => "view" == this.get_action_name(),
         },
-        word: {
-          title: "Word",
-          format: "identifier",
-          is_constant: () => "view" == this.get_action_name(),
-        },
+        word: { title: "Word", is_constant: () => "view" == this.get_action_name() },
         animal_code: {
           title: "Animal Code",
           // regex is exactly 7 integers >= 0 delimited by a period (.)

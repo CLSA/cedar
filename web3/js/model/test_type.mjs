@@ -22,7 +22,7 @@ export class CN_model_test_type extends CN_base_model {
       },
       properties: {
         rank: { title: "Rank" },
-        name: { title: "Name", format: "identifier" },
+        name: { title: "Name" },
         data_type: { title: "Data Type" },
         average_score: { meta: {}, title: "Average Score", is_constant: () => true },
         average_alt_score: { meta: {}, title: "Average Alternate Score", is_constant: () => true },
