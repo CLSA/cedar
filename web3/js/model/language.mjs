@@ -1,8 +1,6 @@
+const classes = await import(`${CENOZO_URL}/js/model/language.mjs`);
 const { CN_action_list } = await import(`${CENOZO_URL}/js/action/list.mjs`);
 const { CN_session } = await import(`${CENOZO_URL}/js/session.mjs`);
-
-const classes = await import(`${CENOZO_URL}/js/model/language.mjs`);
-const base_list_class = classes.CN_list_language ? classes.CN_list_language : CN_action_list;
 
 export class CN_model_language extends classes.CN_model_language {
   /**
@@ -28,7 +26,7 @@ export class CN_model_language extends classes.CN_model_language {
   }
 }
 
-
+const base_list_class = classes.CN_list_language ? classes.CN_list_language : CN_action_list;
 export class CN_list_language extends base_list_class {
   /**
    * Extend parent method

@@ -1,6 +1,3 @@
-import { CN_model_base_data, CN_test_base_data } from "./base_data.mjs"
-import { CN_model_word } from "./word.mjs"
-
 const { CN_api } = await import(`${CENOZO_URL}/js/api.mjs`);
 const { CN_common } = await import(`${CENOZO_URL}/js/common.mjs`);
 const { CN_element_label } = await import(`${CENOZO_URL}/js/element/label.mjs`);
@@ -9,6 +6,8 @@ const { CN_input_typeahead } = await import(`${CENOZO_URL}/js/input/typeahead.mj
 const { CN_modal_confirm } = await import(`${CENOZO_URL}/js/modal/confirm.mjs`);
 const { CN_modal_input } = await import(`${CENOZO_URL}/js/modal/input.mjs`);
 const { CN_modal_message } = await import(`${CENOZO_URL}/js/modal/message.mjs`);
+import { CN_model_base_data, CN_test_base_data } from "./base_data.mjs"
+import { CN_model_word } from "./word.mjs"
 
 export class CN_model_base_rank_data extends CN_model_base_data {
   constructor(data_name) {
