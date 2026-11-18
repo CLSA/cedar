@@ -23,9 +23,14 @@ export class CN_model_home extends classes.CN_model_home {
   _create_element() {
     const el = super._create_element();
     if ("typist" == CN_session.get("role", "name")) {
-      el.querySelector("div.row").append(CN_base_element.html(
-        '<div name="transcription-list" class="mt-4"></div>'
-      ));
+      el.querySelector("div.row").append(CN_base_element.html(`
+        <div name="transcription-list" class="mt-4">
+          <div class="text-center">
+            <div class="fw-bold fs-4 mb-2">Loading Transcription List...</div>
+            <img src="${CENOZO_URL}/img/loading.gif"></img>
+          </div>
+        </div>
+      `));
     }
     return el;
   }
