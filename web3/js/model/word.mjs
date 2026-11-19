@@ -191,19 +191,23 @@ export class CN_model_word extends CN_base_model {
       },
     };
   }
+
+  /**
+   * Extend parent method
+   */
+  get_child_model_list() {
+    const action = this.get_action();
+    return (
+      "view" == action.get_type() && action.get_property_value("animal_code") ?
+      super.get_child_model_list().filter(model => "compound" != model.get_name()) :
+      super.get_child_model_list()
+    );
+  }
 }
 
 export class CN_view_word extends CN_action_view {
   /**
-   * Remove the compound model from the selector's child list when the animal code is defined
-   */
-  get_selector_child_list() {
-    const animal_code = this.get_property_value("animal_code");
-    return super.get_selector_child_list().filter(c => null == animal_code || "compound" != c.model.get_name());
-  }
-
-  /**
-   * Extends the parent method
+   * Extend parent method
    */
   async get_text(type) {
     if ("crumb" == type) {
