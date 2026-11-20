@@ -616,6 +616,15 @@ cenozoApp.defineModule({
               );
             },
 
+            getServiceResourcePath: function (resource) {
+              let path = this.$$getServiceResourcePath(resource);
+              const matches = path.match(/uid=([^\/]+)\/transcription\/uid=/);
+              if (matches) {
+                path = "transcription/uid=" + matches[1];
+              }
+              return path;
+            },
+
             canRescoreTestEntries: function () {
               return 2 < CnSession.role.tier;
             },
@@ -682,6 +691,8 @@ cenozoApp.defineModule({
 
             // special function to update the user list
             updateUserList: async function (participantIdentifier) {
+              if (!participantIdentifier) return;
+
               var response = await CnHttpFactory.instance({
                 path: "participant/" + participantIdentifier,
                 data: {
